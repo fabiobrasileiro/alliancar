@@ -16,21 +16,58 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Conventional commits:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Os conventionals commits e branch names vão nos ajudar a se organizar melhor e resolver problemas fácil e rápido. Commitem arquivo por arquivo com o formato abaixo e na descrição adicione resumidamente o que foi feito/criado.
 
-## Learn More
+formato básico:
+<tipo>[escopo opcional]: <descrição curta>
 
-To learn more about Next.js, take a look at the following resources:
+O que usaremos:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+feat: → nova funcionalidade
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+fix: → correção de bug
 
-## Deploy on Vercel
+docs: → mudanças só em documentação
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+style: → ajustes de formatação (sem mudar lógica)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+refactor: → mudança de código sem alterar comportamento
+
+test: → adição/ajuste de testes
+
+chore: → tarefas diversas (build, configs, dependências)
+
+Exemplos:
+feat(auth): add login with Google
+fix(api): handle null user response
+docs(readme): update installation guide
+refactor(user): simplify password hashing
+
+🌿 Conventional Branch Names
+
+formato básico:
+<tipo>/<descrição-curta>
+
+O que usaremos:
+feat/ → nova feature
+
+fix/ → correção de bug
+
+chore/ → manutenção (deps, CI/CD, configs)
+
+docs/ → documentação
+
+refactor/ → refatoração
+
+hotfix/ → correção urgente em produção
+
+Exemplos:
+
+feat/user-authentication
+fix/user-profile-image
+docs/api-endpoints
+chore/update-dependencies
+hotfix/login-crash
+
