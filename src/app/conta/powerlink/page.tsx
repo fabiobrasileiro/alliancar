@@ -25,7 +25,7 @@ const affiliateLink = {
 
 const copyToClipboard = (text: string): void => {
     navigator.clipboard.writeText(text);
-    alert("Link copiado!");
+    alert("Link copiado com sucesso!");
 };
 
 export default function Powerlinks() {
