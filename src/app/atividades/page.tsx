@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function AtividadesPage() {
   return (
-    <main className="block m-auto p-2 md:px-6 md:py-4">
+    <>
       <header className="flex flex-col flex-wrap">
         <h2 className="font-bold leading-tight m-0 text-slate-700 text-2xl">
           Atividades
@@ -157,6 +157,6 @@ export default function AtividadesPage() {
           </Card>
         </div>
       </div>
-    </main>
+    </>
   );
 }
