@@ -7,53 +7,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Sidebar, { SidebarItem } from "@/components/sidebar";
 
 export default function FinanceiroPage() {
+  const sidebarItems: SidebarItem[] = [
+    { id: "painel", label: "Painel Financeiro", href: "/financeiro" },
+    {
+      id: "pagamentos",
+      label: "Painel de Pagamentos",
+      href: "/financeiro/pagamentos",
+    },
+    {
+      id: "saque",
+      label: "Contas de Saque",
+      href: "/financeiro/contas-de-saque",
+    },
+    { id: "faturas", label: "Faturas Power CRM", href: "/financeiro/faturas" },
+  ];
   return (
     <>
       <div className="block m-auto p-2 md:px-6 md:py-4">
         <div className="flex gap-6 items-start w-full">
-          <aside className="w-64 shrink-0 bg-slate-50 border rounded-md">
-            <h3 className="px-4 py-3 font-semibold text-slate-700">
-              Financeiro
-            </h3>
-            <nav className="px-2 pb-2">
-              <ul className="flex flex-col gap-1">
-                <li>
-                  <Link
-                    href="/financeiro"
-                    className="block rounded-md px-3 py-2 text-slate-800 bg-white shadow-sm border"
-                  >
-                    Painel Financeiro
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/financeiro/pagamentos"
-                    className="block rounded-md px-3 py-2 text-slate-600 hover:bg-slate-100"
-                  >
-                    Painel de Pagamentos
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/financeiro/contas-de-saque"
-                    className="block rounded-md px-3 py-2 text-slate-600 hover:bg-slate-100"
-                  >
-                    Contas de Saque
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/financeiro/faturas"
-                    className="block rounded-md px-3 py-2 text-slate-600 hover:bg-slate-100"
-                  >
-                    Faturas Power CRM
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-          </aside>
+          <Sidebar title="Financeiro" items={sidebarItems} />
 
           <section className="flex-1 min-w-0">
             <header className="flex flex-col flex-wrap">
