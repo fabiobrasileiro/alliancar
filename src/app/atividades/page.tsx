@@ -105,27 +105,27 @@ export default function AtividadesPage() {
             <div className="w-full block">
               <Tabs value="TODAY">
                 <TabsList>
-                  <TabsTrigger value="LATE" active={false}>
+                  <TabsTrigger value="LATE" >
                     Atrasadas
                     <Badge variant="red">0</Badge>
                   </TabsTrigger>
-                  <TabsTrigger value="TODAY" active>
+                  <TabsTrigger value="TODAY" >
                     Para hoje
                     <Badge variant="blue">0</Badge>
                   </TabsTrigger>
-                  <TabsTrigger value="PLANNED" active={false}>
+                  <TabsTrigger value="PLANNED" >
                     Planejadas
                     <Badge variant="gray">0</Badge>
                   </TabsTrigger>
-                  <TabsTrigger value="COMPLETED" active={false}>
+                  <TabsTrigger value="COMPLETED" >
                     Concluidas
                     <Badge variant="green">0</Badge>
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="LATE" active={false}></TabsContent>
+                <TabsContent value="LATE" ></TabsContent>
 
-                <TabsContent value="TODAY" active>
+                <TabsContent value="TODAY" >
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2 items-center my-8 w-full bg-slate-100 text-slate-500 p-8 rounded-md">
                       <svg
@@ -150,8 +150,8 @@ export default function AtividadesPage() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="PLANNED" active={false}></TabsContent>
-                <TabsContent value="COMPLETED" active={false}></TabsContent>
+                <TabsContent value="PLANNED" ></TabsContent>
+                <TabsContent value="COMPLETED" ></TabsContent>
               </Tabs>
             </div>
           </Card>
