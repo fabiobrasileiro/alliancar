@@ -10,17 +10,28 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-jelly-bean-50: #effbfc;
+  --color-jelly-bean-100: #d6f4f7;
+  --color-jelly-bean-200: #b1e7f0;
+  --color-jelly-bean-300: #7bd4e5;
+  --color-jelly-bean-400: #3eb8d2;
+  --color-jelly-bean-500: #239cb7;
+  --color-jelly-bean-600: #1e7792;
+  --color-jelly-bean-700: #20667e;
+  --color-jelly-bean-800: #225468;
+  --color-jelly-bean-900: #214758;
+  --color-jelly-bean-950: #102d3c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #636363;
     --foreground: #ededed;
   }
 }
 
 body {
-  background: var(--background);
+  background: var(--color-jelly-bean-50);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
