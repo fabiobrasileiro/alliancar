@@ -1,0 +1,125 @@
+"use client";
+
+import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/utils/supabase/client";
+
+export default function LoginForm() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setErrorMessage(null);
+        const supabase = createClient();
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+        setIsLoading(false);
+        if (error) {
+            setErrorMessage(
+                error.message || "Falha ao entrar. Verifique suas credenciais.",
+            );
+            return;
+        }
+        const redirectTo = searchParams.get("redirectedFrom") || "/";
+        router.replace(redirectTo);
+    };
+
+    const handleResetPassword = async () => {
+        if (!email) {
+            setErrorMessage("Informe um e-mail para recuperar a senha.");
+            return;
+        }
+        const supabase = createClient();
+        await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo:
+                typeof window !== "undefined"
+                    ? `${window.location.origin}/login`
+                    : undefined,
+        });
+        setErrorMessage(
+            "Se o e-mail existir, enviaremos instruções de recuperação.",
+        );
+    };
+
+    return (
+        <div className="flex items-center justify-center px-4 py-10">
+            <Card className="w-full max-w-md">
+                <CardHeader>
+                    <CardTitle className="text-xl">Acesse a sua conta</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <form className="grid gap-4" onSubmit={handleSubmit}>
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">E-mail</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="Seu e-mail"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="password">Senha</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder="Sua senha"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+                        {errorMessage && (
+                            <div className="text-sm text-red-600">{errorMessage}</div>
+                        )}
+                        <div className="flex items-center justify-between">
+                            <button
+                                type="button"
+                                className="text-sm text-blue-700 hover:underline"
+                                onClick={handleResetPassword}
+                            >
+                                Esqueci minha senha
+                            </button>
+                            <Button type="submit" disabled={isLoading}>
+                                {isLoading ? "Entrando..." : "Acessar"}
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+                <CardFooter>
+                    <p className="text-sm text-slate-600 text-center w-full">
+                        Se você ainda não é um cliente do Power CRM{" "}
+                        <a
+                            href="https://site.powercrm.com.br/cadastro/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 hover:underline"
+                        >
+                            solicite uma demonstração
+                        </a>
+                    </p>
+                </CardFooter>
+            </Card>
+        </div>
+    );
+}
