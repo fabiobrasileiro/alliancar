@@ -12,7 +12,7 @@ export default function Navbar() {
   const [showReportMenu, setShowReportMenu] = useState(false);
 
   return (
-    <div className="w-full bg--green shadow-sm flex flex-col">
+    <div className="w-full bg--green shadow-sm flex flex-col bg-jelly-bean-900">
       <div className="flex items-center justify-between px-4 py-2 border-b">
         {/* Logo */}
         <div className="flex gap-4">
@@ -134,8 +134,6 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-
-
     </div>
   );
 }
