@@ -1,4 +1,5 @@
-import React from "react";
+'use client'
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -22,22 +23,86 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Pagination } from "@/components/ui/pagination";
-import { createClient } from '@/utils/supabase/server'
-import { cookies } from 'next/headers'
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
+export default function ContatosPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  
+  const [nomeCompleto, setNomeCompleto] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [cpfCnpj, setCpfCnpj] = useState("");
+  const [banco, setBanco] = useState("");
+  const [estado, setEstado] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-export default async function ContatosPage() {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const buildQuery = () => {
+    const filters = [];
+    
+    if (nomeCompleto) filters.push(`nome_completo.ilike.%${nomeCompleto}%`);
+    if (telefone) filters.push(`telefone.eq.${telefone}`);
+    if (cpfCnpj) filters.push(`cpf_cnpj.eq.${cpfCnpj}`);
+    if (banco) filters.push(`banco.ilike.%${banco}%`);
+    if (estado) filters.push(`estado.ilike.%${estado}%`);
+    
+    // Se houver termo de busca geral, adiciona aos filtros
+    if (searchTerm) {
+      filters.push(`nome_completo.ilike.%${searchTerm}%`);
+      filters.push(`telefone.ilike.%${searchTerm}%`);
+      filters.push(`email.ilike.%${searchTerm}%`);
+    }
+    
+    return filters.join(',');
+  };
 
-  const { data: rows } = await supabase.from('profile').select()
+  // Função para buscar dados
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const queryFilter = buildQuery();
+      
+      let query = supabase
+        .from('profile')
+        .select();
+      
+      if (queryFilter) {
+        query = query.or(queryFilter);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Erro ao buscar dados:', error);
+        return;
+      }
+      
+      setRows(data || []);
+    } catch (error) {
+      console.error('Erro:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Buscar dados quando o componente montar
+  React.useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Handler para o formulário de busca
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+    fetchData();
+  };
 
   return (
     <>
       <div className="px-5 py-5">
-
         <header className="flex flex-col flex-wrap">
-          <h2 className="font-bold leading-tight m-0 text-slate-700 text-2xl">
+          <h2 className="font-bold leading-tight m-0 text-jelly-bean-950 text-2xl">
             Contatos
           </h2>
           <header className="flex items-center justify-between flex-wrap mt-2">
@@ -61,41 +126,12 @@ export default async function ContatosPage() {
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </span>
-              <span className="text-sm text-blue-700">
-                {" "}
+              <span className="text-sm text-jelly-bean-700">
                 <Link className="hover:opacity-70" href="/crm/client">
                   Contatos
                 </Link>
               </span>
             </nav>
-            <div className="flex items-center justify-center gap-4">
-              <a
-                target="_blank"
-                rel="noreferrer"
-                className="text-blue-700"
-                href="https://www.youtube.com/@PowerCRM"
-              >
-                <div className="flex items-center justify-center gap-2 text-sm">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-badge-help"
-                  >
-                    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" x2="12.01" y1="17" y2="17"></line>
-                  </svg>
-                  Aprenda a usar
-                </div>
-              </a>
-            </div>
           </header>
         </header>
 
@@ -104,18 +140,18 @@ export default async function ContatosPage() {
             <Card className="overflow-hidden">
               <CardHeader className="p-8">
                 <CardTitle>Contatos</CardTitle>
-                <CardDescription>173 contatos cadastrados</CardDescription>
+                <CardDescription>{rows?.length} contatos encontrados</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="max-md:overflow-auto max-md:max-w-full">
-                  <Table className="flex-nowrap bg-gray-500 text-white">
+                  <Table className="flex-nowrap bg-jelly-bean-950 text-white">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="pl-8 w-10">
                           <Checkbox aria-label="Selecionar todos" />
                         </TableHead>
                         <TableHead>Nome completo</TableHead>
-                        <TableHead>Email</TableHead>
+                        <TableHead>Telefone</TableHead>
                         <TableHead>Cpf/Cnpj</TableHead>
                         <TableHead>Banco</TableHead>
                         <TableHead>Agência</TableHead>
@@ -127,8 +163,14 @@ export default async function ContatosPage() {
                         <TableHead className="w-16 text-center"></TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody className="flex-nowrap bg-gray-500 text-black">
-                      {(rows || []).map((r) => (
+                    <TableBody className="flex-nowrap bg-jelly-bean-50 text-jelly-bean-950 ">
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={12} className="text-center py-4">
+                            Carregando...
+                          </TableCell>
+                        </TableRow>
+                      ) : (rows || []).map((r) => (
                         <TableRow key={r.id}>
                           <TableCell className="pl-8">
                             <Checkbox
@@ -136,7 +178,7 @@ export default async function ContatosPage() {
                             />
                           </TableCell>
                           <TableCell>{r.nome_completo}</TableCell>
-                          <TableCell>{r.email}</TableCell>
+                          <TableCell>{r.telefone}</TableCell>
                           <TableCell>{r.cpf_cnpj}</TableCell>
                           <TableCell>{r.banco}</TableCell>
                           <TableCell>{r.agencia}</TableCell>
@@ -144,7 +186,7 @@ export default async function ContatosPage() {
                           <TableCell>{r.receita_estimada}</TableCell>
                           <TableCell>{r.cep}</TableCell>
                           <TableCell>{r.estado}</TableCell>
-                          <TableCell>{r.ativo}</TableCell>
+                          <TableCell>{r.ativo ? 'Sim' : 'Não'}</TableCell>
                           <TableCell className="w-16 text-center">
                             <a href={r.link} aria-label="Abrir contato">
                               <svg
@@ -178,31 +220,74 @@ export default async function ContatosPage() {
           <aside className="flex w-[min-content] max-sm:w-full max-md:w-2/3 max-lg:order-first">
             <Card className="w-full md:w-2/6 md:min-w-96">
               <CardContent className="p-6 md:p-8">
-                <form className="w-full">
+                <form className="w-full" onSubmit={handleSearch}>
                   <div className="flex flex-col gap-4 max-lg:w-full">
                     <div className="flex flex-col w-full">
-                      <Label htmlFor="search">Buscar contato</Label>
-                      <Input id="search" placeholder="NOME | EMAIL | TELEFONE" />
+                      <Label htmlFor="search" className="text-jelly-bean-900">Buscar contato</Label>
+                    
                     </div>
-                    <div>
-                      <Button type="button">Aplicar</Button>
-                    </div>
-                    <Separator />
-                    <div className="flex flex-col gap-4">
-                      <p className="text-sm text-slate-500">
-                        Identifique e mescle registros de contatos duplicados
-                        usando e-mail, telefone ou CPF/CNPJ.
-                      </p>
-                      <div>
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          variant="outline"
-                        >
-                          Mesclar duplicados
-                        </Button>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col">
+                        <Label htmlFor="nome" className="text-jelly-bean-900">Nome</Label>
+                        <Input 
+                          id="nome" 
+                          value={nomeCompleto}
+                          onChange={(e) => setNomeCompleto(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <Label htmlFor="telefone" className="text-jelly-bean-900">Telefone</Label>
+                        <Input 
+                          id="telefone" 
+                          value={telefone}
+                          onChange={(e) => setTelefone(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <Label htmlFor="cpfCnpj" className="text-jelly-bean-900">CPF/CNPJ</Label>
+                        <Input 
+                          id="cpfCnpj" 
+                          value={cpfCnpj}
+                          onChange={(e) => setCpfCnpj(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <Label htmlFor="banco" className="text-jelly-bean-900">Banco</Label>
+                        <Input 
+                          id="banco" 
+                          value={banco}
+                          onChange={(e) => setBanco(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <Label htmlFor="estado" className="text-jelly-bean-900">Estado</Label>
+                        <Input 
+                          id="estado" 
+                          value={estado}
+                          onChange={(e) => setEstado(e.target.value)}
+                        />
                       </div>
                     </div>
+                    
+                    <div className="flex gap-2">
+                      <Button type="submit" className="bg-jelly-bean-900">Aplicar Filtros</Button>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={() => {
+                          setNomeCompleto("");
+                          setTelefone("");
+                          setCpfCnpj("");
+                          setBanco("");
+                          setEstado("");
+                          setSearchTerm("");
+                          fetchData();
+                        }}
+                      >
+                        Limpar
+                      </Button>
+                    </div>                   
                   </div>
                 </form>
               </CardContent>
