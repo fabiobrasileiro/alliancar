@@ -11,7 +11,14 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   // Rotas públicas
-  const publicPaths = ["/login", "/favicon.ico", "/_next", "/api", "/public"];
+  const publicPaths = [
+    "/login",
+    "/signup",
+    "/favicon.ico",
+    "/_next",
+    "/api",
+    "/public",
+  ];
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
   if (isPublic) return response;
@@ -25,7 +32,7 @@ export async function middleware(request: NextRequest) {
     const supabase = createServerClient(supabaseUrl, supabaseAnon, {
       cookies: {
         getAll: () => request.cookies.getAll(),
-        setAll: () => { },
+        setAll: () => {},
       },
     });
     const {
@@ -45,5 +52,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|login|api|public).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|login|signup|api|public).*)",
+  ],
 };
