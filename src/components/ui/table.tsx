@@ -8,11 +8,11 @@ export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableEle
 }
 
 export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={cn('bg-slate-100 text-left', className)} {...props} />;
+  return <thead className={cn('bg-jelly-bean-50 text-left', className)} {...props} />;
 }
 
 export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <tbody className={cn('bg-white', className)} {...props} />;
+  return <tbody className={cn('bg-jelly-bean-50', className)} {...props} />;
 }
 
 export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
