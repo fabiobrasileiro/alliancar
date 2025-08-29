@@ -24,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ title, items, className }) => {
 
   return (
     <aside
-      className={`bg-slate-50 border rounded-md ${collapsed ? "w-14" : "w-64"} shrink-0 transition-all ${className || ""
+      className={`bg-slate-50 border rounded-md h-screen ${collapsed ? "w-14" : "w-64"} shrink-0 transition-all ${className || ""
         }`}
     >
       <div className="flex items-center justify-between px-3 py-3 border-b">
