@@ -8,11 +8,11 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-slate-200 text-slate-700",
-  blue: "bg-blue-600 text-white",
-  red: "bg-red-500 text-white",
-  green: "bg-green-500 text-white",
-  gray: "bg-slate-500 text-white",
+  default: "bg-jelly-bean-300 text-jelly-bean-50",
+  blue: "bg-jelly-bean-100 text-white",
+  red: "bg-red-300 text-white",
+  green: "bg-green-300 text-white",
+  gray: "bg-slate-300 text-white",
 };
 
 export function Badge({
@@ -23,7 +23,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center min-w-5 h-4 px-1 rounded-md text-xs font-medium",
+        "inline-flex items-center justify-center min-w-5 h-4 px-1 rounded-md text-xs font-medium text-jelly-bean-50",
         variantClasses[variant],
         className,
       )}
