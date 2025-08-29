@@ -1,162 +1,694 @@
-import React from "react";
+'use client'
+import React, { useState, useEffect, Fragment } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { createClient } from '@/utils/supabase/client';
+import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
 
-export default function AtividadesPage() {
+
+
+interface Atividade {
+  id: number;
+  created_at: string;
+  titulo: string;
+  descricao: string;
+  responsavel: string;
+  prazo: string;
+  prioridade: "alta" | "media" | "baixa";
+  tipo: "reuniao" | "tarefa" | "ligacao" | "apresentacao";
+  status: "atrasada" | "hoje" | "planejada" | "concluida";
+}
+
+interface TypeFilters {
+  reuniao: boolean;
+  tarefa: boolean;
+  ligacao: boolean;
+  apresentacao: boolean;
+}
+
+interface PriorityFilters {
+  Alta: boolean;
+  Normal: boolean;
+  Baixa: boolean;
+}
+
+const AtividadesPage: React.FC = () => {
+  const [atividades, setAtividades] = useState<Atividade[]>([]);
+  const [filteredAtividades, setFilteredAtividades] = useState<Atividade[]>([]);
+  const [activeTab, setActiveTab] = useState<"atrasada" | "hoje" | "planejada" | "concluida">("hoje");
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [typeFilters, setTypeFilters] = useState<TypeFilters>({
+    reuniao: false,
+    tarefa: false,
+    ligacao: false,
+    apresentacao: false
+  });
+  const [priorityFilters, setPriorityFilters] = useState<PriorityFilters>({
+    Alta: false,
+    Normal: false,
+    Baixa: false
+  });
+  const [loading, setLoading] = useState<boolean>(true);
+  const supabase = createClient();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [novaAtividade, setNovaAtividade] = useState({
+    titulo: "",
+    descricao: "",
+    responsavel: "",
+    prioridade: "Normal" as "Alta" | "Normal" | "Baixa",
+    tipo: "tarefa" as 'Ligar' | 'Whatsapp' | 'Email' | 'Visita' | 'Previsão de fechamento',
+    status: "Pendente" as "Pendente" | "Em andamento" | "Concluída" | "Cancelada",
+    prazo: new Date().toISOString().split('T')[0]
+  });
+
+  // Buscar atividades do Supabase
+  useEffect(() => {
+    const fetchAtividades = async () => {
+
+      try {
+        setLoading(true);
+
+        let { data, error } = await supabase
+          .from('atividades')
+          .select('*')
+
+
+
+        if (error) {
+          console.error('Erro ao buscar atividades:', error);
+          return;
+        }
+
+        if (data) {
+          const hoje = new Date().toISOString().split('T')[0];
+          const atividadesComStatus = data.map(atividade => {
+            let status: Atividade['status'] = 'planejada';
+
+            if (atividade.prazo < hoje && atividade.status !== 'concluida') {
+              status = 'atrasada';
+            } else if (atividade.prazo === hoje && atividade.status !== 'concluida') {
+              status = 'hoje';
+            } else if (atividade.status === 'concluida') {
+              status = 'concluida';
+            }
+
+            return { ...atividade, status };
+          });
+
+          setAtividades(atividadesComStatus);
+          setFilteredAtividades(atividadesComStatus);
+        }
+      } catch (error) {
+        console.error('Erro:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAtividades();
+  }, [supabase]);
+
+  // Contar atividades por status para os badges
+  const countByStatus = {
+    atrasada: atividades.filter(a => a.status === "atrasada").length,
+    hoje: atividades.filter(a => a.status === "hoje").length,
+    planejada: atividades.filter(a => a.status === "planejada").length,
+    concluida: atividades.filter(a => a.status === "concluida").length,
+  };
+
+  // Aplicar filtros quando qualquer filtro mudar
+  useEffect(() => {
+    let result = atividades;
+
+    // Filtrar por aba ativa
+    result = result.filter(atividade => atividade.status === activeTab);
+
+    // Filtrar por termo de busca
+    if (searchTerm) {
+      result = result.filter(atividade =>
+        atividade.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        atividade.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filtrar por tipo, se algum tipo estiver selecionado
+    const selectedTypes = Object.keys(typeFilters).filter(key => typeFilters[key as keyof TypeFilters]);
+    if (selectedTypes.length > 0) {
+      result = result.filter(atividade => selectedTypes.includes(atividade.tipo));
+    }
+
+    // Filtrar por prioridade, se alguma prioridade estiver selecionada
+    const selectedPriorities = Object.keys(priorityFilters).filter(key => priorityFilters[key as keyof PriorityFilters]);
+    if (selectedPriorities.length > 0) {
+      result = result.filter(atividade => selectedPriorities.includes(atividade.prioridade));
+    }
+
+    setFilteredAtividades(result);
+  }, [atividades, activeTab, searchTerm, typeFilters, priorityFilters]);
+
+  // Manipulador para alternar filtros de tipo
+  const handleTypeFilterChange = (type: keyof TypeFilters): void => {
+    setTypeFilters(prev => ({
+      ...prev,
+      [type]: !prev[type]
+    }));
+  };
+
+  // Manipulador para alternar filtros de prioridade
+  const handlePriorityFilterChange = (priority: keyof PriorityFilters): void => {
+    setPriorityFilters(prev => ({
+      ...prev,
+      [priority]: !prev[priority]
+    }));
+  };
+
+  // Limpar todos os filtros
+  const clearAllFilters = (): void => {
+    setSearchTerm("");
+    setTypeFilters({
+      reuniao: false,
+      tarefa: false,
+      ligacao: false,
+      apresentacao: false
+    });
+    setPriorityFilters({
+      Alta: false,
+      Normal: false,
+      Baixa: false
+    });
+  };
+
+  // Contar quantos filtros estão ativos
+  const activeFiltersCount: number = [
+    searchTerm,
+    ...Object.values(typeFilters),
+    ...Object.values(priorityFilters)
+  ].filter(Boolean).length;
+
+  // Formatar data para exibição
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
   return (
     <>
-      <header className="flex flex-col flex-wrap">
-        <h2 className="font-bold leading-tight m-0 text-slate-700 text-2xl">
-          Atividades
-        </h2>
-        <header className="flex items-center justify-between flex-wrap">
-          <nav className="flex items-center flex-wrap gap-2 max-[450px]:pr-8">
-            <span className="text-slate-950 text-sm flex gap-2 items-center">
-              <Link className="hover:opacity-70" href="/">
-                Home
-              </Link>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-chevron-right"
-              >
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </span>
-            <span className="text-sm text-blue-700">
-              <Link className="hover:opacity-70" href="/crm/activity">
-                Atividades
-              </Link>
-            </span>
-          </nav>
-          <div className="flex items-center justify-center gap-4 pl-2 flex-row-reverse flex-wrap mt-4 lg:flex-row lg:mt-0">
-            <div className="flex items-center justify-center gap-4">
-              <a
-                target="_blank"
-                rel="noreferrer"
-                className="text-blue-700"
-                href="https://www.youtube.com/@PowerCRM"
-              >
-                <div className="flex items-center justify-center gap-2 text-sm">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-badge-help"
-                  >
-                    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" x2="12.01" y1="17" y2="17"></line>
-                  </svg>
-                  Aprenda a usar
-                </div>
-              </a>
-            </div>
-            <Button type="button" className="text-sm px-5 h-9">
-              + Atividades
-            </Button>
-            <button
-              className="font-base text-center justify-center cursor-pointer focus:outline-none disabled:cursor-not-allowed rounded-md p-1 bg-white flex items-center"
-              type="button"
-              aria-haspopup="dialog"
-              aria-expanded="false"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-filter"
-              >
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-              </svg>
-              <div className="flex items-center justify-center bg-red-500 text-white rounded-full w-4 h-4 text-[10px]">
-                2
-              </div>
-            </button>
-          </div>
-        </header>
-      </header>
+      <div className="px-5 py-3">
+        <header className="flex flex-col flex-wrap">
+          <h2 className="font-bold leading-tight m-0 text-slate-700 text-2xl">
+            Atividades
+          </h2>
+          <header className="flex items-center justify-between flex-wrap">
+            <nav className="flex items-center flex-wrap gap-2 max-[450px]:pr-8">
+              <span className="text-slate-950 text-sm flex gap-2 items-center">
+                <Link className="hover:opacity-70" href="/">
+                  Home
+                </Link>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-chevron-right"
+                >
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </span>
+              <span className="text-sm text-jelly-bean-700">
+                <Link className="hover:opacity-70" href="/crm/activity">
+                  Atividades
+                </Link>
+              </span>
+            </nav>
+            <div className="flex items-center justify-center gap-4 pl-2 flex-row-reverse flex-wrap mt-4 lg:flex-row lg:mt-0">
 
-      <div className="flex flex-col md:flex-row gap-4 mt-8 items-start w-full">
-        <div className="flex flex-col max-[965px]:w-full md:w-4/6">
-          <Card className="w-full p-6 md:p-8">
-            <div className="w-full block">
-              <Tabs value="TODAY">
-                <TabsList>
-                  <TabsTrigger value="LATE" >
-                    Atrasadas
-                    <Badge variant="red">0</Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="TODAY" >
-                    Para hoje
-                    <Badge variant="blue">0</Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="PLANNED" >
-                    Planejadas
-                    <Badge variant="gray">0</Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="COMPLETED" >
-                    Concluidas
-                    <Badge variant="green">0</Badge>
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="LATE" ></TabsContent>
-
-                <TabsContent value="TODAY" >
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-2 items-center my-8 w-full bg-slate-100 text-slate-500 p-8 rounded-md">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="80"
-                        height="80"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="lucide lucide-inbox"
-                      >
-                        <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
-                        <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
-                      </svg>
-                      <p className="text-base text-slate-700 m-0">
-                        Nenhum atividade encontrada
-                      </p>
-                    </div>
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                className="text-sm px-5 h-9 bg-jelly-bean-900 hover:bg-jelly-bean-700"
+              >
+                + Nova Atividade
+              </Button>
+              <button
+                className="font-base text-center justify-center cursor-pointer focus:outline-none disabled:cursor-not-allowed rounded-md p-1 bg-white flex items-center relative"
+                type="button"
+                onClick={() => setShowFilters(!showFilters)}
+                aria-expanded={showFilters}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-filter"
+                >
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                {activeFiltersCount > 0 && (
+                  <div className="flex items-center justify-center bg-red-500 text-white rounded-full w-4 h-4 text-[10px] absolute -top-1 -right-1">
+                    {activeFiltersCount}
                   </div>
-                </TabsContent>
+                )}
+              </button>
+            </div>
+          </header>
+        </header>
 
-                <TabsContent value="PLANNED" ></TabsContent>
-                <TabsContent value="COMPLETED" ></TabsContent>
-              </Tabs>
+        {/* Filtros expandíveis */}
+        {showFilters && (
+          <Card className="p-4 mt-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold">Filtros</h3>
+              <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                Limpar Filtros
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex flex-col">
+                <Label htmlFor="search" className="mb-2">Buscar</Label>
+                <Input
+                  id="search"
+                  placeholder="Buscar atividades..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <Label className="mb-2">Tipo</Label>
+                <div className="space-y-2">
+                  {Object.keys(typeFilters).map(type => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`type-${type}`}
+                        checked={typeFilters[type as keyof TypeFilters]}
+                        onChange={() => handleTypeFilterChange(type as keyof TypeFilters)}
+                      />
+                      <label
+                        htmlFor={`type-${type}`}
+                        className="text-sm font-medium leading-none capitalize"
+                      >
+                        {type}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col">
+                <Label className="mb-2">Prioridade</Label>
+                <div className="space-y-2">
+                  {Object.keys(priorityFilters).map(priority => (
+                    <div key={priority} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`priority-${priority}`}
+                        checked={priorityFilters[priority as keyof PriorityFilters]}
+                        onChange={() => handlePriorityFilterChange(priority as keyof PriorityFilters)}
+                      />
+                      <label
+                        htmlFor={`priority-${priority}`}
+                        className="text-sm font-medium leading-none capitalize"
+                      >
+                        {priority}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </Card>
+        )}
+
+        <div className="flex flex-col md:flex-row gap-4 mt-8 items-start w-full">
+          <div className="flex flex-col max-[965px]:w-full md:w-4/6">
+            <Card className="w-full p-6 md:p-8">
+              <div className="w-full block">
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="">
+                  <TabsList className="w-full h-12">
+                    <TabsTrigger value="atrasada">
+                      Atrasadas
+                      <Badge variant="red">{countByStatus.atrasada}</Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="hoje">
+                      Para hoje
+                      <Badge variant="blue">{countByStatus.hoje}</Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="planejada">
+                      Planejadas
+                      <Badge variant="gray">{countByStatus.planejada}</Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="concluida">
+                      Concluídas
+                      <Badge variant="green">{countByStatus.concluida}</Badge>
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {loading ? (
+                    <div className="flex justify-center items-center my-8">
+                      <p>Carregando atividades...</p>
+                    </div>
+                  ) : (
+                    <>
+                      {(["atrasada", "hoje", "planejada", "concluida"] as const).map(status => (
+                        <TabsContent key={status} value={status}>
+                          <div className="flex flex-col gap-4 mt-4">
+                            {filteredAtividades.filter(a => a.status === status).length > 0 ? (
+                              filteredAtividades
+                                .filter(a => a.status === status)
+                                .map(atividade => (
+                                  <Card key={atividade.id} className="p-4">
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex-1">
+                                        <h4 className="font-semibold text-jelly-bean-950">{atividade.titulo}</h4>
+                                        <p className="text-sm text-jelly-bean-800 mt-1">
+                                          {atividade.descricao}
+                                        </p>
+                                        <div className="flex flex-wrap gap-3 mt-2">
+                                          <span className="text-xs bg-jelly-bean-100 text-jelly-bean-800 px-2 py-1 rounded capitalize">
+                                            Tipo: {atividade.tipo}
+                                          </span>
+                                          <span className="text-xs text-jelly-bean-800">
+                                            Prazo: {formatDate(atividade.prazo)}
+                                          </span>
+                                          <span className="text-xs text-jelly-bean-800">
+                                            Responsável: {atividade.responsavel}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <Badge variant={
+                                        atividade.prioridade === "alta" ? "red" :
+                                          atividade.prioridade === "media" ? "blue" : "gray"
+                                      } className="capitalize">
+                                        {atividade.prioridade}
+                                      </Badge>
+                                    </div>
+                                  </Card>
+                                ))
+                            ) : (
+                              <div className="flex flex-col gap-2 items-center my-8 w-full bg-slate-100 text-slate-500 p-8 rounded-md">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="80"
+                                  height="80"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="lucide lucide-inbox"
+                                >
+                                  <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+                                  <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+                                </svg>
+                                <p className="text-base text-slate-700 m-0">
+                                  Nenhuma atividade encontrada
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </TabsContent>
+                      ))}
+                    </>
+                  )}
+                </Tabs>
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
+
+
+
+
+      
+      <Transition show={isModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={setIsModalOpen}>
+          <div className="fixed inset-0 z-10 overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <TransitionChild
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              >
+                <DialogPanel className="relative transform overflow-hidden rounded-lg  text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+
+                  {/* Cabeçalho do modal */}
+                  <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div className="sm:flex sm:items-start">
+                      <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                        <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900 mb-4">
+                          Nova Atividade
+                        </Dialog.Title>
+
+                        {/* Formulário do modal */}
+                        <div className="mt-2 space-y-4">
+                          {/* Campo Título */}
+                          <div className="grid w-full items-center gap-1.5">
+                            <Label htmlFor="titulo" className="text-sm font-medium">
+                              Título *
+                            </Label>
+                            <Input
+                              type="text"
+                              id="titulo"
+                              placeholder="Digite o título da atividade"
+                              value={novaAtividade.titulo || ''}
+                              onChange={(e) => setNovaAtividade({
+                                ...novaAtividade,
+                                titulo: e.target.value
+                              })}
+                              required
+                            />
+                          </div>
+
+                          {/* Campo Descrição */}
+                          <div className="grid w-full items-center gap-1.5">
+                            <Label htmlFor="descricao" className="text-sm font-medium">
+                              Descrição
+                            </Label>
+                            <textarea
+                              id="descricao"
+                              rows={3}
+                              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
+                              placeholder="Descreva a atividade..."
+                              value={novaAtividade.descricao || ''}
+                              onChange={(e) => setNovaAtividade({
+                                ...novaAtividade,
+                                descricao: e.target.value
+                              })}
+                            />
+                          </div>
+
+                          {/* Campo Responsável */}
+                          <div className="grid w-full items-center gap-1.5">
+                            <Label htmlFor="responsavel" className="text-sm font-medium">
+                              Responsável
+                            </Label>
+                            <Input
+                              type="text"
+                              id="responsavel"
+                              placeholder="Nome do responsável"
+                              value={novaAtividade.responsavel || ''}
+                              onChange={(e) => setNovaAtividade({
+                                ...novaAtividade,
+                                responsavel: e.target.value
+                              })}
+                            />
+                          </div>
+
+                          {/* Campo Prazo */}
+                          <div className="grid w-full items-center gap-1.5">
+                            <Label htmlFor="prazo" className="text-sm font-medium">
+                              Prazo *
+                            </Label>
+                            <Input
+                              type="date"
+                              id="prazo"
+                              value={novaAtividade.prazo || ''}
+                              onChange={(e) => setNovaAtividade({
+                                ...novaAtividade,
+                                prazo: e.target.value
+                              })}
+                              required
+                            />
+                          </div>
+
+                          {/* Campo Prioridade */}
+                          <div className="grid w-full items-center gap-1.5">
+                            <Label htmlFor="prioridade" className="text-sm font-medium">
+                              Prioridade
+                            </Label>
+                            <select
+                              id="prioridade"
+                              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
+                              value={novaAtividade.prioridade || 'Normal'}
+                              onChange={(e) => setNovaAtividade({
+                                ...novaAtividade,
+                                prioridade: e.target.value as 'Alta' | 'Normal' | 'Baixa'
+                              })}
+                            >
+                              <option value="Alta">Alta</option>
+                              <option value="Normal">Normal</option>
+                              <option value="Baixa">Baixa</option>
+                            </select>
+                          </div>
+
+                          {/* Campo Tipo */}
+                          <div className="grid w-full items-center gap-1.5">
+                            <Label htmlFor="tipo" className="text-sm font-medium">
+                              Tipo
+                            </Label>
+                            <select
+                              id="tipo"
+                              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
+                              value={novaAtividade.tipo || 'tarefa'}
+                              onChange={(e) => setNovaAtividade({
+                                ...novaAtividade,
+                                tipo: e.target.value as 'Ligar' | 'Whatsapp' | 'Email' | 'Visita' | 'Previsão de fechamento'
+                              })}
+                            >
+                              <option value="Ligar">Ligação</option>
+                              <option value="Whatsapp">Whatsapp</option>
+                              <option value="Email">Email</option>
+                              <option value="Visita">Apresentação</option>
+                              <option value="Previsão de fechamento"> Previsão de fechamento</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rodapé do modal com botões */}
+                  <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <button
+                      type="button"
+                      className="inline-flex w-full justify-center rounded-md bg-jelly-bean-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-jelly-bean-500 sm:ml-3 sm:w-auto"
+                      onClick={async () => {
+                        try {
+                          // Validar campos obrigatórios
+                          if (!novaAtividade.titulo || !novaAtividade.prazo) {
+                            alert('Por favor, preencha todos os campos obrigatórios.');
+                            return;
+                          }
+
+                          // Inserir no Supabase
+                          const { data, error } = await supabase
+                            .from('atividades')
+                            .insert([
+                              {
+                                titulo: novaAtividade.titulo,
+                                descricao: novaAtividade.descricao || '',
+                                responsavel: novaAtividade.responsavel || '',
+                                prazo: novaAtividade.prazo,
+                                prioridade: novaAtividade.prioridade || 'media',
+                                tipo: novaAtividade.tipo || 'tarefa',
+                                status: 'Pendente'
+                              }
+                            ])
+                            .select();
+
+                          if (error) {
+                            console.error('Erro ao criar atividade:', error);
+                            alert('Erro ao criar atividade. Tente novamente.');
+                            return;
+                          }
+
+                          // Atualizar a lista de atividades
+                          if (data) {
+                            // Recarregar as atividades ou atualizar o estado local
+                            const { data: novasAtividades, error: fetchError } = await supabase
+                              .from('atividades')
+                              .select('*')
+                              .order('prazo', { ascending: true });
+
+                            if (!fetchError && novasAtividades) {
+                              const hoje = new Date().toISOString().split('T')[0];
+                              const atividadesComStatus = novasAtividades.map(atividade => {
+                                let status: Atividade['status'] = 'planejada';
+
+                                if (atividade.prazo < hoje && atividade.status !== 'concluida') {
+                                  status = 'atrasada';
+                                } else if (atividade.prazo === hoje && atividade.status !== 'concluida') {
+                                  status = 'hoje';
+                                } else if (atividade.status === 'concluida') {
+                                  status = 'concluida';
+                                }
+
+                                return { ...atividade, status };
+                              });
+
+                              setAtividades(atividadesComStatus);
+                            }
+
+                            // Fechar modal e resetar formulário
+                            setIsModalOpen(false);
+                            setNovaAtividade({
+                              titulo: "",
+                              descricao: "",
+                              responsavel: "",
+                              prioridade: "Normal",
+                              status: 'Pendente',
+                              tipo: "Ligar",
+                              prazo: new Date().toISOString().split('T')[0]
+                            });
+                          }
+                        } catch (error) {
+                          console.error('Erro:', error);
+                          alert('Erro ao criar atividade. Tente novamente.');
+                        }
+                      }}
+                    >
+                      Criar Atividade
+                    </button>
+                    <button
+                      type="button"
+                      className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        // Resetar formulário ao cancelar
+                        setNovaAtividade({
+                          titulo: "",
+                          descricao: "",
+                          responsavel: "",
+                          prioridade: "Normal",
+                          status: 'Pendente',
+                          tipo: "Ligar",
+                          prazo: new Date().toISOString().split('T')[0]
+                        });
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+
+                </DialogPanel>
+              </TransitionChild>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </>
   );
-}
+};
+
+export default AtividadesPage;
