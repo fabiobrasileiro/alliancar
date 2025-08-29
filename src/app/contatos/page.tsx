@@ -42,9 +42,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -62,7 +60,6 @@ const renderValue = (value: unknown): string => {
 };
 
 export default function ContatosPage() {
-  const router = useRouter();
   const supabase = createClient();
 
   // Estados para filtros
@@ -72,7 +69,7 @@ export default function ContatosPage() {
   const [banco, setBanco] = useState("");
   const [estado, setEstado] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Estados para dados e paginação
   const [rows, setRows] = useState<ContactRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,9 +86,7 @@ export default function ContatosPage() {
 
   // Construir query de filtro
   const buildQuery = () => {
-    let query = supabase
-      .from("profile")
-      .select("*", { count: "exact" });
+    let query = supabase.from("profile").select("*", { count: "exact" });
 
     if (nomeCompleto) {
       query = query.ilike("nome_completo", `%${nomeCompleto}%`);
@@ -109,7 +104,9 @@ export default function ContatosPage() {
       query = query.ilike("estado", `%${estado}%`);
     }
     if (searchTerm) {
-      query = query.or(`nome_completo.ilike.%${searchTerm}%,telefone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+      query = query.or(
+        `nome_completo.ilike.%${searchTerm}%,telefone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`,
+      );
     }
 
     return query;
@@ -122,8 +119,8 @@ export default function ContatosPage() {
     const end = start + limit - 1;
 
     try {
-      let query = buildQuery();
-      
+      const query = buildQuery();
+
       const { data, error, count } = await query
         .range(start, end)
         .order("criado_em", { ascending: false });
@@ -147,6 +144,7 @@ export default function ContatosPage() {
   // Buscar dados quando os filtros ou página mudarem
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, searchTerm]);
 
   // Handler para o formulário de busca
@@ -201,10 +199,7 @@ export default function ContatosPage() {
   // Handler para deletar contato
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("profile")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("profile").delete().eq("id", id);
 
       if (error) {
         throw error;
@@ -222,10 +217,10 @@ export default function ContatosPage() {
 
   // Handler para seleção de contatos
   const toggleContactSelection = (id: string) => {
-    setSelectedContacts(prev =>
+    setSelectedContacts((prev) =>
       prev.includes(id)
-        ? prev.filter(contactId => contactId !== id)
-        : [...prev, id]
+        ? prev.filter((contactId) => contactId !== id)
+        : [...prev, id],
     );
   };
 
@@ -234,7 +229,7 @@ export default function ContatosPage() {
     if (selectedContacts.length === rows.length) {
       setSelectedContacts([]);
     } else {
-      setSelectedContacts(rows.map(contact => contact.id));
+      setSelectedContacts(rows.map((contact) => contact.id));
     }
   };
 
@@ -252,7 +247,9 @@ export default function ContatosPage() {
         throw error;
       }
 
-      toast.success(`${selectedContacts.length} contatos deletados com sucesso`);
+      toast.success(
+        `${selectedContacts.length} contatos deletados com sucesso`,
+      );
       setSelectedContacts([]);
       fetchData(); // Recarregar dados
     } catch (error) {
@@ -309,10 +306,7 @@ export default function ContatosPage() {
                   </CardDescription>
                 </div>
                 {selectedContacts.length > 0 && (
-                  <Button 
-                    variant="default" 
-                    onClick={handleDeleteMultiple}
-                  >
+                  <Button variant="default" onClick={handleDeleteMultiple}>
                     Excluir Selecionados ({selectedContacts.length})
                   </Button>
                 )}
@@ -323,9 +317,12 @@ export default function ContatosPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="pl-8 w-10">
-                          <Checkbox 
+                          <Checkbox
                             aria-label="Selecionar todos"
-                            checked={selectedContacts.length === rows.length && rows.length > 0}
+                            checked={
+                              selectedContacts.length === rows.length &&
+                              rows.length > 0
+                            }
                             onChange={toggleSelectAll}
                           />
                         </TableHead>
@@ -339,7 +336,9 @@ export default function ContatosPage() {
                         <TableHead>Cep</TableHead>
                         <TableHead>Estado</TableHead>
                         <TableHead>Ativo</TableHead>
-                        <TableHead className="w-16 text-center">Ações</TableHead>
+                        <TableHead className="w-16 text-center">
+                          Ações
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="flex-nowrap bg-jelly-bean-50 text-jelly-bean-950 ">
@@ -386,9 +385,20 @@ export default function ContatosPage() {
                                   size="sm"
                                   onClick={() => handleEdit(r)}
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil">
-                                    <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
-                                    <path d="M15 5l4 4"/>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="lucide lucide-pencil"
+                                  >
+                                    <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+                                    <path d="M15 5l4 4" />
                                   </svg>
                                 </Button>
                                 <Button
@@ -399,12 +409,23 @@ export default function ContatosPage() {
                                     setIsDeleteDialogOpen(true);
                                   }}
                                 >
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2">
-                                    <path d="M3 6h18"/>
-                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                                    <line x1="10" x2="10" y1="11" y2="17"/>
-                                    <line x1="14" x2="14" y1="11" y2="17"/>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="lucide lucide-trash-2"
+                                  >
+                                    <path d="M3 6h18" />
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                    <line x1="10" x2="10" y1="11" y2="17" />
+                                    <line x1="14" x2="14" y1="11" y2="17" />
                                   </svg>
                                 </Button>
                               </div>
@@ -449,9 +470,6 @@ export default function ContatosPage() {
               <CardContent className="p-6 md:p-8">
                 <form className="w-full" onSubmit={handleSearch}>
                   <div className="flex flex-col gap-4 max-lg:w-full">
-                   
-
-
                     <div className="grid grid-cols-2 gap-2">
                       <div className="flex flex-col">
                         <Label htmlFor="nome" className="text-jelly-bean-900">
@@ -557,10 +575,12 @@ export default function ContatosPage() {
                   <Input
                     id="edit-nome"
                     value={editingContact.nome_completo || ""}
-                    onChange={(e) => setEditingContact({
-                      ...editingContact,
-                      nome_completo: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        nome_completo: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex flex-col">
@@ -568,10 +588,12 @@ export default function ContatosPage() {
                   <Input
                     id="edit-telefone"
                     value={editingContact.telefone || ""}
-                    onChange={(e) => setEditingContact({
-                      ...editingContact,
-                      telefone: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        telefone: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex flex-col">
@@ -579,10 +601,12 @@ export default function ContatosPage() {
                   <Input
                     id="edit-cpf"
                     value={editingContact.cpf_cnpj || ""}
-                    onChange={(e) => setEditingContact({
-                      ...editingContact,
-                      cpf_cnpj: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        cpf_cnpj: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex flex-col">
@@ -590,10 +614,12 @@ export default function ContatosPage() {
                   <Input
                     id="edit-banco"
                     value={editingContact.banco || ""}
-                    onChange={(e) => setEditingContact({
-                      ...editingContact,
-                      banco: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        banco: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex flex-col">
@@ -601,10 +627,12 @@ export default function ContatosPage() {
                   <Input
                     id="edit-agencia"
                     value={editingContact.agencia || ""}
-                    onChange={(e) => setEditingContact({
-                      ...editingContact,
-                      agencia: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        agencia: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex flex-col">
@@ -612,10 +640,12 @@ export default function ContatosPage() {
                   <Input
                     id="edit-conta"
                     value={editingContact.conta || ""}
-                    onChange={(e) => setEditingContact({
-                      ...editingContact,
-                      conta: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        conta: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex flex-col">
@@ -623,10 +653,12 @@ export default function ContatosPage() {
                   <Input
                     id="edit-receita"
                     value={editingContact.receita_estimada || ""}
-                    onChange={(e) => setEditingContact({
-                      ...editingContact,
-                      receita_estimada: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        receita_estimada: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex flex-col">
@@ -634,10 +666,12 @@ export default function ContatosPage() {
                   <Input
                     id="edit-cep"
                     value={editingContact.cep || ""}
-                    onChange={(e) => setEditingContact({
-                      ...editingContact,
-                      cep: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        cep: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex flex-col">
@@ -645,10 +679,12 @@ export default function ContatosPage() {
                   <Input
                     id="edit-estado"
                     value={editingContact.estado || ""}
-                    onChange={(e) => setEditingContact({
-                      ...editingContact,
-                      estado: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        estado: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex flex-col">
@@ -656,10 +692,12 @@ export default function ContatosPage() {
                   <Input
                     id="edit-cidade"
                     value={editingContact.cidade || ""}
-                    onChange={(e) => setEditingContact({
-                      ...editingContact,
-                      cidade: e.target.value
-                    })}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        cidade: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="flex flex-col justify-center">
@@ -667,10 +705,12 @@ export default function ContatosPage() {
                     <Checkbox
                       id="edit-ativo"
                       checked={editingContact.ativo || false}
-                      onChange={(e) => setEditingContact({
-                        ...editingContact,
-                        ativo: e.target.checked
-                      })}
+                      onChange={(e) =>
+                        setEditingContact({
+                          ...editingContact,
+                          ativo: e.target.checked,
+                        })
+                      }
                     />
                     <Label htmlFor="edit-ativo">Ativo</Label>
                   </div>
@@ -679,7 +719,10 @@ export default function ContatosPage() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
               Cancelar
             </Button>
             <Button onClick={handleSaveEdit}>Salvar</Button>
@@ -693,15 +736,19 @@ export default function ContatosPage() {
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir este contato? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este contato? Esta ação não pode
+              ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancelar
             </Button>
-            <Button 
-              variant="default" 
+            <Button
+              variant="default"
               onClick={() => contactToDelete && handleDelete(contactToDelete)}
             >
               Excluir

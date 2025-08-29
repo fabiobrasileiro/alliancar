@@ -1,16 +1,13 @@
-"use client"
+"use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import SidebarLayout from "@/components/SidebarLayoute"
-
+import SidebarLayout from "@/components/SidebarLayoute";
 
 export default function PerfilPage() {
-
   return (
     <SidebarLayout>
-
       <div className="flex">
         {/* Conteúdo */}
         <div className="flex-1 p-6">
@@ -108,17 +105,20 @@ export default function PerfilPage() {
 
             {/* Aba Foto de Perfil */}
             <TabsContent value="foto_perfil">
-              <p className="text-gray-600">Upload da sua foto de perfil em breve.</p>
+              <p className="text-gray-600">
+                Upload da sua foto de perfil em breve.
+              </p>
             </TabsContent>
 
             {/* Aba Dados de Acesso */}
             <TabsContent value="dados_acesso">
-              <p className="text-gray-600">Aqui você poderá alterar sua senha e dados de acesso.</p>
+              <p className="text-gray-600">
+                Aqui você poderá alterar sua senha e dados de acesso.
+              </p>
             </TabsContent>
           </Tabs>
         </div>
       </div>
     </SidebarLayout>
-
   );
 }

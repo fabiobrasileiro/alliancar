@@ -1,8 +1,7 @@
-"use client"
+"use client";
 import React from "react";
 import { Button } from "@/components/ui/button";
-import SidebarLayout from "@/components/SidebarLayoute"
-
+import SidebarLayout from "@/components/SidebarLayoute";
 
 const powerlinks = [
   {
@@ -24,7 +23,6 @@ const affiliateLink = {
   url: "https://app.powercrm.com.br/affiliateFormPage/ADddnAXD",
 };
 
-
 const copyToClipboard = (text: string): void => {
   navigator.clipboard.writeText(text);
   alert("Link copiado com sucesso!");
@@ -38,8 +36,8 @@ export default function Powerlinks() {
         <div>
           <h3 className="text-2xl font-semibold mb-2">Powerlinks</h3>
           <p>
-            Estes são os seus powerlinks, envie ele para seus clientes para receber
-            diretamente os pedidos de cotação.
+            Estes são os seus powerlinks, envie ele para seus clientes para
+            receber diretamente os pedidos de cotação.
           </p>
         </div>
 
@@ -81,9 +79,9 @@ export default function Powerlinks() {
           </h4>
           <p className="mb-4">
             Use o powerlink abaixo para a captação de afiliados. Afiliados são
-            pessoas que têm seus próprios powerlinks, mas somente com a função de
-            indicar. Eles não vendem. Afiliados cadastrados por você, sempre que
-            indicarem alguém este contato chegará para você.
+            pessoas que têm seus próprios powerlinks, mas somente com a função
+            de indicar. Eles não vendem. Afiliados cadastrados por você, sempre
+            que indicarem alguém este contato chegará para você.
           </p>
 
           <div className="flex flex-col md:flex-row border border-gray-300 rounded-lg p-4 gap-4">
@@ -110,6 +108,5 @@ export default function Powerlinks() {
         </div>
       </div>
     </SidebarLayout>
-
   );
 }
