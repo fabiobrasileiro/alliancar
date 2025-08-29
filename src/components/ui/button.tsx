@@ -17,7 +17,7 @@ const variantClasses: Record<ButtonVariant, string> = {
         'border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 focus-visible:ring-slate-300',
     secondary:
         'bg-slate-100 text-slate-900 hover:bg-slate-200 focus-visible:ring-slate-300',
-    ghost: 'bg-transparent hover:bg-slate-100 text-slate-900',
+    ghost: 'bg-transparent hover:bg-jelly-bean-500 text-jelly-bean-50',
     link: 'bg-transparent text-blue-600 hover:text-blue-800 underline',
 };
 
