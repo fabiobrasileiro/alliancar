@@ -56,13 +56,12 @@ export default function SignupForm() {
     try {
       const supabase = createClient();
 
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // 1️⃣ Cria o usuário no Supabase Auth
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            full_name: fullName,
-          },
+          data: { full_name: fullName },
         },
       });
 
@@ -71,14 +70,22 @@ export default function SignupForm() {
         return;
       }
 
-      if (data.user) {
-        if (data.user.email_confirmed_at) {
-          // Usuário confirmado, redireciona imediatamente
-          router.replace(redirectTo);
+      // 2️⃣ Se o usuário foi criado, adiciona manualmente no profile
+      if (signUpData.user) {
+        await supabase.from("profile").insert({
+          id: signUpData.user.id,
+          nome_completo: fullName,
+          criado_em: new Date(),
+          ativo: true,
+          auth_id: signUpData.user.id,
+        });
+
+        // 3️⃣ Verifica se o email já está confirmado
+        if (signUpData.user.email_confirmed_at) {
+          router.replace(redirectTo); // redireciona
         } else {
-          // Precisa confirmar email
           setSuccess(
-            "Conta criada com sucesso! Verifique seu email para confirmar a conta.",
+            "Conta criada com sucesso! Verifique seu email para confirmar a conta."
           );
         }
       }
@@ -89,6 +96,7 @@ export default function SignupForm() {
       setLoading(false);
     }
   };
+
 
   return (
     <>
