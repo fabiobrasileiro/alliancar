@@ -1,29 +1,41 @@
-"use client"
-import { useState } from "react"
-import Image from "next/image"
-import { Card } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import SidebarLayout from "@/components/SidebarLayoute"
+"use client";
+import { useState } from "react";
+import Image from "next/image";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import SidebarLayout from "@/components/SidebarLayoute";
 
 interface Venda {
-  pagamento: string
-  data: string
-  associado: string
-  placa: string
-  comissao: string
-  status: string
+  pagamento: string;
+  data: string;
+  associado: string;
+  placa: string;
+  comissao: string;
+  status: string;
 }
 
 export default function MinhasVendas() {
-  const [vendas] = useState<Venda[]>([]) // dados futuros da API
+  const [vendas] = useState<Venda[]>([]); // dados futuros da API
 
   return (
     <SidebarLayout>
       <div className="p-6">
-
         {/* Título */}
         <h2 className="text-2xl font-semibold mb-6">Minhas Vendas</h2>
 
@@ -32,7 +44,11 @@ export default function MinhasVendas() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <span className="block mb-1 text-sm">De:</span>
-              <Input type="date" defaultValue="2025-08-01" id="filterDateFrom" />
+              <Input
+                type="date"
+                defaultValue="2025-08-01"
+                id="filterDateFrom"
+              />
             </div>
             <div>
               <span className="block mb-1 text-sm">Até:</span>
@@ -58,12 +74,20 @@ export default function MinhasVendas() {
 
         {/* Resumo */}
         <div className="mb-6">
-          <p className="text-gray-700">&gt; Total <strong id="totalSalesCounter">{vendas.length}</strong> Vendas</p>
+          <p className="text-gray-700">
+            &gt; Total <strong id="totalSalesCounter">{vendas.length}</strong>{" "}
+            Vendas
+          </p>
         </div>
 
         <Card className="p-4 mb-6 flex justify-between items-center">
           <span>Total</span>
-          <span className="text-xl font-bold text-blue-600" id="totalSalesValue">R$ 0,00</span>
+          <span
+            className="text-xl font-bold text-blue-600"
+            id="totalSalesValue"
+          >
+            R$ 0,00
+          </span>
         </Card>
 
         {/* Tabela */}
@@ -103,6 +127,5 @@ export default function MinhasVendas() {
         </div>
       </div>
     </SidebarLayout>
-
-  )
+  );
 }
