@@ -16,6 +16,8 @@ import {
   TransitionChild,
 } from "@headlessui/react";
 import { toast } from "sonner";
+import { useUser } from "@/context/UserContext";
+import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Atividade {
   id: number;
@@ -23,9 +25,10 @@ interface Atividade {
   titulo: string;
   descricao: string;
   responsavel: string;
+  responsavel_name: string;
   prazo: string;
-  prioridade: "alta" | "media" | "baixa";
-  tipo: "reuniao" | "tarefa" | "ligacao" | "apresentacao";
+  prioridade: "Alta" | "Normal" | "Baixa";
+  tipo: "Ligar" | "Whatsapp" | "Email" | "Visita" | "Previsão de fechamento";
   status: "atrasada" | "hoje" | "planejada" | "concluida";
 }
 
@@ -41,6 +44,11 @@ interface PriorityFilters {
   Alta: boolean;
   Normal: boolean;
   Baixa: boolean;
+}
+
+interface Usuario {
+  id: string;
+  nome_completo: string;
 }
 
 const AtividadesPage: React.FC = () => {
@@ -74,10 +82,43 @@ const AtividadesPage: React.FC = () => {
     titulo: "",
     descricao: "",
     responsavel: "",
-    prioridade: "media" as "alta" | "media" | "baixa",
-    tipo: "tarefa" as "reuniao" | "tarefa" | "ligacao" | "apresentacao",
+    responsavel_name: "",
+    prioridade: "Normal" as "Alta" | "Normal" | "Baixa",
+    tipo: "Ligar" as "Ligar" | "Whatsapp" | "Email" | "Visita" | "Previsão de fechamento",
     prazo: new Date().toISOString().split("T")[0],
   });
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [selectedUsuarios, setselectedUsuarios] = useState<Usuario[]>([]);
+
+  // Buscar usuarios do Supabase
+  useEffect(() => {
+    fetchProfile();
+  }, [supabase]);
+
+  //procurar usuarios
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+
+      let { data: profile, error } = await supabase
+        .from('profile')
+        .select('nome_completo, id')
+
+      if (error) {
+        console.error("Erro ao buscar usuários:", error);
+        toast.error("Erro ao carregar usuários");
+        return;
+      }
+
+
+      setUsuarios(profile || []);
+    } catch (error) {
+      console.error("Erro:", error);
+      toast.error("Erro ao carregar atividades");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Buscar atividades do Supabase
   useEffect(() => {
@@ -238,6 +279,7 @@ const AtividadesPage: React.FC = () => {
     setNovaAtividade({
       titulo: atividade.titulo,
       descricao: atividade.descricao,
+      responsavel_name: atividade.responsavel_name,
       responsavel: atividade.responsavel,
       prioridade: atividade.prioridade,
       tipo: atividade.tipo,
@@ -303,6 +345,7 @@ const AtividadesPage: React.FC = () => {
             titulo: novaAtividade.titulo,
             descricao: novaAtividade.descricao,
             responsavel: novaAtividade.responsavel,
+            responsavel_name: novaAtividade.responsavel_name,
             prazo: novaAtividade.prazo,
             prioridade: novaAtividade.prioridade,
             tipo: novaAtividade.tipo,
@@ -325,6 +368,7 @@ const AtividadesPage: React.FC = () => {
             titulo: novaAtividade.titulo,
             descricao: novaAtividade.descricao,
             responsavel: novaAtividade.responsavel,
+            responsavel_name: novaAtividade.responsavel_name,
             prazo: novaAtividade.prazo,
             prioridade: novaAtividade.prioridade,
             tipo: novaAtividade.tipo,
@@ -344,8 +388,9 @@ const AtividadesPage: React.FC = () => {
         titulo: "",
         descricao: "",
         responsavel: "",
-        prioridade: "media",
-        tipo: "tarefa",
+        responsavel_name: "",
+        prioridade: "Normal",
+        tipo: "Ligar",
         prazo: new Date().toISOString().split("T")[0],
       });
       setAtividadeEditando(null);
@@ -419,8 +464,9 @@ const AtividadesPage: React.FC = () => {
                     titulo: "",
                     descricao: "",
                     responsavel: "",
-                    prioridade: "media",
-                    tipo: "tarefa",
+                    responsavel_name: "",
+                    prioridade: "Normal",
+                    tipo: "Ligar",
                     prazo: new Date().toISOString().split("T")[0],
                   });
                   setIsModalOpen(true);
@@ -521,24 +567,24 @@ const AtividadesPage: React.FC = () => {
                                             Prazo: {formatDate(atividade.prazo)}
                                           </span>
                                           <span className="text-xs text-jelly-bean-800">
-                                            Responsável: {atividade.responsavel}
+                                            Responsável: {atividade.responsavel_name}
                                           </span>
                                         </div>
                                       </div>
                                       <div className="flex md:flex-col flex-row mt-4 md:mt-0 items-end gap-2">
                                         <Badge
                                           variant={
-                                            atividade.prioridade === "alta"
+                                            atividade.prioridade === "Alta"
                                               ? "red"
-                                              : atividade.prioridade === "media"
+                                              : atividade.prioridade === "Normal"
                                                 ? "blue"
                                                 : "gray"
                                           }
                                           className="capitalize"
                                         >
-                                          {atividade.prioridade === "alta"
+                                          {atividade.prioridade === "Alta"
                                             ? "Alta"
-                                            : atividade.prioridade === "media"
+                                            : atividade.prioridade === "Normal"
                                               ? "Normal"
                                               : "Baixa"}
                                         </Badge>
@@ -789,18 +835,23 @@ const AtividadesPage: React.FC = () => {
                             >
                               Responsável
                             </Label>
-                            <Input
-                              type="text"
+                            <select
                               id="responsavel"
-                              placeholder="Nome do responsável"
+                              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
                               value={novaAtividade.responsavel}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                const selectedUser = usuarios.find((u) => u.id === e.target.value);
                                 setNovaAtividade({
                                   ...novaAtividade,
                                   responsavel: e.target.value,
-                                })
-                              }
-                            />
+                                  responsavel_name: selectedUser?.nome_completo || "",
+                                });
+                              }}
+                            >
+                              {usuarios?.map((usuario) => (
+                                <option value={usuario.id}>{usuario.nome_completo}</option>
+                              ))}
+                            </select>
                           </div>
 
                           {/* Campo Prazo */}
@@ -841,15 +892,15 @@ const AtividadesPage: React.FC = () => {
                                 setNovaAtividade({
                                   ...novaAtividade,
                                   prioridade: e.target.value as
-                                    | "alta"
-                                    | "media"
-                                    | "baixa",
+                                    | "Alta"
+                                    | "Normal"
+                                    | "Baixa",
                                 })
                               }
                             >
-                              <option value="alta">Alta</option>
-                              <option value="media">Normal</option>
-                              <option value="baixa">Baixa</option>
+                              <option value="Alta">Alta</option>
+                              <option value="Normal">Normal</option>
+                              <option value="Baixa">Baixa</option>
                             </select>
                           </div>
 
@@ -869,10 +920,11 @@ const AtividadesPage: React.FC = () => {
                                 setNovaAtividade({
                                   ...novaAtividade,
                                   tipo: e.target.value as
-                                    | "reuniao"
-                                    | "tarefa"
-                                    | "ligacao"
-                                    | "apresentacao",
+                                    "Ligar"
+                                    | "Whatsapp"
+                                    | "Email"
+                                    | "Visita"
+                                    | "Previsão de fechamento",
                                 })
                               }
                             >
@@ -907,8 +959,9 @@ const AtividadesPage: React.FC = () => {
                           titulo: "",
                           descricao: "",
                           responsavel: "",
-                          prioridade: "media",
-                          tipo: "tarefa",
+                          responsavel_name: "",
+                          prioridade: "Normal",
+                          tipo: "Ligar",
                           prazo: new Date().toISOString().split("T")[0],
                         });
                       }}
