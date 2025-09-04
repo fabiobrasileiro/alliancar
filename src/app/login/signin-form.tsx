@@ -22,11 +22,14 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isResetMode, setIsResetMode] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage(null);
+    setSuccessMessage(null);
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -43,20 +46,30 @@ export default function LoginForm() {
     router.replace(redirectTo);
   };
 
-  const handleResetPassword = async () => {
-    if (!email) {
-      setErrorMessage("Informe um e-mail para recuperar a senha.");
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    const supabase = createClient();
+    const redirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/login`
+        : undefined;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+
+    setIsLoading(false);
+    if (error) {
+      setErrorMessage(
+        error.message || "Não foi possível enviar o link. Tente novamente.",
+      );
       return;
     }
-    const supabase = createClient();
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo:
-        typeof window !== "undefined"
-          ? `${window.location.origin}/login`
-          : undefined,
-    });
-    setErrorMessage(
-      "Se o e-mail existir, enviaremos instruções de recuperação.",
+    setSuccessMessage(
+      "Se o e-mail existir, enviaremos um link para recuperar a senha.",
     );
   };
 
@@ -64,10 +77,15 @@ export default function LoginForm() {
     <div className="flex items-center justify-center px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-xl">Acesse a sua conta</CardTitle>
+          <CardTitle className="text-xl">
+            {isResetMode ? "Recuperar senha" : "Acesse a sua conta"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="grid gap-4" onSubmit={handleSubmit}>
+          <form
+            className="grid gap-4"
+            onSubmit={isResetMode ? handleResetPasswordSubmit : handleSubmit}
+          >
             <div className="grid gap-2">
               <Label htmlFor="email">E-mail</Label>
               <Input
@@ -79,30 +97,66 @@ export default function LoginForm() {
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+
+            {!isResetMode && (
+              <div className="grid gap-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+
             {errorMessage && (
               <div className="text-sm text-red-600">{errorMessage}</div>
             )}
+            {successMessage && (
+              <div className="text-sm text-green-600">{successMessage}</div>
+            )}
+
             <div className="flex items-center justify-between">
-              <button
-                type="button"
-                className="text-sm text-blue-700 hover:underline"
-                onClick={handleResetPassword}
+              {!isResetMode ? (
+                <button
+                  type="button"
+                  className="text-sm text-blue-700 hover:underline"
+                  onClick={() => {
+                    setIsResetMode(true);
+                    setErrorMessage(null);
+                    setSuccessMessage(null);
+                  }}
+                >
+                  Esqueci minha senha
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="text-sm text-slate-600 hover:underline"
+                  onClick={() => {
+                    setIsResetMode(false);
+                    setErrorMessage(null);
+                    setSuccessMessage(null);
+                  }}
+                >
+                  Voltar ao login
+                </button>
+              )}
+
+              <Button
+                type="submit"
+                disabled={isLoading || (isResetMode && !email)}
               >
-                Esqueci minha senha
-              </button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Entrando..." : "Acessar"}
+                {isResetMode
+                  ? isLoading
+                    ? "Enviando..."
+                    : "Enviar link"
+                  : isLoading
+                    ? "Entrando..."
+                    : "Acessar"}
               </Button>
             </div>
           </form>

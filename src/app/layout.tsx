@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavbarWrapper from "@/components/navbar-wrapper";
 import { UserProvider } from "@/context/UserContext";
+import IdleLogout from "@/components/idle-logout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,12 +30,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-
         <UserProvider>
+          <IdleLogout />
           <NavbarWrapper>{children}</NavbarWrapper>
         </UserProvider>
-
-
       </body>
     </html>
   );

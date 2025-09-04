@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,8 @@ import {
   User,
   X,
 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 interface SaleCard {
   id: string;
@@ -224,8 +226,70 @@ export default function VendasPage() {
     ordenarAntigas: false,
   });
 
+  const [cards, setCards] = useState<SaleCard[]>([]);
+  const [loadingCards, setLoadingCards] = useState(false);
+  const supabase = createClient();
+
+  const daysBetween = (isoDate: string) => {
+    const created = new Date(isoDate).getTime();
+    const now = Date.now();
+    const diff = Math.max(0, now - created);
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const fetchCards = async () => {
+    try {
+      setLoadingCards(true);
+      const { data, error } = await supabase
+        .from("negociacoes")
+        .select(
+          "id, tipo_veiculo, placa, marca_id, ano_modelo, modelo_id, origem_lead, veiculo_trabalho, enviar_cotacao, chaves, created_at",
+        )
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+
+      const mapped: SaleCard[] = (data || []).map((row: any) => {
+        const chaves = (row as any).chaves || {};
+        const clientName = chaves.nome_contato || "-";
+        const vehicleParts = [row.placa, row.marca_id, row.modelo_id].filter(
+          Boolean,
+        );
+        const vehicle = vehicleParts.length
+          ? vehicleParts.join(" · ")
+          : row.placa || "-";
+        const createdAt = row.created_at as string;
+        const etapa = (chaves.etapa as SaleCard["status"]) || "quotation";
+        return {
+          id: row.id,
+          clientName,
+          date: new Date(createdAt).toLocaleString("pt-BR"),
+          vehicle,
+          price: "-",
+          status: etapa,
+          tags: [],
+          hasTracker: !!row.veiculo_trabalho,
+          isAccepted: false,
+          isExpired: false,
+          daysInStage: daysBetween(createdAt),
+          user: chaves.responsavel || "-",
+        } as SaleCard;
+      });
+      setCards(mapped);
+    } catch (err: any) {
+      console.error("Erro ao carregar negociações", err);
+      toast.error("Erro ao carregar negociações");
+    } finally {
+      setLoadingCards(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const getCardsForColumn = (status: string) => {
-    return mockData.filter((card) => card.status === status);
+    return cards.filter((card) => card.status === status);
   };
 
   const handleFormChange = (
@@ -245,27 +309,54 @@ export default function VendasPage() {
     }));
   };
 
-  const handleSubmit = () => {
-    console.log("Nova negociação:", formData);
-    // Aqui você implementaria a lógica para salvar
-    setIsModalOpen(false);
-    setFormData({
-      cooperativa: "11375",
-      tipoVeiculo: "0",
-      placa: "",
-      marca: "",
-      anoModelo: "",
-      modelo: "",
-      nomeContato: "",
-      email: "",
-      celular: "",
-      estado: "",
-      cidade: "",
-      origemLead: "0",
-      subOrigemLead: "",
-      veiculoTrabalho: false,
-      enviarCotacao: false,
-    });
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        tipo_veiculo: formData.tipoVeiculo || null,
+        placa: formData.placa || null,
+        marca_id: formData.marca || null,
+        ano_modelo: formData.anoModelo ? Number(formData.anoModelo) : null,
+        modelo_id: formData.modelo || null,
+        origem_lead: formData.origemLead || null,
+        veiculo_trabalho: !!formData.veiculoTrabalho,
+        enviar_cotacao: !!formData.enviarCotacao,
+        chaves: {
+          etapa: "quotation",
+          nome_contato: formData.nomeContato,
+          email: formData.email,
+          celular: formData.celular,
+          estado: formData.estado,
+          cidade: formData.cidade,
+        },
+      };
+
+      const { error } = await supabase.from("negociacoes").insert(payload);
+      if (error) throw error;
+
+      toast.success("Negociação adicionada");
+      setIsModalOpen(false);
+      setFormData({
+        cooperativa: "11375",
+        tipoVeiculo: "0",
+        placa: "",
+        marca: "",
+        anoModelo: "",
+        modelo: "",
+        nomeContato: "",
+        email: "",
+        celular: "",
+        estado: "",
+        cidade: "",
+        origemLead: "0",
+        subOrigemLead: "",
+        veiculoTrabalho: false,
+        enviarCotacao: false,
+      });
+      fetchCards();
+    } catch (err: any) {
+      console.error("Erro ao adicionar negociação", err);
+      toast.error("Erro ao adicionar negociação");
+    }
   };
 
   const handleFilterSubmit = () => {
@@ -397,6 +488,42 @@ export default function VendasPage() {
       </CardContent>
     </Card>
   );
+
+  // DnD helpers
+  const onDragStart = (ev: React.DragEvent, cardId: string) => {
+    ev.dataTransfer.setData("text/plain", cardId);
+  };
+
+  const onDragOver = (ev: React.DragEvent) => {
+    ev.preventDefault();
+  };
+
+  const persistStage = async (id: string, etapa: SaleCard["status"]) => {
+    try {
+      const { error } = await supabase
+        .from("negociacoes")
+        .update({ chaves: { etapa } })
+        .eq("id", id);
+      if (error) throw error;
+    } catch (e) {
+      toast.error("Falha ao mover negociação");
+      throw e;
+    }
+  };
+
+  const onDropTo = async (ev: React.DragEvent, status: SaleCard["status"]) => {
+    ev.preventDefault();
+    const id = ev.dataTransfer.getData("text/plain");
+    if (!id) return;
+    // Atualiza localmente
+    setCards((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)));
+    try {
+      await persistStage(id, status);
+    } catch (e) {
+      // rollback reload
+      fetchCards();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -1253,7 +1380,12 @@ export default function VendasPage() {
       {/* Pipeline de Vendas */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {columns.map((column) => (
-          <div key={column.id} className={`${column.color} rounded-lg p-4`}>
+          <div
+            key={column.id}
+            className={`${column.color} rounded-lg p-4`}
+            onDragOver={onDragOver}
+            onDrop={(ev) => onDropTo(ev, column.id as SaleCard["status"])}
+          >
             {/* Header da coluna */}
             <div className="flex items-center justify-between mb-4">
               <div>

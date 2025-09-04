@@ -57,13 +57,14 @@ export default function SignupForm() {
       const supabase = createClient();
 
       // 1️⃣ Cria o usuário no Supabase Auth
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-        },
-      });
+      const { data: signUpData, error: signUpError } =
+        await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName },
+          },
+        });
 
       if (signUpError) {
         setError(signUpError.message);
@@ -85,7 +86,7 @@ export default function SignupForm() {
           router.replace(redirectTo); // redireciona
         } else {
           setSuccess(
-            "Conta criada com sucesso! Verifique seu email para confirmar a conta."
+            "Conta criada com sucesso! Verifique seu email para confirmar a conta.",
           );
         }
       }
@@ -96,7 +97,6 @@ export default function SignupForm() {
       setLoading(false);
     }
   };
-
 
   return (
     <>
