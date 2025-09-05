@@ -16,12 +16,12 @@ import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
-const Profile = () => {
+const perfis = () => {
   const supabase = createClient();
   const [activeTab, setActiveTab] = useState("dados_pessoais");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [profileId, setProfileId] = useState<string | null>(null);
+  const [perfisId, setperfisId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     fullName: "",
@@ -64,11 +64,11 @@ const Profile = () => {
 
   // Buscar dados do perfil ao carregar
   useEffect(() => {
-    fetchProfile();
+    fetchperfis();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchProfile = async () => {
+  const fetchperfis = async () => {
     try {
       setLoading(true);
 
@@ -84,7 +84,7 @@ const Profile = () => {
 
       // Buscar perfil do usuário
       const { data, error } = await supabase
-        .from("profile")
+        .from("perfis")
         .select("*")
         .eq("auth_id", user.id)
         .single();
@@ -96,7 +96,7 @@ const Profile = () => {
       }
 
       if (data) {
-        setProfileId(data.id);
+        setperfisId(data.id);
         setFormData({
           name: data.nome_completo?.split(" ")[0] || "",
           fullName: data.nome_completo || "",
@@ -134,7 +134,7 @@ const Profile = () => {
   };
 
   const handleSavePersonalData = async () => {
-    if (!profileId) {
+    if (!perfisId) {
       toast.error("Perfil não encontrado");
       return;
     }
@@ -143,7 +143,7 @@ const Profile = () => {
       setSaving(true);
 
       const { error } = await supabase
-        .from("profile")
+        .from("perfis")
         .update({
           nome_completo: formData.fullName,
           cpf_cnpj: formData.registration,
@@ -156,7 +156,7 @@ const Profile = () => {
           cidade: formData.addressCity,
           atualizado_em: new Date().toISOString(),
         })
-        .eq("id", profileId);
+        .eq("id", perfisId);
 
       if (error) {
         throw error;
@@ -448,7 +448,7 @@ const Profile = () => {
               <Label>Faça upload da sua foto de perfil</Label>
               <div className="mt-4">
                 <Input
-                  id="profilePictureInput"
+                  id="perfisPictureInput"
                   type="file"
                   className="hidden"
                 />
@@ -460,7 +460,7 @@ const Profile = () => {
                 <Image
                   width={150}
                   height={150}
-                  id="profilePictureImg"
+                  id="perfisPictureImg"
                   src="/"
                   alt="Foto de perfil"
                   className="w-full h-full object-cover"
@@ -527,4 +527,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default perfis;

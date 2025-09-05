@@ -29,12 +29,7 @@ const sidebarLayout = ({ children }: { children: ReactNode }) => {
       href: '/conta/hotlink'
     },
   
-    {
-      id: 'meus-afiliados',
-      label: 'Meus Afiliados',
-      icon: <Users className="h-4 w-4" />,
-      href: '/conta/afiliado'
-    }
+  
   ];
 
     return (

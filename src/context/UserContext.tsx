@@ -2,62 +2,112 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { createClient, User } from '@supabase/supabase-js';
 
+interface UserPerfil {
+  id: string;
+  auth_id: string;
+  nome_completo: string;
+  cpf_cnpj: string;
+  telefone: string;
+  foto_perfil_url: string;
+  receita_estimada: number;
+  ativo: boolean;
+  tipo_usuario: string;
+  roles: string;
+  criado_em: string;
+  atualizado_em: string;
+}
+
+interface UserContextType {
+  user: User | null;
+  perfil: UserPerfil | null;
+  loading: boolean;
+  refetchPerfil: () => Promise<void>;
+}
+
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const UserContext = createContext<any>(null);
+const UserContext = createContext<UserContextType>({
+  user: null,
+  perfil: null,
+  loading: true,
+  refetchPerfil: async () => {},
+});
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [perfil, setPerfil] = useState<UserPerfil | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    const [user, setUser] = useState<User | null>(null);
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const fetchPerfil = async (userId: string) => {
+    try {
+      const { data: perfilData, error: perfilError } = await supabase
+        .from('perfis')
+        .select('*')
+        .eq('auth_id', userId)
+        .maybeSingle();
 
-    useEffect(() => {
-        const fetchUser = async () => {
-            const { data } = await supabase.auth.getUser();
+      if (perfilError) {
+        console.error("Erro ao buscar perfil:", perfilError);
+        return null;
+      }
+      
+      return perfilData;
+    } catch (error) {
+      console.error("Erro na busca do perfil:", error);
+      return null;
+    }
+  };
 
-            if (data.user) {
-                setUser(data.user);
+  const refetchPerfil = async () => {
+    if (user?.id) {
+      setLoading(true);
+      const perfilData = await fetchPerfil(user.id);
+      setPerfil(perfilData);
+      setLoading(false);
+    }
+  };
 
-                const { data: profileData } = await supabase
-                    .from('profile')
-                    .select('*')
-                    .eq('auth_id', data.user.id)
-                    .single();
+  useEffect(() => {
+    // Obter sessão inicial
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        setUser(session.user);
+        const perfilData = await fetchPerfil(session.user.id);
+        setPerfil(perfilData);
+      }
+      setLoading(false);
+    };
 
-                setProfile(profileData);
-            }
+    getInitialSession();
 
-            setLoading(false); // ✅ indica que terminou
-        };
-
-        fetchUser();
-
-        // atualizar automaticamente quando o estado de auth mudar
-        const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (session?.user) {
-                setUser(session.user);
-                // opcional: buscar profile de novo
-            } else {
-                setUser(null);
-                setProfile(null);
-            }
-        });
-
-        return () => {
-            listener.subscription.unsubscribe();
-        };
-    }, []);
-    console.log('user aqui:', user)
-
-    return (
-        <UserContext.Provider value={{ user, profile, loading, setLoading }}>
-            {children}
-        </UserContext.Provider>
+    // Listener para mudanças de auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+          const perfilData = await fetchPerfil(session.user.id);
+          setPerfil(perfilData);
+        } else {
+          setUser(null);
+          setPerfil(null);
+        }
+        setLoading(false);
+      }
     );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  return (
+    <UserContext.Provider value={{ user, perfil, loading, refetchPerfil }}>
+      {children}
+    </UserContext.Provider>
+  );
 };
 
 export const useUser = () => useContext(UserContext);

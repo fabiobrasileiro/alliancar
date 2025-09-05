@@ -56,18 +56,27 @@
 
 body {
   background: var(--color-jelly-bean-50);
-
 }
 
-h1, h2, h3{
-  color: var(--color-jelly-bean-950);
+h1,
+h2,
+h3 {
+  color: var(--heading-color);
 }
 
-p, span{
-  color: var(--color-jelly-bean-700);
+p,
+span {
+  color: var(--text-color);
+}
+
+.text-default {
+  color: #ffff;
 }
 
 :root {
+  --heading-color: var(--color-jelly-bean-950, inherit);
+  --text-color: var(--color-jelly-bean-700, inherit);
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.129 0.042 264.695);

@@ -86,7 +86,7 @@ export default function ContatosPage() {
 
   // Construir query de filtro
   const buildQuery = () => {
-    let query = supabase.from("profile").select("*", { count: "exact" });
+    let query = supabase.from("perfis").select("*", { count: "exact" });
 
     if (nomeCompleto) {
       query = query.ilike("nome_completo", `%${nomeCompleto}%`);
@@ -166,7 +166,7 @@ export default function ContatosPage() {
 
     try {
       const { error } = await supabase
-        .from("profile")
+        .from("perfis")
         .update({
           nome_completo: editingContact.nome_completo,
           telefone: editingContact.telefone,
@@ -199,7 +199,7 @@ export default function ContatosPage() {
   // Handler para deletar contato
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from("profile").delete().eq("id", id);
+      const { error } = await supabase.from("perfis").delete().eq("id", id);
 
       if (error) {
         throw error;
@@ -239,7 +239,7 @@ export default function ContatosPage() {
 
     try {
       const { error } = await supabase
-        .from("profile")
+        .from("perfis")
         .delete()
         .in("id", selectedContacts);
 

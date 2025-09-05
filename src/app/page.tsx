@@ -1,11 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { useUser } from "@/context/UserContext";
 
 export default function Home() {
   const supabase = createClient();
   const [showAllNews, setShowAllNews] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { user, perfil } = useUser();
+
   const [dashboardData, setDashboardData] = useState({
     saldo: {
       disponivel: "R$ 0,00",
@@ -204,10 +207,10 @@ export default function Home() {
         <div className="flex-1">
           <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-              Olá, Marcel Araújo
+              Olá, {perfil?.nome_completo}
             </h1>
             <p className="text-gray-600 mt-2">
-              <strong>Acompanhe seu trabalho e novidades do Power CRM.</strong>
+              <strong>Acompanhe seu trabalho e novidades do Alliancar  CRM.</strong>
             </p>
           </div>
 
@@ -242,7 +245,7 @@ export default function Home() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center text-center">
-                <a href="/company/pipeline" className="block">
+                <a href="/atividades" className="block">
                   <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-3 mx-auto">
                     <svg
                       className="w-5 h-5 text-gray-600"
@@ -294,112 +297,114 @@ export default function Home() {
           </div>
 
           {/* Seção Central de Ajuda */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">
-              Central de ajuda
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center text-center">
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="https://youtube.com/playlist?list=PLkx4o3GGrL5fylzae6xrR87PsunJnr8wr&si=TjKIF-dptpehOnEz"
-                  className="block"
-                >
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-3 mx-auto">
-                    <svg
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                      ></path>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <p className="text-gray-700">
-                    Curso <br />
-                    Power CRM
-                  </p>
-                </a>
-              </div>
+            {/* <div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                Central de ajuda
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center text-center">
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="https://youtube.com/playlist?list=PLkx4o3GGrL5fylzae6xrR87PsunJnr8wr&si=TjKIF-dptpehOnEz"
+                    className="block"
+                  >
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-3 mx-auto">
+                      <svg
+                        className="w-5 h-5 text-gray-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                        ></path>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        ></path>
+                      </svg>
+                    </div>
+                    <p className="text-gray-700">
+                      Curso <br />
+                      Power CRM
+                    </p>
+                  </a>
+                </div>
 
-              <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center text-center">
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="https://powercrm.zendesk.com/hc/pt-br"
-                  className="block"
-                >
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-3 mx-auto">
-                    <svg
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <p className="text-gray-700">
-                    Central de
-                    <br />
-                    Ajuda
-                  </p>
-                </a>
-              </div>
+                <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center text-center">
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="https://powercrm.zendesk.com/hc/pt-br"
+                    className="block"
+                  >
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-3 mx-auto">
+                      <svg
+                        className="w-5 h-5 text-gray-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        ></path>
+                      </svg>
+                    </div>
+                    <p className="text-gray-700">
+                      Central de
+                      <br />
+                      Ajuda
+                    </p>
+                  </a>
+                </div>
 
-              <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center text-center">
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="https://powercrm.zendesk.com/hc/pt-br/requests/new"
-                  className="block"
-                >
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-3 mx-auto">
-                    <svg
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <p className="text-gray-700">
-                    Envie uma <br />
-                    solicitação
-                  </p>
-                </a>
+                <div className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center text-center">
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="https://powercrm.zendesk.com/hc/pt-br/requests/new"
+                    className="block"
+                  >
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-3 mx-auto">
+                      <svg
+                        className="w-5 h-5 text-gray-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        ></path>
+                      </svg>
+                    </div>
+                    <p className="text-gray-700">
+                      Envie uma <br />
+                      solicitação
+                    </p>
+                  </a>
+                </div>
               </div>
-            </div>
-          </div>
+            </div> */}
         </div>
 
-        {/* Seção de Notícias */}
+        {/* 
+        Seção de Notícias
+        
         <div className="w-full lg:w-2/5">
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-5">
@@ -420,7 +425,6 @@ export default function Home() {
                           rel="noopener noreferrer"
                           href={noticia.link}
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={noticia.imagem}
                             alt={noticia.titulo}
@@ -495,7 +499,9 @@ export default function Home() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
+
+        
       </div>
     </div>
   );

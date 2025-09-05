@@ -20,17 +20,19 @@ import { Badge } from "@/components/ui/badge";
 type BadgeVariant = "default" | "blue" | "red" | "green" | "gray";
 import Sidebar, { SidebarItem } from "@/components/sidebar";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 interface Pagamento {
-  id: number;
-  pagamento: string;
-  data: string;
-  associado: string;
+  id: string;
+  data: number;
   placa: string;
   comissao: number;
   status: string;
-  created_at: string;
-  updated_at: string;
+  associado_id: string;
+  associado_name: string;
+  data_criacao: string;
+  data_atualizacao: string;
+  pagamentos: number;
 }
 
 export default function FinanceiroPage() {
@@ -38,6 +40,37 @@ export default function FinanceiroPage() {
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState("todos");
+
+  useEffect(() => {
+    fetchPagamentos();
+  }, [supabase]);
+
+  //procurar usuarios
+  const fetchPagamentos = async () => {
+    try {
+      setLoading(true);
+
+      let { data: pagamentos, error } = await supabase
+        .from('pagamentos')
+        .select('*')
+        .order("data", { ascending: false });
+
+
+      if (error) {
+        console.error("Erro ao buscar usuários:", error);
+        toast.error("Erro ao carregar usuários");
+        return;
+      }
+
+
+      setPagamentos(pagamentos || []);
+    } catch (error) {
+      console.error("Erro:", error);
+      toast.error("Erro ao carregar atividades");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sidebarItems: SidebarItem[] = [
     { id: "painel", label: "Painel Financeiro", href: "/financeiro" },
@@ -59,27 +92,6 @@ export default function FinanceiroPage() {
     fetchPagamentos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const fetchPagamentos = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("pagamentos")
-        .select("*")
-        .order("data", { ascending: false });
-
-      if (error) {
-        console.error("Erro ao buscar pagamentos:", error);
-        return;
-      }
-
-      setPagamentos(data || []);
-    } catch (error) {
-      console.error("Erro:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Filtrar pagamentos
   const filteredPagamentos = pagamentos.filter((pagamento) => {
@@ -258,10 +270,10 @@ export default function FinanceiroPage() {
                         filteredPagamentos.map((pagamento) => (
                           <TableRow key={pagamento.id}>
                             <TableCell className="font-medium">
-                              {pagamento.pagamento}
+                              {pagamento.pagamentos}
                             </TableCell>
                             <TableCell>{formatDate(pagamento.data)}</TableCell>
-                            <TableCell>{pagamento.associado}</TableCell>
+                            <TableCell>{pagamento.associado_id}</TableCell>
                             <TableCell>{pagamento.placa}</TableCell>
                             <TableCell className="font-semibold">
                               {formatCurrency(

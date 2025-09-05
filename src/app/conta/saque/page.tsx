@@ -13,11 +13,14 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-type BadgeVariant = "default" | "blue" | "red" | "green" | "gray";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Image from "next/image";
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { useUser } from "@/context/UserContext";
+
+type BadgeVariant = "default" | "blue" | "red" | "green" | "gray";
 
 interface Payout {
   id: string;
@@ -31,80 +34,150 @@ interface Payout {
   paid_at: string | null;
 }
 
-interface ProfileData {
+interface BancoData {
+  id: string;
+  banco: string;
+  agencia: string;
+  digito_agencia: string;
+  conta: string;
+  digito_conta: string;
+  principal: boolean;
+  pix: string
+}
+
+interface EnderecoData {
+  id: string;
+  cep: string;
+  endereco: string;
+  numero: string;
+  complemento: string;
+  estado: string;
+  cidade: string;
+  principal: boolean;
+}
+
+interface PerfilData {
   id: string;
   nome_completo: string;
   cpf_cnpj: string;
-  banco: string;
-  agencia: string;
-  conta: string;
+  auth_id: string;
+}
+
+interface SaquesData {
+  id: string;
+  associado_id: string;
+  data: string;
+  valor: number;
+  metodo: string;
+  referencia: string;
+  observacao: string;
+  status: string;
 }
 
 export default function ContaDeSaqueIugu() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [perfil, setPerfil] = useState<PerfilData | null>(null);
+  const [bancoPrincipal, setBancoPrincipal] = useState<BancoData | null>(null);
+  const [enderecoPrincipal, setEnderecoPrincipal] = useState<EnderecoData | null>(null);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [saldoDisponivel, setSaldoDisponivel] = useState(0);
   const [valorSaque, setValorSaque] = useState("");
   const [processingSaque, setProcessingSaque] = useState(false);
+  const [contaSelecionada, setContaSelecionada] = useState<string>("");
+  const [contasBancarias, setContasBancarias] = useState<BancoData | null>(null);
+  const [saques, setSaques] = useState<SaquesData[]>([]);
+  const { user } = useUser();
+
+
+  console.log('saques: ', saques)
 
   // Buscar dados ao carregar
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
 
       // Buscar usuário autenticado
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
         toast.error("Usuário não autenticado");
         return;
       }
 
-      // Buscar perfil do usuário
-      const { data: profileData, error: profileError } = await supabase
-        .from("profile")
-        .select("*")
-        .eq("auth_id", user.id)
-        .single();
+      // Buscar dados em paralelo para melhor performance
+      const [
+        perfilResponse,
+        bancosResponse,
+        enderecosResponse,
+        payoutsResponse,
+        saquesResponse
+      ] = await Promise.all([
+        // Perfil do usuário
+        supabase
+          .from("perfis")
+          .select("id, nome_completo, cpf_cnpj, auth_id")
+          .eq("auth_id", user.id)
+          .single(),
 
-      if (profileError) {
-        console.error("Erro ao buscar perfil:", profileError);
-      } else {
-        setProfile(profileData);
+        // Contas bancárias
+        supabase
+          .from("contas_bancarias")
+          .select("*")
+          .eq("usuario_id", user.id)
+          .single()
+        ,
+
+        // Endereços
+        supabase
+          .from("enderecos")
+          .select("*")
+          .eq("usuario_id", user.id)
+          .single(),
+
+        // Saques
+        supabase
+          .from("pagamentos")
+          .select("*")
+          .eq("associado_id", user.id),
+
+        supabase
+          .from("saques")
+          .select("*")
+          .eq("associado_id", user.id)
+      ]);
+
+
+      // Processar respostas
+      if (perfilResponse.data) setPerfil(perfilResponse.data);
+
+      if (bancosResponse.data) {
+        setContasBancarias(bancosResponse.data);
       }
 
-      // Buscar payouts do usuário
-      const { data: payoutsData, error: payoutsError } = await supabase
-        .from("payouts")
-        .select("*")
-        .eq("affiliate_id", profileData?.id || user.id)
-        .order("created_at", { ascending: false });
+      if (enderecosResponse.data) setEnderecoPrincipal(enderecosResponse.data);
 
-      if (payoutsError) {
-        console.error("Erro ao buscar saques:", payoutsError);
-      } else {
-        setPayouts(payoutsData || []);
+      if (payoutsResponse.data) {
+        setPayouts(payoutsResponse.data);
 
-        // Calcular saldo disponível (payouts pendentes)
-        const disponivel = (payoutsData || []).reduce((sum, payout) => {
-          if (payout.status === "pending" || payout.status === "approved") {
-            return sum + payout.total_cents / 100;
-          }
-          return sum;
-        }, 0);
+        // calcular saldo disponível (apenas pendentes)
+        const disponivel = payoutsResponse.data
+          .filter(payout => payout.status === "A receber")
+          .reduce((sum, payout) => sum + (payout.comissao), 0);
+
         setSaldoDisponivel(disponivel);
       }
+
+      if (saquesResponse.data) {
+        setSaques(saquesResponse.data);
+
+      }
+
     } catch (error) {
-      console.error("Erro:", error);
+      console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
@@ -126,66 +199,123 @@ export default function ContaDeSaqueIugu() {
 
   // Obter cor do status
   const getStatusColor = (status: string): BadgeVariant => {
-    switch (status) {
-      case "paid":
-        return "green";
-      case "approved":
-        return "blue";
-      case "pending":
-        return "gray";
-      case "rejected":
-        return "red";
-      default:
-        return "default";
+    const statusMap: Record<string, BadgeVariant> = {
+      "paid": "green",
+      "approved": "blue",
+      "pending": "gray",
+      "rejected": "red",
+      "processing": "blue"
+    };
+    return statusMap[status] || "default";
+  };
+
+  // Obter texto do status
+  const getStatusText = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      "paid": "Pago",
+      "approved": "Aprovado",
+      "pending": "Pendente",
+      "rejected": "Rejeitado",
+      "processing": "Processando"
+    };
+    return statusMap[status] || status;
+  };
+
+  // Validar valor do saque
+  const validarValorSaque = (valor: number): { valido: boolean; mensagem?: string } => {
+    if (!valor || valor <= 0) {
+      return { valido: false, mensagem: "Valor deve ser maior que zero" };
     }
+
+    if (valor > saldoDisponivel) {
+      return { valido: false, mensagem: "Saldo insuficiente" };
+    }
+
+    if (valor < 10) {
+      return { valido: false, mensagem: "Valor mínimo: R$ 10,00" };
+    }
+
+    return { valido: true };
   };
 
   // Processar saque
   const handleSaque = async () => {
-    const valor = parseFloat(valorSaque.replace(",", "."));
-
-    if (!valor || valor <= 0) {
-      toast.error("Por favor, informe um valor válido");
-      return;
-    }
-
-    if (valor > saldoDisponivel) {
-      toast.error("Valor maior que o saldo disponível");
-      return;
-    }
-
     try {
-      setProcessingSaque(true);
+      const valor = parseFloat(valorSaque.replace(/\./g, "").replace(",", "."));
 
-      // Criar novo payout
-      const { error } = await supabase.from("payouts").insert({
-        affiliate_id: profile?.id,
-        period_month: new Date().toISOString().split("T")[0],
-        total_cents: Math.round(valor * 100),
-        status: "pending",
-        payment_method: "bank_transfer",
-        external_ref: `SAQUE-${Date.now()}`,
-        created_at: new Date().toISOString(),
-      });
-
-      if (error) {
-        throw error;
+      const validacao = validarValorSaque(valor);
+      if (!validacao.valido) {
+        toast.error(validacao.mensagem);
+        return;
       }
 
-      toast.success("Saque solicitado com sucesso!");
+      if (!contaSelecionada) {
+        toast.error("Selecione uma conta bancária");
+        return;
+      }
+
+      setProcessingSaque(true);
+
+      // Buscar dados da conta selecionada
+      if (!contasBancarias || contasBancarias.id !== contaSelecionada) {
+        toast.error("Conta bancária não encontrada");
+        return;
+      }
+      const conta = contasBancarias;
+
+      // Criar novo saque com transaction
+      const { data: payout, error } = await supabase
+        .from("payouts")
+        .insert({
+          affiliate_id: perfil?.id,
+          period_month: new Date().toISOString().slice(0, 7), // YYYY-MM
+          total_cents: Math.round(valor * 100),
+          status: "pending",
+          payment_method: "pix", // ou "bank_transfer"
+          external_ref: `SAQUE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          bank_data: conta, // Salvar dados da conta para auditoria
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Saque solicitado com sucesso! Processamento em até 3 dias úteis.");
       setValorSaque("");
-      fetchData(); // Recarregar dados
-    } catch (error) {
+
+      // Recarregar dados
+      await fetchData();
+
+    } catch (error: any) {
       console.error("Erro ao solicitar saque:", error);
-      toast.error("Erro ao solicitar saque");
+      toast.error(error.message || "Erro ao solicitar saque");
     } finally {
       setProcessingSaque(false);
     }
   };
+
+  // Renderizar loading
+  if (loading) {
+    return (
+      <SidebarLayout>
+        <div className="space-y-6 p-5">
+          <h2 className="text-2xl font-semibold">Conta de Saque</h2>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p>Carregando dados...</p>
+            </div>
+          </div>
+        </div>
+      </SidebarLayout>
+    );
+  }
+
   return (
     <SidebarLayout>
-      <div className="space-y-6">
-        <h2 className="text-2xl font-semibold">Conta de Saque Iugu</h2>
+      <div className="space-y-6 p-5">
+        <h2 className="text-2xl font-semibold">Conta de Saque</h2>
 
         <Tabs defaultValue="conta" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -197,85 +327,68 @@ export default function ContaDeSaqueIugu() {
           {/* Aba Conta de Saque */}
           <TabsContent value="conta">
             <Card>
-              <CardContent className="space-y-4 p-6">
-                <p>
-                  Beneficiário da Conta de Saque:{" "}
-                  <strong>
-                    {loading ? "Carregando..." : profile?.nome_completo || "-"}
-                  </strong>
-                  <br />
-                  CPF/CNPJ:{" "}
-                  <strong>
-                    {loading ? "Carregando..." : profile?.cpf_cnpj || "-"}
-                  </strong>
-                  <br />
-                  Conta Iugu: <strong>-</strong>
-                </p>
-                <hr />
-                <div>
-                  <strong>Dados para Saque:</strong>
-                  <br />
-                  Banco:{" "}
-                  <span>
-                    {loading ? "Carregando..." : profile?.banco || "-"}
-                  </span>
-                  <br />
-                  Agência:{" "}
-                  <span>
-                    {loading ? "Carregando..." : profile?.agencia || "-"}
-                  </span>
-                  <br />
-                  Conta:{" "}
-                  <span>
-                    {loading ? "Carregando..." : profile?.conta || "-"}
-                  </span>
-                  <br />
-                  Tipo de Conta: <span>Conta Corrente</span>
+              <CardContent className="space-y-6 p-6">
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Informações Pessoais</h3>
+                  <p>
+                    <strong>Nome:</strong> {perfil?.nome_completo || "Não informado"}
+                    <br />
+                    <strong>CPF/CNPJ:</strong> {perfil?.cpf_cnpj || "Não informado"}
+                  </p>
                 </div>
 
-                <Button className="w-56 hidden">Alterar conta</Button>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Endereço Principal</h3>
+                  {enderecoPrincipal ? (
+                    <p>
+                      {enderecoPrincipal.endereco}, {enderecoPrincipal.numero}
+                      {enderecoPrincipal.complemento && `, ${enderecoPrincipal.complemento}`}
+                      <br />
+                      {enderecoPrincipal.cidade} - {enderecoPrincipal.estado}
+                      <br />
+                      CEP: {enderecoPrincipal.cep}
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground">Nenhum endereço cadastrado</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Conta Bancária Principal</h3>
+                  {contasBancarias ? (
+                    <p>
+                      <strong>Banco:</strong> {contasBancarias.banco}
+                      <br />
+                      <strong>Agência:</strong> {contasBancarias.agencia}
+                      {contasBancarias.digito_agencia && `-${contasBancarias.digito_agencia}`}
+                      <br />
+                      <strong>Conta:</strong> {contasBancarias.conta}
+                      {contasBancarias.digito_conta && `-${contasBancarias.digito_conta}`}
+                      <br />
+                      <strong>Pix:</strong> {contasBancarias.pix}
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground">Nenhuma conta bancária cadastrada</p>
+                  )}
+                </div>
 
                 <div className="flex flex-col md:flex-row gap-6 items-center justify-between border rounded-lg p-4 bg-muted/30">
                   <div className="flex items-center gap-4">
-                    <Image
-                      width={150}
-                      height={150}
-                      src="/"
-                      alt="Saldo"
-                      className="w-12 h-12"
-                    />
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 font-bold">R$</span>
+                    </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">
-                        Saldo total disponível
-                      </p>
-                      <p className="text-lg font-semibold">
-                        {loading
-                          ? "Carregando..."
-                          : formatCurrency(saldoDisponivel)}
-                      </p>
+                      <p className="text-sm text-muted-foreground">Saldo disponível para saque</p>
+                      <p className="text-lg font-semibold">{formatCurrency(saldoDisponivel)}</p>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      A receber (parcelado)
-                    </p>
-                    <p className="font-medium">R$ 0,00</p>
-                  </div>
-                </div>
 
-                <div className="flex gap-2 mt-4">
-                  <Image
-                    width={150}
-                    height={150}
-                    src="/"
-                    alt="Dúvidas"
-                    className="w-5 h-5 mt-1"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Vendas parceladas</strong> em cartão de crédito
-                    serão liberadas a cada 30 dias de acordo com o número de
-                    parcelas.
-                  </p>
+                  <Button
+                    onClick={() => (document.querySelector('[data-value="sacar"]') as HTMLElement)?.click()}
+                    disabled={saldoDisponivel <= 0}
+                  >
+                    Solicitar Saque
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -285,51 +398,73 @@ export default function ContaDeSaqueIugu() {
           <TabsContent value="sacar">
             <Card>
               <CardContent className="grid md:grid-cols-2 gap-6 p-6">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Disponível para saque
-                  </p>
-                  <p className="text-lg font-bold text-green-600">
-                    {loading
-                      ? "Carregando..."
-                      : formatCurrency(saldoDisponivel)}
-                  </p>
-
-                  <div className="mt-4 text-sm text-muted-foreground">
-                    <p>Detalhes do saque:</p>
-                    <p>
-                      Tarifa de saque:{" "}
-                      <strong className="text-foreground">R$ 1,99</strong>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Disponível para saque</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {formatCurrency(saldoDisponivel)}
                     </p>
-                    <p>Os pagamentos serão realizados em até 3 dias úteis.</p>
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    <p className="font-semibold">Informações importantes:</p>
+                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                      <li>Valor mínimo: R$ 10,00</li>
+                      <li>Taxa de saque: R$ 1,99</li>
+                      <li>Processamento em até 3 dias úteis</li>
+                      <li>Verifique seus dados bancários antes de solicitar</li>
+                    </ul>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <label className="text-sm font-medium">
-                    O saque será realizado para a conta bancária principal
-                  </label>
-                  <div>
-                    <label className="text-sm font-medium">
-                      Valor do saque
-                    </label>
-                    <div className="flex items-center gap-2 mt-1">
+                  <div className="space-y-2">
+                   <div className="flex flex-col">
+                     <label className="text-sm font-medium">Conta bancária para recebimento</label>
+                    <Select value={contaSelecionada} onValueChange={setContaSelecionada}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a conta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contasBancarias ? (
+                          <>
+                            <SelectItem key={contasBancarias.id} value={contasBancarias.id}>
+                              {contasBancarias.banco} - Ag: {contasBancarias.agencia} - CC: {contasBancarias.conta}
+                              {contasBancarias.principal && " (Principal)"}
+                            </SelectItem>
+                          </>
+                        ) : (
+                          "Nenhuma conta bancária cadastrada"
+                        )}
+                      </SelectContent>
+                    </Select>
+                   </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Valor do saque (R$)</label>
+                    <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">R$</span>
                       <Input
                         type="text"
                         placeholder="0,00"
                         className="text-right"
                         value={valorSaque}
-                        onChange={(e) => setValorSaque(e.target.value)}
+                        onChange={(e) => {
+                          // Permitir apenas números e vírgula
+                          const value = e.target.value.replace(/[^\d,]/g, "");
+                          setValorSaque(value);
+                        }}
                       />
                     </div>
                   </div>
+
                   <Button
-                    className="w-56 bg-green-600 hover:bg-green-700"
+                    className="w-full bg-green-600 hover:bg-green-700"
                     onClick={handleSaque}
-                    disabled={processingSaque || loading || !saldoDisponivel}
+                    disabled={processingSaque || saldoDisponivel <= 0}
                   >
-                    {processingSaque ? "Processando..." : "Efetuar Saque"}
+                    {processingSaque ? "Processando..." : "Solicitar Saque"}
                   </Button>
                 </div>
               </CardContent>
@@ -340,65 +475,49 @@ export default function ContaDeSaqueIugu() {
           <TabsContent value="historico">
             <Card>
               <CardContent className="p-6">
-                <p className="mb-4">
-                  &gt; Total <strong>{payouts.length}</strong> registros
-                </p>
+                <div className="flex justify-between items-center mb-4">
+                  <p>
+                    Total <strong>{saques.length}</strong> saques
+                  </p>
+                </div>
+
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Data do pedido</TableHead>
-                      <TableHead>Efetivado em</TableHead>
+                      <TableHead>Data</TableHead>
                       <TableHead>Valor</TableHead>
+                      <TableHead>Método</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Detalhes</TableHead>
+                      <TableHead>Referência</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {loading ? (
+                    {saques.length === 0 ? (
                       <TableRow>
                         <TableCell
                           colSpan={5}
-                          className="text-center text-sm text-muted-foreground"
+                          className="text-center py-8 text-muted-foreground"
                         >
-                          Carregando...
-                        </TableCell>
-                      </TableRow>
-                    ) : payouts.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          className="text-center text-sm text-muted-foreground"
-                        >
-                          Não há dados para exibir
+                          Nenhum saque realizado
                         </TableCell>
                       </TableRow>
                     ) : (
-                      payouts.map((payout) => (
-                        <TableRow key={payout.id}>
-                          <TableCell>{formatDate(payout.created_at)}</TableCell>
-                          <TableCell>
-                            {payout.paid_at ? formatDate(payout.paid_at) : "-"}
-                          </TableCell>
+                      saques.map((saque) => (
+                        <TableRow key={saque.id}>
+                          <TableCell>{formatDate(saque.data)}</TableCell>
                           <TableCell className="font-semibold">
-                            {formatCurrency(payout.total_cents / 100)}
+                            {formatCurrency(saque.valor)}
+                          </TableCell>
+                          <TableCell className="capitalize">
+                            {saque.metodo}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusColor(payout.status)}>
-                              {payout.status === "paid"
-                                ? "Pago"
-                                : payout.status === "approved"
-                                  ? "Aprovado"
-                                  : payout.status === "pending"
-                                    ? "Pendente"
-                                    : payout.status === "rejected"
-                                      ? "Rejeitado"
-                                      : payout.status}
+                            <Badge variant={getStatusColor(saque.status)}>
+                              {getStatusText(saque.status)}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm">
-                              Ver detalhes
-                            </Button>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {saque.referencia}
                           </TableCell>
                         </TableRow>
                       ))
@@ -408,6 +527,7 @@ export default function ContaDeSaqueIugu() {
               </CardContent>
             </Card>
           </TabsContent>
+
         </Tabs>
       </div>
     </SidebarLayout>

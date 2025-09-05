@@ -6,6 +6,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Alliancar from "../../public/alliancar.avif"
+import { useUser } from '@/context/UserContext';
 
 type ClassValue = string | false | null | undefined;
 
@@ -13,8 +14,27 @@ function classNames(...classes: ClassValue[]): string {
   return classes.filter(Boolean).join(' ');
 }
 
+export function formatDateBR(isoString: string): string {
+  if (!isoString) return "";
+
+  const date = new Date(isoString);
+
+  return date.toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+
+
 export default function Navbar() {
   const [showNotifications, setShowNotifications] = useState(false);
+  const { user, perfil, loading } = useUser();
+
 
   const navigation = [
     { name: 'Vendas', href: '/vendas', current: false },
@@ -45,7 +65,7 @@ export default function Navbar() {
           </div>
           <div className="flex flex-1 items-center justify-center  lg:justify-start">
             <div className="flex">
-              <Image src={Alliancar} width={150} height={150} alt="Alliancar"  />
+              <Image src={Alliancar} width={150} height={150} alt="Alliancar" />
             </div>
             <div className="hidden sm:ml-6 lg:block">
               <div className="flex space-x-4">
@@ -66,7 +86,7 @@ export default function Navbar() {
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
             {/* Notifications */}
-            <div className="relative">
+            {/* <div className="relative">
               <button
                 type="button"
                 className="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-white"
@@ -78,7 +98,7 @@ export default function Navbar() {
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-md bg-gray-800 py-1 outline -outline-offset-1 outline-white/10 shadow-lg">
+                <div className="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-md bg-jelly-bean-900 py-1 outline -outline-offset-1 outline-white/10 shadow-lg">
                   <div className="flex items-center justify-between p-4 border-b border-white/10">
                     <div className="flex items-center gap-2">
                       <BellIcon className="h-5 w-5 text-gray-300" />
@@ -109,18 +129,14 @@ export default function Navbar() {
                   </div>
                 </div>
               )}
-            </div>
+            </div> */}
 
-            {/* Profile dropdown */}
-            <Menu as="div" className="relative ml-3">
-              <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            {/* perfis dropdown */}
+            <Menu as="div" className="relative ml-3 ">
+              <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ">
                 <span className="absolute -inset-1.5" />
-                <span className="sr-only">Open user menu</span>
-                <img
-                  alt=""
-                  src="https://user.powercrm.com.br/open/userPicture/167902"
-                  className="size-8 rounded-full bg-gray-800 outline -outline-offset-1 outline-white/10"
-                />
+                <span className="sr-only ">Open user menu</span>
+                <h6 className="size-8 rounded-full bg-jelly-bean-600 outline -outline-offset-1 outline-white/10 text-white flex justify-center items-center font-bold text-sm">{perfil?.nome_completo.toUpperCase().slice(0, 2)}</h6>
               </MenuButton>
 
               <MenuItems
@@ -128,22 +144,18 @@ export default function Navbar() {
                 className="absolute right-0 z-10 mt-2 w-64 origin-top-right rounded-md bg-gray-800 py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
               >
                 <div className="flex items-center gap-3 px-4 py-2 border-b border-white/10">
-                  <img
-                    src="https://user.powercrm.com.br/open/userPicture/167902"
-                    alt="User"
-                    className="w-10 h-10 rounded-full"
-                  />
+                  <h6 className="size-10 rounded-full bg-jelly-bean-600 outline -outline-offset-1 outline-white/10 text-white flex justify-center items-center font-bold text-sm">{perfil?.nome_completo.toUpperCase().slice(0, 2)}</h6>
                   <div>
-                    <p className="font-medium text-white">Marcel Araújo</p>
-                    <p className="text-sm text-gray-400">
-                      omarcelaraujo@gmail.com
+                    <p className="font-medium text-default">{perfil?.nome_completo}</p>
+                    <p className="text-sm text-default">
+                      {user?.email}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      Último acesso: 22/08/2025 - 10:34
+                    <p className="text-[10px] text-default mt-1">
+                      Último acesso: {formatDateBR(user?.last_sign_in_at ?? "")}
                     </p>
                   </div>
                 </div>
-                <MenuItem>
+                {/* <MenuItem>
                   <a
                     href="https://powercrm.zendesk.com/hc/pt-br/requests/new"
                     target="_blank"
@@ -151,7 +163,7 @@ export default function Navbar() {
                   >
                     Central de ajuda
                   </a>
-                </MenuItem>
+                </MenuItem> */}
                 <MenuItem>
                   <Link
                     href="/logout"
