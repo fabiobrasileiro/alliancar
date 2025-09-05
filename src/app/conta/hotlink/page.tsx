@@ -1,34 +1,52 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import SidebarLayout from "@/components/SidebarLayoute";
+import { createClient } from "@/utils/supabase/client";
 
-const powerlinks = [
-  {
-    title: "Cotação",
-    url: "https://cotacao.me/dlm5xrlz?id=ADddnAXD",
-  },
-  {
-    title: "Cotação ISA",
-    url: "https://alliancarclube.com.br/formulario/?id=ADddnAXD",
-  },
-  {
-    title: "LP ALLIANCAR",
-    url: "https://cotacao.me/DOarNyQe?id=ADddnAXD",
-  },
-];
-
-const affiliateLink = {
-  title: "Captação de Afiliados",
-  url: "https://app.powercrm.com.br/affiliateFormPage/ADddnAXD",
-};
-
-const copyToClipboard = (text: string): void => {
-  navigator.clipboard.writeText(text);
-  alert("Link copiado com sucesso!");
-};
+interface hotlinks {
+  nome: string;
+  link: string;
+}
 
 export default function Powerlinks() {
+  const [powerlinks, setPowerlinks] = useState<hotlinks[]>([]);
+  const supabase = createClient();
+  const [loading, setLoading] = useState(true);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+
+      // Buscar hotlinks
+      const { data: hotlinks, error: hotlinksError } = await supabase
+        .from("hotlinks")
+        .select("nome, link");
+
+      if (hotlinksError) {
+        console.error("Erro ao buscar hotlinks:", hotlinksError);
+        return;
+      }
+
+      setPowerlinks(hotlinks || []);
+    } catch (error) {
+      console.error("Erro ao buscar dados do dashboard:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Executa ao montar
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  // Função de copiar link
+  const copyToClipboard = (text: string): void => {
+    navigator.clipboard.writeText(text);
+    alert("Link copiado com sucesso!");
+  };
+
   return (
     <SidebarLayout>
       <div className="p-4 space-y-8">
@@ -56,12 +74,12 @@ export default function Powerlinks() {
               {/* Info e botão */}
               <div className="flex-1 flex flex-col justify-between">
                 <div>
-                  <h4 className="font-semibold text-lg">{link.title}</h4>
-                  <h4 className="text-gray-500 break-all">{link.url}</h4>
+                  <h4 className="font-semibold text-lg">{link.nome}</h4>
+                  <h4 className="text-gray-500 break-all">{link.link}</h4>
                 </div>
                 <div className="mt-4">
                   <Button
-                    onClick={() => copyToClipboard(link.url)}
+                    onClick={() => copyToClipboard(link.link)}
                     className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Copiar Link
@@ -70,41 +88,9 @@ export default function Powerlinks() {
               </div>
             </div>
           ))}
-        </div>
 
-        {/* Powerlink para afiliados */}
-        <div>
-          <h4 className="text-xl font-semibold mb-2">
-            Powerlink para cadastro de afiliados
-          </h4>
-          <p className="mb-4">
-            Use o powerlink abaixo para a captação de afiliados. Afiliados são
-            pessoas que têm seus próprios powerlinks, mas somente com a função
-            de indicar. Eles não vendem. Afiliados cadastrados por você, sempre
-            que indicarem alguém este contato chegará para você.
-          </p>
-
-          <div className="flex flex-col md:flex-row border border-gray-300 rounded-lg p-4 gap-4">
-            {/* QR code placeholder */}
-            <div className="w-36 h-36 bg-gray-100 flex items-center justify-center">
-              <span className="text-gray-400">QR</span>
-            </div>
-
-            <div className="flex-1 flex flex-col justify-between">
-              <div>
-                <h4 className="font-semibold text-lg">{affiliateLink.title}</h4>
-                <h4 className="text-gray-500 break-all">{affiliateLink.url}</h4>
-              </div>
-              <div className="mt-4">
-                <Button
-                  onClick={() => copyToClipboard(affiliateLink.url)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Copiar Link
-                </Button>
-              </div>
-            </div>
-          </div>
+          {/* Estado de carregamento */}
+          {loading && <p>Carregando...</p>}
         </div>
       </div>
     </SidebarLayout>
