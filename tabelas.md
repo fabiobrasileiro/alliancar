@@ -1,5 +1,5 @@
 Database Tables
-profile
+negociacoes
 Filter columns
 
 New column
@@ -9,188 +9,58 @@ id
 No description
 
 uuid	uuid		
-nome_completo
+tipo_veiculo
 
 No description
 
-text	text		
-cpf_cnpj
+character varying	varchar		
+placa
 
 No description
 
-text	text		
-senha_hash
+character varying	varchar		
+marca_id
 
 No description
 
-text	text		
-banco
+character varying	varchar		
+ano_modelo
 
 No description
 
-text	text		
-agencia
+integer	int4		
+modelo_id
 
 No description
 
-text	text		
-digito_agencia
+uuid	uuid		
+origem_lead
 
 No description
 
-text	text		
-conta
-
-No description
-
-text	text		
-digito_conta
-
-No description
-
-text	text		
-receita_estimada
-
-No description
-
-numeric	numeric		
-cep
-
-No description
-
-text	text		
-endereco
-
-No description
-
-text	text		
-numero
-
-No description
-
-text	text		
-complemento
-
-No description
-
-text	text		
-estado
-
-No description
-
-text	text		
-cidade
-
-No description
-
-text	text		
-identidade_url
-
-No description
-
-text	text		
-selfie_url
-
-No description
-
-text	text		
-balancete_url
-
-No description
-
-text	text		
-contrato_social_url
-
-No description
-
-text	text		
-foto_perfil_url
-
-No description
-
-text	text		
-hotlink
-
-No description
-
-text	text		
-ativo
+character varying	varchar		
+veiculo_trabalho
 
 No description
 
 boolean	bool		
-criado_em
+enviar_cotacao
 
 No description
 
-timestamp with time zone	timestamptz		
-atualizado_em
+boolean	bool		
+chaves
 
 No description
 
-timestamp with time zone	timestamptz		
-tipo_usuario
-
-No description
-
-USER-DEFINED	tipo_usuario		
-auth_id
-
-No description
-
-uuid	uuid		
-telefone
-
-No description
-
-text	text		
-roles
-
-No description
-
-USER-DEFINED	roles
-d
-
-No description
-
-uuid	uuid		
-affiliate_id
-
-No description
-
-uuid	uuid		
-period_month
-
-No description
-
-date	date		
-total_cents
-
-No description
-
-bigint	int8		
-status
-
-No description
-
-text	text		
-payment_method
-
-No description
-
-text	text		
-external_ref
-
-No description
-
-text	text		
+jsonb	jsonb		
 created_at
 
 No description
 
-timestamp with time zone	timestamptz		
-paid_at
+timestamp without time zone	timestamp		
+updated_at
 
 No description
 
-timestamp with time zone	timestamptz		
+timestamp without time zone	timestamp

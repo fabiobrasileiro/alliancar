@@ -64,13 +64,15 @@ h3 {
   color: var(--heading-color);
 }
 
-p,
-span {
-  color: var(--text-color);
+h1,
+h2,
+h3 {
+  color: var(--color-jelly-bean-950);
 }
 
-.text-default {
-  color: #ffff;
+p,
+span {
+  color: var(--color-jelly-bean-700);
 }
 
 :root {
@@ -149,6 +151,7 @@ span {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

@@ -1,7 +1,15 @@
 "use client";
 
-import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import {
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+} from "@headlessui/react";
+import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,7 +19,7 @@ import { useUser } from '@/context/UserContext';
 type ClassValue = string | false | null | undefined;
 
 function classNames(...classes: ClassValue[]): string {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
 }
 
 export function formatDateBR(isoString: string): string {
@@ -37,15 +45,15 @@ export default function Navbar() {
 
 
   const navigation = [
-    { name: 'Vendas', href: '/vendas', current: false },
-    { name: 'Contatos', href: '/contatos', current: false },
-    { name: 'Atividades', href: '/atividades', current: false },
-    { name: 'Minha Conta', href: '/conta', current: false },
-    { name: 'Relatórios', href: '/relatorios', current: false },
-    { name: 'Financeiro', href: '/financeiro', current: false },
+    { name: "Vendas", href: "/vendas", current: false },
+    { name: "Contatos", href: "/contatos", current: false },
+    { name: "Atividades", href: "/atividades", current: false },
+    { name: "Minha Conta", href: "/conta", current: false },
+    { name: "Relatórios", href: "/relatorios", current: false },
+    { name: "Financeiro", href: "/financeiro", current: false },
     // { name: 'Minha Empresa', href: '/empresa', current: false },
     // { name: 'Ferramentas', href: '/ferramentas', current: false },
-  ]
+  ];
 
   return (
     <Disclosure
@@ -59,8 +67,14 @@ export default function Navbar() {
             <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-white">
               <span className="absolute -inset-0.5" />
               <span className="sr-only">Open main menu</span>
-              <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
-              <XMarkIcon aria-hidden="true" className="hidden size-6 group-data-open:block" />
+              <Bars3Icon
+                aria-hidden="true"
+                className="block size-6 group-data-open:hidden"
+              />
+              <XMarkIcon
+                aria-hidden="true"
+                className="hidden size-6 group-data-open:block"
+              />
             </DisclosureButton>
           </div>
           <div className="flex flex-1 items-center justify-center  lg:justify-start">
@@ -74,8 +88,10 @@ export default function Navbar() {
                     key={item.name}
                     href={item.href}
                     className={classNames(
-                      item.current ? 'bg-jelly-bean-950/50 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white',
-                      'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      item.current
+                        ? "bg-jelly-bean-950/50 text-white"
+                        : "text-gray-300 hover:bg-white/5 hover:text-white",
+                      "rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     )}
                   >
                     {item.name}
@@ -102,7 +118,9 @@ export default function Navbar() {
                   <div className="flex items-center justify-between p-4 border-b border-white/10">
                     <div className="flex items-center gap-2">
                       <BellIcon className="h-5 w-5 text-gray-300" />
-                      <h2 className="text-lg font-semibold text-white">Notificações</h2>
+                      <h2 className="text-lg font-semibold text-white">
+                        Notificações
+                      </h2>
                     </div>
                     <button
                       onClick={() => setShowNotifications(false)}
@@ -113,7 +131,9 @@ export default function Navbar() {
                   </div>
                   <div className="p-2">
                     <div className="cursor-pointer hover:bg-white/5 rounded p-2">
-                      <h3 className="font-medium text-white">Cotações recebidas</h3>
+                      <h3 className="font-medium text-white">
+                        Cotações recebidas
+                      </h3>
                       <span className="text-sm text-gray-400">
                         Negociação recebida
                       </span>
@@ -186,8 +206,10 @@ export default function Navbar() {
               as="a"
               href={item.href}
               className={classNames(
-                item.current ? 'bg-jelly-bean-950/50 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white',
-                'block rounded-md px-3 py-2 text-base font-medium',
+                item.current
+                  ? "bg-jelly-bean-950/50 text-white"
+                  : "text-gray-300 hover:bg-white/5 hover:text-white",
+                "block rounded-md px-3 py-2 text-base font-medium",
               )}
             >
               {item.name}
@@ -196,5 +218,5 @@ export default function Navbar() {
         </div>
       </DisclosurePanel>
     </Disclosure>
-  )
+  );
 }
