@@ -4,20 +4,19 @@ import Link from "next/link";
 
 interface ContactRow {
   id: string;
-  contato?: string;
-  nome_completo?: string;
-  telefone?: string;
+  nome: string;
+  email?: string;
+  celular?: string;
   cpf_cnpj?: string;
-  banco?: string;
-  agencia?: string;
-  conta?: string;
-  receita_estimada?: string;
   cep?: string;
   estado?: string;
   cidade?: string;
-  status?: string;
-  ativo?: boolean;
-  link?: string;
+  origem_lead?: string;
+  veiculo_trabalho?: boolean;
+  enviar_cotacao_email?: boolean;
+  afiliado_id?: string;
+  created_at?: string;
+  updated_at?: string;
   [key: string]: unknown;
 }
 
@@ -52,6 +51,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Helper para renderizar valores de forma segura
 const renderValue = (value: unknown): string => {
@@ -59,15 +65,26 @@ const renderValue = (value: unknown): string => {
   return String(value);
 };
 
+// Opções para origem do lead
+const ORIGEM_LEAD_OPTIONS = [
+  "Facebook",
+  "Google",
+  "Indicação",
+  "Instagram",
+  "Presencial",
+  "Site"
+];
+
 export default function ContatosPage() {
   const supabase = createClient();
 
   // Estados para filtros
-  const [nomeCompleto, setNomeCompleto] = useState("");
-  const [telefone, setTelefone] = useState("");
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [celular, setCelular] = useState("");
   const [cpfCnpj, setCpfCnpj] = useState("");
-  const [banco, setBanco] = useState("");
   const [estado, setEstado] = useState("");
+  const [origemLead, setOrigemLead] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
   // Estados para dados e paginação
@@ -84,28 +101,46 @@ export default function ContatosPage() {
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
 
+  // Estados para adicionar contato
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newContact, setNewContact] = useState<Partial<ContactRow>>({
+    nome: "",
+    email: "",
+    celular: "",
+    cpf_cnpj: "",
+    cep: "",
+    estado: "",
+    cidade: "",
+    origem_lead: "",
+    veiculo_trabalho: false,
+    enviar_cotacao_email: false
+  });
+
   // Construir query de filtro
   const buildQuery = () => {
-    let query = supabase.from("perfis").select("*", { count: "exact" });
+    let query = supabase.from("contatos").select("*", { count: "exact" });
 
-    if (nomeCompleto) {
-      query = query.ilike("nome_completo", `%${nomeCompleto}%`);
+    if (nome) {
+      query = query.ilike("nome", `%${nome}%`);
     }
-    if (telefone) {
-      query = query.ilike("telefone", `%${telefone}%`);
+    if (email) {
+      query = query.ilike("email", `%${email}%`);
+    }
+    if (celular) {
+      query = query.ilike("celular", `%${celular}%`);
     }
     if (cpfCnpj) {
       query = query.ilike("cpf_cnpj", `%${cpfCnpj}%`);
     }
-    if (banco) {
-      query = query.ilike("banco", `%${banco}%`);
-    }
     if (estado) {
       query = query.ilike("estado", `%${estado}%`);
     }
+    if (origemLead) {
+      query = query.eq("origem_lead", origemLead);
+    }
     if (searchTerm) {
       query = query.or(
-        `nome_completo.ilike.%${searchTerm}%,telefone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`,
+        `nome.ilike.%${searchTerm}%,celular.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`,
       );
     }
 
@@ -123,7 +158,7 @@ export default function ContatosPage() {
 
       const { data, error, count } = await query
         .range(start, end)
-        .order("criado_em", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Erro ao buscar dados:", error);
@@ -154,6 +189,54 @@ export default function ContatosPage() {
     fetchData();
   };
 
+  // Handler para adicionar contato
+  const handleAdd = () => {
+    setNewContact({
+      nome: "",
+      email: "",
+      celular: "",
+      cpf_cnpj: "",
+      cep: "",
+      estado: "",
+      cidade: "",
+      origem_lead: "",
+      veiculo_trabalho: false,
+      enviar_cotacao_email: false
+    });
+    setIsAddDialogOpen(true);
+  };
+
+  // Handler para salvar novo contato
+  const handleSaveNew = async () => {
+    try {
+      const { error } = await supabase
+        .from("contatos")
+        .insert([{
+          nome: newContact.nome,
+          email: newContact.email,
+          celular: newContact.celular,
+          cpf_cnpj: newContact.cpf_cnpj,
+          cep: newContact.cep,
+          estado: newContact.estado,
+          cidade: newContact.cidade,
+          origem_lead: newContact.origem_lead,
+          veiculo_trabalho: newContact.veiculo_trabalho,
+          enviar_cotacao_email: newContact.enviar_cotacao_email
+        }]);
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Contato adicionado com sucesso");
+      setIsAddDialogOpen(false);
+      fetchData(); // Recarregar dados
+    } catch (error) {
+      console.error("Erro ao adicionar contato:", error);
+      toast.error("Erro ao adicionar contato");
+    }
+  };
+
   // Handler para editar contato
   const handleEdit = (contact: ContactRow) => {
     setEditingContact(contact);
@@ -166,19 +249,18 @@ export default function ContatosPage() {
 
     try {
       const { error } = await supabase
-        .from("perfis")
+        .from("contatos")
         .update({
-          nome_completo: editingContact.nome_completo,
-          telefone: editingContact.telefone,
+          nome: editingContact.nome,
+          email: editingContact.email,
+          celular: editingContact.celular,
           cpf_cnpj: editingContact.cpf_cnpj,
-          banco: editingContact.banco,
-          agencia: editingContact.agencia,
-          conta: editingContact.conta,
-          receita_estimada: editingContact.receita_estimada,
           cep: editingContact.cep,
           estado: editingContact.estado,
           cidade: editingContact.cidade,
-          ativo: editingContact.ativo,
+          origem_lead: editingContact.origem_lead,
+          veiculo_trabalho: editingContact.veiculo_trabalho,
+          enviar_cotacao_email: editingContact.enviar_cotacao_email,
         })
         .eq("id", editingContact.id);
 
@@ -199,7 +281,7 @@ export default function ContatosPage() {
   // Handler para deletar contato
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from("perfis").delete().eq("id", id);
+      const { error } = await supabase.from("contatos").delete().eq("id", id);
 
       if (error) {
         throw error;
@@ -239,7 +321,7 @@ export default function ContatosPage() {
 
     try {
       const { error } = await supabase
-        .from("perfis")
+        .from("contatos")
         .delete()
         .in("id", selectedContacts);
 
@@ -305,11 +387,20 @@ export default function ContatosPage() {
                     {rows?.length} contatos encontrados
                   </CardDescription>
                 </div>
-                {selectedContacts.length > 0 && (
-                  <Button variant="default" onClick={handleDeleteMultiple}>
-                    Excluir Selecionados ({selectedContacts.length})
+                <div className="flex gap-2">
+                  <Button
+                    variant="default"
+                    onClick={handleAdd}
+                    className="bg-jelly-bean-900"
+                  >
+                    Adicionar Contato
                   </Button>
-                )}
+                  {selectedContacts.length > 0 && (
+                    <Button variant="default" onClick={handleDeleteMultiple}>
+                      Excluir Selecionados ({selectedContacts.length})
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="max-md:overflow-auto max-md:max-w-full">
@@ -326,16 +417,16 @@ export default function ContatosPage() {
                             onChange={toggleSelectAll}
                           />
                         </TableHead>
-                        <TableHead>Nome completo</TableHead>
-                        <TableHead>Telefone</TableHead>
-                        <TableHead>Cpf/Cnpj</TableHead>
-                        <TableHead>Banco</TableHead>
-                        <TableHead>Agência</TableHead>
-                        <TableHead>Conta</TableHead>
-                        <TableHead>Receita estimada</TableHead>
-                        <TableHead>Cep</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>E-mail</TableHead>
+                        <TableHead>Celular</TableHead>
+                        <TableHead>CPF/CNPJ</TableHead>
+                        <TableHead>CEP</TableHead>
                         <TableHead>Estado</TableHead>
-                        <TableHead>Ativo</TableHead>
+                        <TableHead>Cidade</TableHead>
+                        <TableHead>Origem</TableHead>
+                        {/* <TableHead>Veículo Trabalho</TableHead>
+                        <TableHead>Enviar Cotação</TableHead> */}
                         <TableHead className="w-16 text-center">
                           Ações
                         </TableHead>
@@ -359,25 +450,21 @@ export default function ContatosPage() {
                           <TableRow key={r.id}>
                             <TableCell className="pl-8">
                               <Checkbox
-                                aria-label={`Selecionar contato ${r.nome_completo || r.id}`}
+                                aria-label={`Selecionar contato ${r.nome || r.id}`}
                                 checked={selectedContacts.includes(r.id)}
                                 onChange={() => toggleContactSelection(r.id)}
                               />
                             </TableCell>
-                            <TableCell>
-                              {renderValue(r.nome_completo)}
-                            </TableCell>
-                            <TableCell>{renderValue(r.telefone)}</TableCell>
+                            <TableCell>{renderValue(r.nome)}</TableCell>
+                            <TableCell>{renderValue(r.email)}</TableCell>
+                            <TableCell>{renderValue(r.celular)}</TableCell>
                             <TableCell>{renderValue(r.cpf_cnpj)}</TableCell>
-                            <TableCell>{renderValue(r.banco)}</TableCell>
-                            <TableCell>{renderValue(r.agencia)}</TableCell>
-                            <TableCell>{renderValue(r.conta)}</TableCell>
-                            <TableCell>
-                              {renderValue(r.receita_estimada)}
-                            </TableCell>
                             <TableCell>{renderValue(r.cep)}</TableCell>
                             <TableCell>{renderValue(r.estado)}</TableCell>
-                            <TableCell>{r.ativo ? "Sim" : "Não"}</TableCell>
+                            <TableCell>{renderValue(r.cidade)}</TableCell>
+                            <TableCell>{renderValue(r.origem_lead)}</TableCell>
+                            {/* <TableCell>{r.veiculo_trabalho ? "Sim" : "Não"}</TableCell>
+                            <TableCell>{r.enviar_cotacao_email ? "Sim" : "Não"}</TableCell> */}
                             <TableCell className="w-16 text-center">
                               <div className="flex justify-center space-x-2">
                                 <Button
@@ -477,21 +564,28 @@ export default function ContatosPage() {
                         </Label>
                         <Input
                           id="nome"
-                          value={nomeCompleto}
-                          onChange={(e) => setNomeCompleto(e.target.value)}
+                          value={nome}
+                          onChange={(e) => setNome(e.target.value)}
                         />
                       </div>
                       <div className="flex flex-col">
-                        <Label
-                          htmlFor="telefone"
-                          className="text-jelly-bean-900"
-                        >
-                          Telefone
+                        <Label htmlFor="email" className="text-jelly-bean-900">
+                          E-mail
                         </Label>
                         <Input
-                          id="telefone"
-                          value={telefone}
-                          onChange={(e) => setTelefone(e.target.value)}
+                          id="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <Label htmlFor="celular" className="text-jelly-bean-900">
+                          Celular
+                        </Label>
+                        <Input
+                          id="celular"
+                          value={celular}
+                          onChange={(e) => setCelular(e.target.value)}
                         />
                       </div>
                       <div className="flex flex-col">
@@ -508,16 +602,6 @@ export default function ContatosPage() {
                         />
                       </div>
                       <div className="flex flex-col">
-                        <Label htmlFor="banco" className="text-jelly-bean-900">
-                          Banco
-                        </Label>
-                        <Input
-                          id="banco"
-                          value={banco}
-                          onChange={(e) => setBanco(e.target.value)}
-                        />
-                      </div>
-                      <div className="flex flex-col">
                         <Label htmlFor="estado" className="text-jelly-bean-900">
                           Estado
                         </Label>
@@ -526,6 +610,23 @@ export default function ContatosPage() {
                           value={estado}
                           onChange={(e) => setEstado(e.target.value)}
                         />
+                      </div>
+                      <div className="flex flex-col">
+                        <Label htmlFor="origemLead" className="text-jelly-bean-900">
+                          Origem do Lead
+                        </Label>
+                        <Select value={origemLead} onValueChange={setOrigemLead}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a origem" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ORIGEM_LEAD_OPTIONS.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
@@ -537,11 +638,12 @@ export default function ContatosPage() {
                         type="button"
                         variant="outline"
                         onClick={() => {
-                          setNomeCompleto("");
-                          setTelefone("");
+                          setNome("");
+                          setEmail("");
+                          setCelular("");
                           setCpfCnpj("");
-                          setBanco("");
                           setEstado("");
+                          setOrigemLead("");
                           setSearchTerm("");
                           setPage(1);
                           fetchData();
@@ -558,6 +660,176 @@ export default function ContatosPage() {
         </div>
       </div>
 
+      {/* Diálogo de Adicionar */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Contato</DialogTitle>
+            <DialogDescription>
+              Preencha os dados do novo contato.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <Label htmlFor="add-nome">Nome *</Label>
+                <Input
+                  id="add-nome"
+                  value={newContact.nome || ""}
+                  onChange={(e) =>
+                    setNewContact({
+                      ...newContact,
+                      nome: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="add-email">E-mail</Label>
+                <Input
+                  id="add-email"
+                  value={newContact.email || ""}
+                  onChange={(e) =>
+                    setNewContact({
+                      ...newContact,
+                      email: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="add-celular">Celular</Label>
+                <Input
+                  id="add-celular"
+                  value={newContact.celular || ""}
+                  onChange={(e) =>
+                    setNewContact({
+                      ...newContact,
+                      celular: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="add-cpf">CPF/CNPJ</Label>
+                <Input
+                  id="add-cpf"
+                  value={newContact.cpf_cnpj || ""}
+                  onChange={(e) =>
+                    setNewContact({
+                      ...newContact,
+                      cpf_cnpj: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="add-cep">CEP</Label>
+                <Input
+                  id="add-cep"
+                  value={newContact.cep || ""}
+                  onChange={(e) =>
+                    setNewContact({
+                      ...newContact,
+                      cep: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="add-estado">Estado</Label>
+                <Input
+                  id="add-estado"
+                  value={newContact.estado || ""}
+                  onChange={(e) =>
+                    setNewContact({
+                      ...newContact,
+                      estado: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="add-cidade">Cidade</Label>
+                <Input
+                  id="add-cidade"
+                  value={newContact.cidade || ""}
+                  onChange={(e) =>
+                    setNewContact({
+                      ...newContact,
+                      cidade: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="add-origem">Origem do Lead</Label>
+                <Select
+                  value={newContact.origem_lead || ""}
+                  onValueChange={(value) =>
+                    setNewContact({
+                      ...newContact,
+                      origem_lead: value,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a origem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ORIGEM_LEAD_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col justify-center">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="add-veiculo"
+                    checked={newContact.veiculo_trabalho || false}
+                    onChange={(e) =>
+                      setNewContact({
+                        ...newContact,
+                        veiculo_trabalho: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="add-veiculo">Veículo de Trabalho</Label>
+                </div>
+              </div>
+              
+              <div className="flex flex-col justify-center">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="add-cotacao"
+                    checked={newContact.enviar_cotacao_email || false}
+                    onChange={(e) =>
+                      setNewContact({
+                        ...newContact,
+                        enviar_cotacao_email: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="add-cotacao">Enviar Cotação por E-mail</Label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAddDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveNew}>Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Diálogo de Edição */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
@@ -571,27 +843,40 @@ export default function ContatosPage() {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col">
-                  <Label htmlFor="edit-nome">Nome Completo</Label>
+                  <Label htmlFor="edit-nome">Nome</Label>
                   <Input
                     id="edit-nome"
-                    value={editingContact.nome_completo || ""}
+                    value={editingContact.nome || ""}
                     onChange={(e) =>
                       setEditingContact({
                         ...editingContact,
-                        nome_completo: e.target.value,
+                        nome: e.target.value,
                       })
                     }
                   />
                 </div>
                 <div className="flex flex-col">
-                  <Label htmlFor="edit-telefone">Telefone</Label>
+                  <Label htmlFor="edit-email">E-mail</Label>
                   <Input
-                    id="edit-telefone"
-                    value={editingContact.telefone || ""}
+                    id="edit-email"
+                    value={editingContact.email || ""}
                     onChange={(e) =>
                       setEditingContact({
                         ...editingContact,
-                        telefone: e.target.value,
+                        email: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <Label htmlFor="edit-celular">Celular</Label>
+                  <Input
+                    id="edit-celular"
+                    value={editingContact.celular || ""}
+                    onChange={(e) =>
+                      setEditingContact({
+                        ...editingContact,
+                        celular: e.target.value,
                       })
                     }
                   />
@@ -605,58 +890,6 @@ export default function ContatosPage() {
                       setEditingContact({
                         ...editingContact,
                         cpf_cnpj: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <Label htmlFor="edit-banco">Banco</Label>
-                  <Input
-                    id="edit-banco"
-                    value={editingContact.banco || ""}
-                    onChange={(e) =>
-                      setEditingContact({
-                        ...editingContact,
-                        banco: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <Label htmlFor="edit-agencia">Agência</Label>
-                  <Input
-                    id="edit-agencia"
-                    value={editingContact.agencia || ""}
-                    onChange={(e) =>
-                      setEditingContact({
-                        ...editingContact,
-                        agencia: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <Label htmlFor="edit-conta">Conta</Label>
-                  <Input
-                    id="edit-conta"
-                    value={editingContact.conta || ""}
-                    onChange={(e) =>
-                      setEditingContact({
-                        ...editingContact,
-                        conta: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <Label htmlFor="edit-receita">Receita Estimada</Label>
-                  <Input
-                    id="edit-receita"
-                    value={editingContact.receita_estimada || ""}
-                    onChange={(e) =>
-                      setEditingContact({
-                        ...editingContact,
-                        receita_estimada: e.target.value,
                       })
                     }
                   />
@@ -700,19 +933,57 @@ export default function ContatosPage() {
                     }
                   />
                 </div>
+                <div className="flex flex-col">
+                  <Label htmlFor="edit-origem">Origem do Lead</Label>
+                  <Select
+                    value={editingContact.origem_lead || ""}
+                    onValueChange={(value) =>
+                      setEditingContact({
+                        ...editingContact,
+                        origem_lead: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a origem" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ORIGEM_LEAD_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="flex flex-col justify-center">
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      id="edit-ativo"
-                      checked={editingContact.ativo || false}
+                      id="edit-veiculo"
+                      checked={editingContact.veiculo_trabalho || false}
                       onChange={(e) =>
                         setEditingContact({
                           ...editingContact,
-                          ativo: e.target.checked,
+                          veiculo_trabalho: e.target.checked,
                         })
                       }
                     />
-                    <Label htmlFor="edit-ativo">Ativo</Label>
+                    <Label htmlFor="edit-veiculo">Veículo de Trabalho</Label>
+                  </div>
+                </div>
+                <div className="flex flex-col justify-center">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="edit-cotacao"
+                      checked={editingContact.enviar_cotacao_email || false}
+                      onChange={(e) =>
+                        setEditingContact({
+                          ...editingContact,
+                          enviar_cotacao_email: e.target.checked,
+                        })
+                      }
+                    />
+                    <Label htmlFor="edit-cotacao">Enviar Cotação por E-mail</Label>
                   </div>
                 </div>
               </div>

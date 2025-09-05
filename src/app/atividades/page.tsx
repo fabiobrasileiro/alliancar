@@ -102,18 +102,17 @@ const AtividadesPage: React.FC = () => {
 
   // Buscar usuarios do Supabase
   useEffect(() => {
-    fetchperfis();
+    fetchafiliados();
   }, [supabase]);
 
   //procurar usuarios
-  const fetchperfis = async () => {
+  const fetchafiliados = async () => {
     try {
       setLoading(true);
 
-      let { data: perfis, error } = await supabase
-        .from("perfis")
+      let { data: afiliados, error } = await supabase
+        .from("afiliados")
         .select("nome_completo, id");
-        .eq('tipo_usuario', 'administrador')
 
       if (error) {
         console.error("Erro ao buscar usuários:", error);
@@ -122,7 +121,7 @@ const AtividadesPage: React.FC = () => {
       }
 
 
-      setUsuarios(perfis || []);
+      setUsuarios(afiliados || []);
     } catch (error) {
       console.error("Erro:", error);
       toast.error("Erro ao carregar atividades");

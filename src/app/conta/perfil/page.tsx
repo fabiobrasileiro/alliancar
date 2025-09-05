@@ -16,12 +16,12 @@ import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
-const perfis = () => {
+const afiliados = () => {
   const supabase = createClient();
   const [activeTab, setActiveTab] = useState("dados_pessoais");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [perfisId, setperfisId] = useState<string | null>(null);
+  const [afiliadosId, setafiliadosId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     fullName: "",
@@ -64,11 +64,11 @@ const perfis = () => {
 
   // Buscar dados do perfil ao carregar
   useEffect(() => {
-    fetchperfis();
+    fetchafiliados();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchperfis = async () => {
+  const fetchafiliados = async () => {
     try {
       setLoading(true);
 
@@ -84,7 +84,7 @@ const perfis = () => {
 
       // Buscar perfil do usuário
       const { data, error } = await supabase
-        .from("perfis")
+        .from("afiliados")
         .select("*")
         .eq("auth_id", user.id)
         .single();
@@ -96,7 +96,7 @@ const perfis = () => {
       }
 
       if (data) {
-        setperfisId(data.id);
+        setafiliadosId(data.id);
         setFormData({
           name: data.nome_completo?.split(" ")[0] || "",
           fullName: data.nome_completo || "",
@@ -134,7 +134,7 @@ const perfis = () => {
   };
 
   const handleSavePersonalData = async () => {
-    if (!perfisId) {
+    if (!afiliadosId) {
       toast.error("Perfil não encontrado");
       return;
     }
@@ -143,7 +143,7 @@ const perfis = () => {
       setSaving(true);
 
       const { error } = await supabase
-        .from("perfis")
+        .from("afiliados")
         .update({
           nome_completo: formData.fullName,
           cpf_cnpj: formData.registration,
@@ -156,7 +156,7 @@ const perfis = () => {
           cidade: formData.addressCity,
           atualizado_em: new Date().toISOString(),
         })
-        .eq("id", perfisId);
+        .eq("id", afiliadosId);
 
       if (error) {
         throw error;
@@ -448,7 +448,7 @@ const perfis = () => {
               <Label>Faça upload da sua foto de perfil</Label>
               <div className="mt-4">
                 <Input
-                  id="perfisPictureInput"
+                  id="afiliadosPictureInput"
                   type="file"
                   className="hidden"
                 />
@@ -460,7 +460,7 @@ const perfis = () => {
                 <Image
                   width={150}
                   height={150}
-                  id="perfisPictureImg"
+                  id="afiliadosPictureImg"
                   src="/"
                   alt="Foto de perfil"
                   className="w-full h-full object-cover"
@@ -527,4 +527,4 @@ const perfis = () => {
   );
 };
 
-export default perfis;
+export default afiliados;

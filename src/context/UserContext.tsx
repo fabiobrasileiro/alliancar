@@ -44,7 +44,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const fetchPerfil = async (userId: string) => {
     try {
       const { data: perfilData, error: perfilError } = await supabase
-        .from('perfis')
+        .from('afiliados')
         .select('*')
         .eq('auth_id', userId)
         .maybeSingle();
