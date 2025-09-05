@@ -145,159 +145,160 @@ export default function FinanceiroPage() {
     }
   };
   return (
-    <>
-      <div className="block m-auto p-2 md:px-6 md:py-4">
-        <div className="flex gap-6 items-start w-full">
-          <Sidebar title="Financeiro" items={sidebarItems} />
+    <h1>HI</h1>
+    // <>
+    //   <div className="block m-auto p-2 md:px-6 md:py-4">
+    //     <div className="flex gap-6 items-start w-full">
+    //       <Sidebar title="Financeiro" items={sidebarItems} />
 
-          <section className="flex-1 min-w-0">
-            <header className="flex flex-col flex-wrap">
-              <h2 className="font-bold leading-tight m-0 text-slate-700 text-2xl">
-                Painel Financeiro
-              </h2>
-            </header>
+    //       <section className="flex-1 min-w-0">
+    //         <header className="flex flex-col flex-wrap">
+    //           <h2 className="font-bold leading-tight m-0 text-slate-700 text-2xl">
+    //             Painel Financeiro
+    //           </h2>
+    //         </header>
 
-            {/* Cards de Resumo */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    Total Geral
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {loading ? "Carregando..." : formatCurrency(resumo.total)}
-                  </div>
-                </CardContent>
-              </Card>
+    //         {/* Cards de Resumo */}
+    //         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+    //           <Card>
+    //             <CardHeader className="pb-2">
+    //               <CardTitle className="text-sm font-medium text-gray-600">
+    //                 Total Geral
+    //               </CardTitle>
+    //             </CardHeader>
+    //             <CardContent>
+    //               <div className="text-2xl font-bold text-gray-900">
+    //                 {loading ? "Carregando..." : formatCurrency(resumo.total)}
+    //               </div>
+    //             </CardContent>
+    //           </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-green-600">
-                    Pago
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    {loading ? "Carregando..." : formatCurrency(resumo.pago)}
-                  </div>
-                </CardContent>
-              </Card>
+    //           <Card>
+    //             <CardHeader className="pb-2">
+    //               <CardTitle className="text-sm font-medium text-green-600">
+    //                 Pago
+    //               </CardTitle>
+    //             </CardHeader>
+    //             <CardContent>
+    //               <div className="text-2xl font-bold text-green-600">
+    //                 {loading ? "Carregando..." : formatCurrency(resumo.pago)}
+    //               </div>
+    //             </CardContent>
+    //           </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-blue-600">
-                    A Receber
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {loading
-                      ? "Carregando..."
-                      : formatCurrency(resumo.aReceber)}
-                  </div>
-                </CardContent>
-              </Card>
+    //           <Card>
+    //             <CardHeader className="pb-2">
+    //               <CardTitle className="text-sm font-medium text-blue-600">
+    //                 A Receber
+    //               </CardTitle>
+    //             </CardHeader>
+    //             <CardContent>
+    //               <div className="text-2xl font-bold text-blue-600">
+    //                 {loading
+    //                   ? "Carregando..."
+    //                   : formatCurrency(resumo.aReceber)}
+    //               </div>
+    //             </CardContent>
+    //           </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-yellow-600">
-                    Pendente
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {loading
-                      ? "Carregando..."
-                      : formatCurrency(resumo.pendente)}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+    //           <Card>
+    //             <CardHeader className="pb-2">
+    //               <CardTitle className="text-sm font-medium text-yellow-600">
+    //                 Pendente
+    //               </CardTitle>
+    //             </CardHeader>
+    //             <CardContent>
+    //               <div className="text-2xl font-bold text-yellow-600">
+    //                 {loading
+    //                   ? "Carregando..."
+    //                   : formatCurrency(resumo.pendente)}
+    //               </div>
+    //             </CardContent>
+    //           </Card>
+    //         </div>
 
-            {/* Filtros */}
-            <div className="mt-6 max-w-xs">
-              <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Filtrar por status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="pago">Pago</SelectItem>
-                  <SelectItem value="a_receber">A Receber</SelectItem>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="cancelado">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    //         {/* Filtros */}
+    //         <div className="mt-6 max-w-xs">
+    //           <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+    //             <SelectTrigger className="w-full">
+    //               <SelectValue placeholder="Filtrar por status" />
+    //             </SelectTrigger>
+    //             <SelectContent>
+    //               <SelectItem value="todos">Todos</SelectItem>
+    //               <SelectItem value="pago">Pago</SelectItem>
+    //               <SelectItem value="a_receber">A Receber</SelectItem>
+    //               <SelectItem value="pendente">Pendente</SelectItem>
+    //               <SelectItem value="cancelado">Cancelado</SelectItem>
+    //             </SelectContent>
+    //           </Select>
+    //         </div>
 
-            {/* Tabela de Pagamentos */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>
-                  Histórico de Pagamentos ({filteredPagamentos.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">
-                    Carregando pagamentos...
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID Pagamento</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Associado</TableHead>
-                        <TableHead>Placa</TableHead>
-                        <TableHead>Comissão</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredPagamentos.length === 0 ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={6}
-                            className="text-center py-8 text-gray-500"
-                          >
-                            Nenhum pagamento encontrado
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredPagamentos.map((pagamento) => (
-                          <TableRow key={pagamento.id}>
-                            <TableCell className="font-medium">
-                              {pagamento.pagamentos}
-                            </TableCell>
-                            <TableCell>{formatDate(pagamento.data)}</TableCell>
-                            <TableCell>{pagamento.associado_id}</TableCell>
-                            <TableCell>{pagamento.placa}</TableCell>
-                            <TableCell className="font-semibold">
-                              {formatCurrency(
-                                parseFloat(pagamento.comissao?.toString()) || 0,
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={getStatusColor(pagamento.status)}>
-                                {pagamento.status
-                                  .replace("_", " ")
-                                  .toUpperCase()}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </section>
-        </div>
-      </div>
-    </>
+    //         {/* Tabela de Pagamentos */}
+    //         <Card className="mt-6">
+    //           <CardHeader>
+    //             <CardTitle>
+    //               Histórico de Pagamentos ({filteredPagamentos.length})
+    //             </CardTitle>
+    //           </CardHeader>
+    //           <CardContent>
+    //             {loading ? (
+    //               <div className="text-center py-8">
+    //                 Carregando pagamentos...
+    //               </div>
+    //             ) : (
+    //               <Table>
+    //                 <TableHeader>
+    //                   <TableRow>
+    //                     <TableHead>ID Pagamento</TableHead>
+    //                     <TableHead>Data</TableHead>
+    //                     <TableHead>Associado</TableHead>
+    //                     <TableHead>Placa</TableHead>
+    //                     <TableHead>Comissão</TableHead>
+    //                     <TableHead>Status</TableHead>
+    //                   </TableRow>
+    //                 </TableHeader>
+    //                 <TableBody>
+    //                   {filteredPagamentos.length === 0 ? (
+    //                     <TableRow>
+    //                       <TableCell
+    //                         colSpan={6}
+    //                         className="text-center py-8 text-gray-500"
+    //                       >
+    //                         Nenhum pagamento encontrado
+    //                       </TableCell>
+    //                     </TableRow>
+    //                   ) : (
+    //                     filteredPagamentos.map((pagamento) => (
+    //                       <TableRow key={pagamento.id}>
+    //                         <TableCell className="font-medium">
+    //                           {pagamento.pagamentos}
+    //                         </TableCell>
+    //                         <TableCell>{formatDate(pagamento.data)}</TableCell>
+    //                         <TableCell>{pagamento.associado_id}</TableCell>
+    //                         <TableCell>{pagamento.placa}</TableCell>
+    //                         <TableCell className="font-semibold">
+    //                           {formatCurrency(
+    //                             parseFloat(pagamento.comissao?.toString()) || 0,
+    //                           )}
+    //                         </TableCell>
+    //                         <TableCell>
+    //                           <Badge variant={getStatusColor(pagamento.status)}>
+    //                             {pagamento.status
+    //                               .replace("_", " ")
+    //                               .toUpperCase()}
+    //                           </Badge>
+    //                         </TableCell>
+    //                       </TableRow>
+    //                     ))
+    //                   )}
+    //                 </TableBody>
+    //               </Table>
+    //             )}
+    //           </CardContent>
+    //         </Card>
+    //       </section>
+    //     </div>
+    //   </div>
+    // </>
   );
 }

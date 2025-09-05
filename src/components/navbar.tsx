@@ -50,7 +50,7 @@ export default function Navbar() {
     { name: "Atividades", href: "/atividades", current: false },
     { name: "Minha Conta", href: "/conta", current: false },
     { name: "Relatórios", href: "/relatorios", current: false },
-    { name: "Financeiro", href: "/financeiro", current: false },
+    // { name: "Financeiro", href: "/financeiro", current: false },
     // { name: 'Minha Empresa', href: '/empresa', current: false },
     // { name: 'Ferramentas', href: '/ferramentas', current: false },
   ];

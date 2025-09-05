@@ -15,14 +15,36 @@ import Image from "next/image";
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
-const afiliados = () => {
+interface FormData {
+  name: string;
+  fullName: string;
+  registration: string;
+  birthdate: string;
+  phone: string;
+  mobile: string;
+  email: string;
+  zipcode: string;
+  address: string;
+  addressNumber: string;
+  addressComplement: string;
+  addressNeighborhood: string;
+  addressState: string;
+  addressCity: string;
+  currentPassword: string;
+  password: string;
+  passwordConfirmation: string;
+  foto_perfil_url?: string;
+}
+
+const Afiliados = () => {
   const supabase = createClient();
   const [activeTab, setActiveTab] = useState("dados_pessoais");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [afiliadosId, setafiliadosId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const [perfilId, setPerfilId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     fullName: "",
     registration: "",
@@ -40,83 +62,84 @@ const afiliados = () => {
     currentPassword: "",
     password: "",
     passwordConfirmation: "",
+    foto_perfil_url: ""
   });
 
-  interface FormData {
-    name: string;
-    fullName: string;
-    registration: string;
-    birthdate: string;
-    phone: string;
-    mobile: string;
-    email: string;
-    zipcode: string;
-    address: string;
-    addressNumber: string;
-    addressComplement: string;
-    addressNeighborhood: string;
-    addressState: string;
-    addressCity: string;
-    currentPassword: string;
-    password: string;
-    passwordConfirmation: string;
-  }
+  // Estados para endereço e bancos
+  const [enderecos, setEnderecos] = useState<any[]>([]);
+  const [bancos, setBancos] = useState<any[]>([]);
 
   // Buscar dados do perfil ao carregar
   useEffect(() => {
-    fetchafiliados();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchPerfil();
   }, []);
 
-  const fetchafiliados = async () => {
+  const fetchPerfil = async () => {
     try {
       setLoading(true);
 
       // Buscar usuário autenticado
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      if (!user) {
+      if (userError || !user) {
         toast.error("Usuário não autenticado");
         return;
       }
 
-      // Buscar perfil do usuário
-      const { data, error } = await supabase
-        .from("afiliados")
-        .select("*")
-        .eq("auth_id", user.id)
-        .single();
+      // Buscar dados em paralelo
+      const [perfilResponse, enderecosResponse, bancosResponse] = await Promise.all([
+        // Perfil do usuário na tabela afiliados
+        supabase
+          .from("afiliados")
+          .select("*")
+          .eq("auth_id", user.id)
+          .single(),
 
-      if (error) {
-        console.error("Erro ao buscar perfil:", error);
-        toast.error("Erro ao carregar perfil");
-        return;
-      }
+        // Endereços do usuário
+        supabase
+          .from("enderecos")
+          .select("*")
+          .eq("usuario_id", user.id),
 
-      if (data) {
-        setafiliadosId(data.id);
+        // Contas bancárias do usuário
+        supabase
+          .from("contas_bancarias")
+          .select("*")
+          .eq("usuario_id", user.id)
+      ]);
+
+      if (perfilResponse.data) {
+        setPerfilId(perfilResponse.data.id);
+        
+        // Buscar endereço principal
+        const enderecoPrincipal = enderecosResponse.data?.find(e => e.principal) || 
+                                 enderecosResponse.data?.[0] || {};
+        
         setFormData({
-          name: data.nome_completo?.split(" ")[0] || "",
-          fullName: data.nome_completo || "",
-          registration: data.cpf_cnpj || "",
+          name: perfilResponse.data.nome_completo?.split(" ")[0] || "",
+          fullName: perfilResponse.data.nome_completo || "",
+          registration: perfilResponse.data.cpf_cnpj || "",
           birthdate: "",
-          phone: data.telefone || "",
-          mobile: data.telefone || "",
+          phone: perfilResponse.data.telefone || "",
+          mobile: perfilResponse.data.telefone || "",
           email: user.email || "",
-          zipcode: data.cep || "",
-          address: data.endereco || "",
-          addressNumber: data.numero || "",
-          addressComplement: data.complemento || "",
+          zipcode: enderecoPrincipal.cep || "",
+          address: enderecoPrincipal.endereco || "",
+          addressNumber: enderecoPrincipal.numero || "",
+          addressComplement: enderecoPrincipal.complemento || "",
           addressNeighborhood: "",
-          addressState: data.estado || "",
-          addressCity: data.cidade || "",
+          addressState: enderecoPrincipal.estado || "",
+          addressCity: enderecoPrincipal.cidade || "",
           currentPassword: "",
           password: "",
           passwordConfirmation: "",
+          foto_perfil_url: perfilResponse.data.foto_perfil_url || ""
         });
       }
+
+      if (enderecosResponse.data) setEnderecos(enderecosResponse.data);
+      if (bancosResponse.data) setBancos(bancosResponse.data);
+
     } catch (error) {
       console.error("Erro:", error);
       toast.error("Erro ao carregar perfil");
@@ -134,7 +157,7 @@ const afiliados = () => {
   };
 
   const handleSavePersonalData = async () => {
-    if (!afiliadosId) {
+    if (!perfilId) {
       toast.error("Perfil não encontrado");
       return;
     }
@@ -142,24 +165,67 @@ const afiliados = () => {
     try {
       setSaving(true);
 
-      const { error } = await supabase
+      // Buscar usuário autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuário não autenticado");
+        return;
+      }
+
+      // Atualizar perfil na tabela afiliados
+      const { error: perfilError } = await supabase
         .from("afiliados")
         .update({
           nome_completo: formData.fullName,
           cpf_cnpj: formData.registration,
-          telefone: formData.phone,
-          cep: formData.zipcode,
-          endereco: formData.address,
-          numero: formData.addressNumber,
-          complemento: formData.addressComplement,
-          estado: formData.addressState,
-          cidade: formData.addressCity,
+          telefone: formData.mobile,
           atualizado_em: new Date().toISOString(),
         })
-        .eq("id", afiliadosId);
+        .eq("id", perfilId);
 
-      if (error) {
-        throw error;
+      if (perfilError) {
+        throw perfilError;
+      }
+
+      // Verificar se já existe um endereço principal
+      const enderecoExistente = enderecos.find(e => e.principal);
+
+      if (enderecoExistente) {
+        // Atualizar endereço existente
+        const { error: enderecoError } = await supabase
+          .from("enderecos")
+          .update({
+            cep: formData.zipcode,
+            endereco: formData.address,
+            numero: formData.addressNumber,
+            complemento: formData.addressComplement,
+            estado: formData.addressState,
+            cidade: formData.addressCity,
+            principal: true
+          })
+          .eq("id", enderecoExistente.id);
+
+        if (enderecoError) {
+          throw enderecoError;
+        }
+      } else {
+        // Criar novo endereço
+        const { error: enderecoError } = await supabase
+          .from("enderecos")
+          .insert({
+            usuario_id: user.id,
+            cep: formData.zipcode,
+            endereco: formData.address,
+            numero: formData.addressNumber,
+            complemento: formData.addressComplement,
+            estado: formData.addressState,
+            cidade: formData.addressCity,
+            principal: true
+          });
+
+        if (enderecoError) {
+          throw enderecoError;
+        }
       }
 
       toast.success("Perfil atualizado com sucesso!");
@@ -208,15 +274,102 @@ const afiliados = () => {
     }
   };
 
+  const handleUploadFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file || !perfilId) return;
+
+      // Verificar se é uma imagem
+      if (!file.type.startsWith('image/')) {
+        toast.error("Por favor, selecione um arquivo de imagem");
+        return;
+      }
+
+      // Fazer upload para o Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${perfilId}-${Math.random()}.${fileExt}`;
+      const filePath = `fotos-perfil/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('afiliados')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Obter URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('afiliados')
+        .getPublicUrl(filePath);
+
+      // Atualizar perfil com a URL da foto
+      const { error: updateError } = await supabase
+        .from("afiliados")
+        .update({ foto_perfil_url: publicUrl })
+        .eq("id", perfilId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Atualizar estado local
+      setFormData(prev => ({ ...prev, foto_perfil_url: publicUrl }));
+      toast.success("Foto de perfil atualizada com sucesso!");
+
+    } catch (error) {
+      console.error("Erro ao fazer upload da foto:", error);
+      toast.error("Erro ao atualizar foto de perfil");
+    }
+  };
+
+  const handleDeleteFoto = async () => {
+    if (!perfilId || !formData.foto_perfil_url) return;
+
+    try {
+      // Extrair caminho do arquivo da URL
+      const urlParts = formData.foto_perfil_url.split('/');
+      const filePath = urlParts.slice(urlParts.indexOf('fotos-perfil')).join('/');
+
+      // Deletar arquivo do storage
+      const { error: deleteError } = await supabase.storage
+        .from('afiliados')
+        .remove([filePath]);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      // Remover URL do perfil
+      const { error: updateError } = await supabase
+        .from("afiliados")
+        .update({ foto_perfil_url: null })
+        .eq("id", perfilId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Atualizar estado local
+      setFormData(prev => ({ ...prev, foto_perfil_url: "" }));
+      toast.success("Foto de perfil removida com sucesso!");
+
+    } catch (error) {
+      console.error("Erro ao remover foto:", error);
+      toast.error("Erro ao remover foto de perfil");
+    }
+  };
+
   return (
     <SidebarLayout>
       <div className="container mx-auto p-4">
-        <h3 className="text-2xl font-bold mb-5">Perfil</h3>
+        <h3 className="text-2xl font-bold mb-5">Perfil do Afiliado</h3>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-4 mb-5">
             <TabsTrigger value="dados_pessoais">Dados Pessoais</TabsTrigger>
             <TabsTrigger value="foto_perfil">Foto de Perfil</TabsTrigger>
+            <TabsTrigger value="dados_bancarios">Dados Bancários</TabsTrigger>
             <TabsTrigger value="dados_acesso">Dados de Acesso</TabsTrigger>
           </TabsList>
 
@@ -229,11 +382,11 @@ const afiliados = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
               <div className="space-y-2">
-                <Label htmlFor="dataName">
-                  Apelido <span className="text-red-500">*</span>
+                <Label htmlFor="name">
+                  Apelido
                 </Label>
                 <Input
-                  id="dataName"
+                  id="name"
                   type="text"
                   maxLength={256}
                   value={formData.name}
@@ -242,11 +395,11 @@ const afiliados = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataFullName">
+                <Label htmlFor="fullName">
                   Nome Completo <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="dataFullName"
+                  id="fullName"
                   type="text"
                   maxLength={256}
                   value={formData.fullName}
@@ -255,47 +408,22 @@ const afiliados = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataRegistration">CPF/CNPJ</Label>
+                <Label htmlFor="registration">CPF/CNPJ</Label>
                 <Input
-                  id="dataRegistration"
+                  id="registration"
                   type="text"
                   maxLength={18}
                   value={formData.registration}
                   onChange={handleInputChange}
-                  disabled
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataBirthdate">
-                  Data de Nascimento <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="dataBirthdate"
-                  type="text"
-                  maxLength={10}
-                  value={formData.birthdate}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dataPhone">Telefone Comercial com DDD</Label>
-                <Input
-                  id="dataPhone"
-                  type="text"
-                  maxLength={32}
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dataMobile">
+                <Label htmlFor="mobile">
                   WhatsApp com DDD<span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="dataMobile"
+                  id="mobile"
                   type="text"
                   maxLength={32}
                   value={formData.mobile}
@@ -304,11 +432,11 @@ const afiliados = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataEmail">
+                <Label htmlFor="email">
                   E-mail <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="dataEmail"
+                  id="email"
                   type="email"
                   maxLength={128}
                   value={formData.email}
@@ -326,11 +454,11 @@ const afiliados = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <div className="space-y-2">
-                <Label htmlFor="dataZipcode">
-                  CEP <span className="text-red-500">*</span>
+                <Label htmlFor="zipcode">
+                  CEP
                 </Label>
                 <Input
-                  id="dataZipcode"
+                  id="zipcode"
                   type="text"
                   maxLength={10}
                   value={formData.zipcode}
@@ -339,11 +467,11 @@ const afiliados = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataAddress">
-                  Endereço <span className="text-red-500">*</span>
+                <Label htmlFor="address">
+                  Endereço
                 </Label>
                 <Input
-                  id="dataAddress"
+                  id="address"
                   type="text"
                   maxLength={512}
                   value={formData.address}
@@ -352,11 +480,11 @@ const afiliados = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataAddressNumber">
-                  Número <span className="text-red-500">*</span>
+                <Label htmlFor="addressNumber">
+                  Número
                 </Label>
                 <Input
-                  id="dataAddressNumber"
+                  id="addressNumber"
                   type="text"
                   maxLength={32}
                   value={formData.addressNumber}
@@ -365,9 +493,9 @@ const afiliados = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataAddressComplement">Complemento</Label>
+                <Label htmlFor="addressComplement">Complemento</Label>
                 <Input
-                  id="dataAddressComplement"
+                  id="addressComplement"
                   type="text"
                   maxLength={64}
                   value={formData.addressComplement}
@@ -376,21 +504,8 @@ const afiliados = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataAddressNeighborhood">
-                  Bairro <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="dataAddressNeighborhood"
-                  type="text"
-                  maxLength={64}
-                  value={formData.addressNeighborhood}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dataAddressState">
-                  Estado <span className="text-red-500">*</span>
+                <Label htmlFor="addressState">
+                  Estado
                 </Label>
                 <Select
                   value={formData.addressState}
@@ -407,30 +522,42 @@ const afiliados = () => {
                     <SelectItem value="AP">Amapá</SelectItem>
                     <SelectItem value="AM">Amazonas</SelectItem>
                     <SelectItem value="BA">Bahia</SelectItem>
-                    {/* Outros estados aqui */}
+                    <SelectItem value="CE">Ceará</SelectItem>
+                    <SelectItem value="DF">Distrito Federal</SelectItem>
+                    <SelectItem value="ES">Espírito Santo</SelectItem>
+                    <SelectItem value="GO">Goiás</SelectItem>
+                    <SelectItem value="MA">Maranhão</SelectItem>
+                    <SelectItem value="MT">Mato Grosso</SelectItem>
+                    <SelectItem value="MS">Mato Grosso do Sul</SelectItem>
+                    <SelectItem value="MG">Minas Gerais</SelectItem>
+                    <SelectItem value="PA">Pará</SelectItem>
+                    <SelectItem value="PB">Paraíba</SelectItem>
+                    <SelectItem value="PR">Paraná</SelectItem>
+                    <SelectItem value="PE">Pernambuco</SelectItem>
+                    <SelectItem value="PI">Piauí</SelectItem>
+                    <SelectItem value="RJ">Rio de Janeiro</SelectItem>
+                    <SelectItem value="RN">Rio Grande do Norte</SelectItem>
+                    <SelectItem value="RS">Rio Grande do Sul</SelectItem>
+                    <SelectItem value="RO">Rondônia</SelectItem>
+                    <SelectItem value="RR">Roraima</SelectItem>
+                    <SelectItem value="SC">Santa Catarina</SelectItem>
+                    <SelectItem value="SP">São Paulo</SelectItem>
+                    <SelectItem value="SE">Sergipe</SelectItem>
+                    <SelectItem value="TO">Tocantins</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dataAddressCity">
-                  Cidade <span className="text-red-500">*</span>
+                <Label htmlFor="addressCity">
+                  Cidade
                 </Label>
-                <Select
+                <Input
+                  id="addressCity"
+                  type="text"
                   value={formData.addressCity}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, addressCity: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a cidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="616">Salvador</SelectItem>
-                    <SelectItem value="281">Abaíra</SelectItem>
-                    {/* Outras cidades aqui */}
-                  </SelectContent>
-                </Select>
+                  onChange={handleInputChange}
+                />
               </div>
             </div>
 
@@ -448,9 +575,10 @@ const afiliados = () => {
               <Label>Faça upload da sua foto de perfil</Label>
               <div className="mt-4">
                 <Input
-                  id="afiliadosPictureInput"
+                  id="fotoPerfilInput"
                   type="file"
-                  className="hidden"
+                  accept="image/*"
+                  onChange={handleUploadFoto}
                 />
               </div>
             </div>
@@ -458,28 +586,71 @@ const afiliados = () => {
             <div className="mt-6">
               <div className="relative w-32 h-32 border rounded-md overflow-hidden">
                 <Image
-                  width={150}
-                  height={150}
-                  id="afiliadosPictureImg"
-                  src="/"
+                  width={128}
+                  height={128}
+                  src={formData.foto_perfil_url || "/placeholder-avatar.png"}
                   alt="Foto de perfil"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <span className="text-white cursor-pointer">Alterar</span>
-                </div>
+                {formData.foto_perfil_url && (
+                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <span 
+                      className="text-white cursor-pointer text-sm"
+                      onClick={() => document.getElementById('fotoPerfilInput')?.click()}
+                    >
+                      Alterar
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <Button className="mt-4">Deletar</Button>
+              {formData.foto_perfil_url && (
+                <Button 
+                  className="mt-4" 
+                  variant="default"
+                  onClick={handleDeleteFoto}
+                >
+                  Remover Foto
+                </Button>
+              )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="dados_bancarios">
+            <div className="mb-6 mt-5">
+              <p className="text-gray-600">
+                Gerencie suas contas bancárias para recebimento de comissões.
+              </p>
+            </div>
+
+            {bancos.length > 0 ? (
+              <div className="space-y-4">
+                {bancos.map((banco) => (
+                  <div key={banco.id} className="p-4 border rounded-lg">
+                    <h4 className="font-semibold">{banco.banco}</h4>
+                    <p>Agência: {banco.agencia}-{banco.digito_agencia}</p>
+                    <p>Conta: {banco.conta}-{banco.digito_conta}</p>
+                    {banco.pix && <p>PIX: {banco.pix}</p>}
+                    {banco.principal && (
+                      <Badge variant="default" className="mt-2">Principal</Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Nenhuma conta bancária cadastrada</p>
+            )}
+
+            <Button className="mt-4" onClick={() => {/* Lógica para adicionar conta bancária */}}>
+              Adicionar Conta Bancária
+            </Button>
           </TabsContent>
 
           <TabsContent value="dados_acesso">
             <div className="mb-6 mt-5">
               <p className="text-gray-600">
                 Tenha em mente que ao alterar a sua senha, nós lhe pediremos que
-                defina uma senha de segurança que contenha letras maiúsculas e
-                minúsculas e números. Isso é para a sua própria segurança.
+                defina uma senha segura que contenha letras maiúsculas, minúsculas e números.
               </p>
             </div>
 
@@ -517,7 +688,7 @@ const afiliados = () => {
               </div>
 
               <Button onClick={handleSavePassword} disabled={saving}>
-                {saving ? "Atualizando..." : "Atualizar"}
+                {saving ? "Atualizando..." : "Atualizar Senha"}
               </Button>
             </div>
           </TabsContent>
@@ -527,4 +698,4 @@ const afiliados = () => {
   );
 };
 
-export default afiliados;
+export default Afiliados;
