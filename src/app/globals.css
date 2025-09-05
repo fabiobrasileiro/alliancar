@@ -59,11 +59,14 @@ body {
 
 }
 
-h1, h2, h3{
+h1,
+h2,
+h3 {
   color: var(--color-jelly-bean-950);
 }
 
-p, span{
+p,
+span {
   color: var(--color-jelly-bean-700);
 }
 
@@ -140,6 +143,7 @@ p, span{
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

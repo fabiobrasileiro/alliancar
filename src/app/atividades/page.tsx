@@ -17,7 +17,12 @@ import {
 } from "@headlessui/react";
 import { toast } from "sonner";
 import { useUser } from "@/context/UserContext";
-import { Select, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Atividade {
   id: number;
@@ -84,7 +89,12 @@ const AtividadesPage: React.FC = () => {
     responsavel: "",
     responsavel_name: "",
     prioridade: "Normal" as "Alta" | "Normal" | "Baixa",
-    tipo: "Ligar" as "Ligar" | "Whatsapp" | "Email" | "Visita" | "Previsão de fechamento",
+    tipo: "Ligar" as
+      | "Ligar"
+      | "Whatsapp"
+      | "Email"
+      | "Visita"
+      | "Previsão de fechamento",
     prazo: new Date().toISOString().split("T")[0],
   });
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -101,15 +111,14 @@ const AtividadesPage: React.FC = () => {
       setLoading(true);
 
       let { data: profile, error } = await supabase
-        .from('profile')
-        .select('nome_completo, id')
+        .from("profile")
+        .select("nome_completo, id");
 
       if (error) {
         console.error("Erro ao buscar usuários:", error);
         toast.error("Erro ao carregar usuários");
         return;
       }
-
 
       setUsuarios(profile || []);
     } catch (error) {
@@ -567,7 +576,8 @@ const AtividadesPage: React.FC = () => {
                                             Prazo: {formatDate(atividade.prazo)}
                                           </span>
                                           <span className="text-xs text-jelly-bean-800">
-                                            Responsável: {atividade.responsavel_name}
+                                            Responsável:{" "}
+                                            {atividade.responsavel_name}
                                           </span>
                                         </div>
                                       </div>
@@ -576,7 +586,8 @@ const AtividadesPage: React.FC = () => {
                                           variant={
                                             atividade.prioridade === "Alta"
                                               ? "red"
-                                              : atividade.prioridade === "Normal"
+                                              : atividade.prioridade ===
+                                                  "Normal"
                                                 ? "blue"
                                                 : "gray"
                                           }
@@ -840,16 +851,21 @@ const AtividadesPage: React.FC = () => {
                               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
                               value={novaAtividade.responsavel}
                               onChange={(e) => {
-                                const selectedUser = usuarios.find((u) => u.id === e.target.value);
+                                const selectedUser = usuarios.find(
+                                  (u) => u.id === e.target.value,
+                                );
                                 setNovaAtividade({
                                   ...novaAtividade,
                                   responsavel: e.target.value,
-                                  responsavel_name: selectedUser?.nome_completo || "",
+                                  responsavel_name:
+                                    selectedUser?.nome_completo || "",
                                 });
                               }}
                             >
                               {usuarios?.map((usuario) => (
-                                <option value={usuario.id}>{usuario.nome_completo}</option>
+                                <option value={usuario.id}>
+                                  {usuario.nome_completo}
+                                </option>
                               ))}
                             </select>
                           </div>
@@ -920,7 +936,7 @@ const AtividadesPage: React.FC = () => {
                                 setNovaAtividade({
                                   ...novaAtividade,
                                   tipo: e.target.value as
-                                    "Ligar"
+                                    | "Ligar"
                                     | "Whatsapp"
                                     | "Email"
                                     | "Visita"

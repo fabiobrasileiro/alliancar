@@ -24,8 +24,9 @@ const Sidebar: React.FC<SidebarProps> = ({ title, items, className }) => {
 
   return (
     <aside
-      className={`bg-slate-50 border rounded-md h-screen ${collapsed ? "w-14" : "w-64"} shrink-0 transition-all ${className || ""
-        }`}
+      className={`bg-slate-50 border rounded-md h-screen ${collapsed ? "w-14" : "w-64"} shrink-0 transition-all ${
+        className || ""
+      }`}
     >
       <div className="flex items-center justify-between px-3 py-3 border-b">
         {!collapsed && (
@@ -53,10 +54,11 @@ const Sidebar: React.FC<SidebarProps> = ({ title, items, className }) => {
               <li key={item.id}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${isActive
+                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${
+                    isActive
                       ? "bg-white shadow-sm text-slate-800"
                       : "text-slate-600 hover:bg-slate-100"
-                    } ${collapsed ? "justify-center" : ""}`}
+                  } ${collapsed ? "justify-center" : ""}`}
                 >
                   {item.icon && (
                     <span className="text-slate-500">{item.icon}</span>
