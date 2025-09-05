@@ -111,7 +111,7 @@ export default function SignupForm() {
                 Preencha os dados abaixo para criar sua conta
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-5">
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Nome Completo</Label>
@@ -173,12 +173,12 @@ export default function SignupForm() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full mt-5" disabled={loading}>
                   {loading ? "Criando conta..." : "Criar Conta"}
                 </Button>
 
-                <div className="text-center">
-                  <span className="text-sm text-gray-600">
+                <div className="text-center mb-7">
+                  <span className="text-sm text-gray-600 ">
                     Já tem uma conta?{" "}
                     <Link
                       href="/login"

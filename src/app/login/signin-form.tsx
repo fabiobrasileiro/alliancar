@@ -74,14 +74,14 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="flex items-center justify-center px-4 py-10">
+    <div className="flex items-center h-screen justify-center px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-xl">
             {isResetMode ? "Recuperar senha" : "Acesse a sua conta"}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-8">
           <form
             className="grid gap-4"
             onSubmit={isResetMode ? handleResetPasswordSubmit : handleSubmit}
@@ -99,7 +99,7 @@ export default function LoginForm() {
             </div>
 
             {!isResetMode && (
-              <div className="grid gap-2">
+              <div className="grid gap-2 mb-2">
                 <Label htmlFor="password">Senha</Label>
                 <Input
                   id="password"
@@ -171,17 +171,7 @@ export default function LoginForm() {
               Criar conta
             </Link>
           </p>
-          <p className="text-sm text-slate-600 text-center w-full">
-            Se você ainda não é um cliente do Power CRM{" "}
-            <a
-              href="https://site.powercrm.com.br/cadastro/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-700 hover:underline"
-            >
-              solicite uma demonstração
-            </a>
-          </p>
+          
         </CardFooter>
       </Card>
     </div>
