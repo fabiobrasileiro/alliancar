@@ -3,151 +3,135 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/context/UserContext";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDownIcon } from "lucide-react";
 import OverviewCards from "./components/OverviewCards";
 import GoalsProgress from "./components/GoalsProgress";
 import PerformanceReports from "./components/PerformanceReports";
 import ReferralTools from "./components/ReferralTools";
 import Ranking from "./components/Ranking";
 import SupportCommunity from "./components/SupportCommunity";
-import { Afiliado } from "./components/types";
+import { AffiliateData } from "./components/types";
 
-interface AffiliateDashboardProps {
-  initialData?: Partial<Afiliado>;
+interface Metas {
+  valor_meta: Number;
 }
 
-export default function AffiliateDashboard({ initialData }: AffiliateDashboardProps) {
+export default function AffiliateDashboard() {
   const supabase = createClient();
   const { user, perfil } = useUser();
   const [loading, setLoading] = useState(true);
-  const [affiliateData, setAffiliateData] = useState<Afiliado>({
+  const [affiliateData, setAffiliateData] = useState<AffiliateData>({
     saldoDisponivel: "R$ 0,00",
     saldoPendente: "R$ 0,00",
     vendasMes: 0,
     ranking: 0,
-    metaMensal: 2000,
-    progresso: 1350,
-    vendasNecessarias: 3,
+    metaMensal: 0,
+    progresso: 0,
+    vendasNecessarias: 0,
     performance: [],
-    linkAfiliado: "https://alliancar.com/afiliado/12345",
-    qrCode: "/api/qr?url=https://alliancar.com/afiliado/12345",
-    badges: [],
-    rankingTop10: [],
-    ...initialData
+    linkAfiliado: "",
+    qrCode: "",
+    rankingTop10: []
   });
 
-  // Buscar dados do dashboard
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (user?.id) fetchDashboardData();
+  }, [user]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      // Simulação de dados - substituir com chamadas reais ao Supabase
-      const mockData = {
-        saldoDisponivel: "R$ 850,00",
-        saldoPendente: "R$ 420,50",
-        vendasMes: 27,
-        ranking: 5,
-        metaMensal: 2000,
-        progresso: 1350,
-        vendasNecessarias: 3,
-        performance: [
-          { id: 1, data: "15/09/2025", cliente: "João Silva", valor: "R$ 89,90", comissao: "R$ 35,96", status: "Pago" },
-          { id: 2, data: "14/09/2025", cliente: "Maria Santos", valor: "R$ 89,90", comissao: "R$ 35,96", status: "Pago" },
-          { id: 3, data: "13/09/2025", cliente: "Pedro Costa", valor: "R$ 89,90", comissao: "R$ 35,96", status: "Pendente" },
-          { id: 4, data: "12/09/2025", cliente: "Ana Oliveira", valor: "R$ 89,90", comissao: "R$ 35,96", status: "Pago" },
-          { id: 5, data: "11/09/2025", cliente: "Carlos Souza", valor: "R$ 89,90", comissao: "R$ 35,96", status: "Pago" },
-        ],
-        linkAfiliado: "https://alliancar.com/afiliado/12345",
-        qrCode: "/api/qr?url=https://alliancar.com/afiliado/12345",
-        badges: ["Primeira venda", "10 vendas", "Top 5 da semana"],
-        rankingTop10: [
-          { posicao: 1, nome: "Carlos Santos", vendas: 54 },
-          { posicao: 2, nome: "Ana Oliveira", vendas: 48 },
-          { posicao: 3, nome: "João Silva", vendas: 42 },
-          { posicao: 4, nome: "Maria Costa", vendas: 37 },
-          { posicao: 5, nome: perfil?.nome_completo || "Você", vendas: 27 },
-          { posicao: 6, nome: "Pedro Alves", vendas: 25 },
-          { posicao: 7, nome: "Laura Mendes", vendas: 22 },
-          { posicao: 8, nome: "Ricardo Lima", vendas: 19 },
-          { posicao: 9, nome: "Fernanda Rocha", vendas: 16 },
-          { posicao: 10, nome: "Paulo Cardoso", vendas: 14 },
-        ]
-      };
+      // Buscar dados principais
+      const { data: dashboard } = await supabase
+        .from('afiliados')
+        .select('*')
+        .eq('auth_id', user?.id)
+        .single();
 
-      setAffiliateData(prev => ({ ...prev, ...mockData }));
+      if (!dashboard) return;
+
+      // Buscar comissões (performance)
+      const { data: comissoes } = await supabase
+        .from('comissoes')
+        .select('*, clientes(nome)')
+        .limit(10);
+
+      console.log("comissoes: ", comissoes)
+
+      // Buscar ranking
+      const { data: ranking } = await supabase
+        .from('ranking_afiliados')
+        .select('*, afiliados(nome_completo)')
+        .order('posicao', { ascending: true })
+        .limit(10);
+
+      // Buscar metas
+      const { data: metas }: Metas = await supabase
+        .from('metas_afiliados')
+        .select('*')
+
+
+      // Formatar dados
+      const performanceData = comissoes?.map(item => ({
+        id: item.id,
+        data: new Date(item.criado_em).toLocaleDateString('pt-BR'),
+        cliente: item.clientes?.nome || 'Cliente',
+        valor: item.valor_contrato.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+        comissao: item.valor_comissao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+        status: item.status
+      })) || [];
+
+      const rankingData = ranking?.map((item, index) => ({
+        posicao: index + 1,
+        nome: item.afiliados?.nome_completo || "Afiliado",
+        vendas: item.total_vendas,
+        total_comissao: item.total_comissao
+      })) || [];
+
+      const metaMensal = metas?.valor_meta || 5000;
+
+      setAffiliateData({
+        saldoDisponivel: dashboard.receita_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+        saldoPendente: dashboard.receita_pendente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+        vendasMes: dashboard.numero_placas || 0,
+        ranking: 0, // Você pode calcular isso baseado no ranking
+        metaMensal, // Valor fixo ou buscar de metas_afiliados
+        progresso: (dashboard.receita_total / 5000) * 100,
+        vendasNecessarias: Math.ceil((5000 - dashboard.receita_total) / 100),
+        performance: performanceData,
+        linkAfiliado: `https://seusite.com/afiliado/${dashboard.id}`,
+        qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://seusite.com/afiliado/${dashboard.id}`,
+        rankingTop10: rankingData
+      });
+
     } catch (error) {
-      console.error("Erro ao buscar dados do dashboard:", error);
+      console.error("Erro ao buscar dados:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    // Você pode adicionar uma notificação de sucesso aqui
-  };
-
-  const shareOnSocialMedia = (platform: string) => {
-    const shareUrl = encodeURIComponent(affiliateData.linkAfiliado);
-    const shareText = encodeURIComponent("Conheça a Alilancar Proteção Veicular!");
-
-    const urls = {
-      whatsapp: `https://wa.me/?text=${shareText} ${shareUrl}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
-      instagram: `https://www.instagram.com/?url=${shareUrl}`,
-    };
-
-    window.open(urls[platform as keyof typeof urls], '_blank');
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(affiliateData.linkAfiliado);
+    alert("Link copiado!");
   };
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard de Afiliado</h1>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} />
-                    <AvatarFallback>
-                      {perfil?.nome_completo?.charAt(0) || user?.email?.charAt(0) || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden md:block">
-                    {perfil?.nome_completo || user?.email}
-                  </span>
-                  <ChevronDownIcon className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Meu Perfil</DropdownMenuItem>
-                <DropdownMenuItem>Configurações</DropdownMenuItem>
-                <DropdownMenuItem>Sair</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+      <header className="bg-white border-b py-4">
+        <div className="max-w-7xl mx-auto px-4">
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard de Afiliado</h1>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         <OverviewCards
           saldoDisponivel={affiliateData.saldoDisponivel}
           saldoPendente={affiliateData.saldoPendente}
@@ -161,42 +145,25 @@ export default function AffiliateDashboard({ initialData }: AffiliateDashboardPr
           vendasNecessarias={affiliateData.vendasNecessarias}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
           <div className="lg:col-span-2">
             <PerformanceReports performance={affiliateData.performance} />
-            
             <ReferralTools
               linkAfiliado={affiliateData.linkAfiliado}
               qrCode={affiliateData.qrCode}
-              onCopyLink={() => copyToClipboard(affiliateData.linkAfiliado)}
-              onShare={shareOnSocialMedia}
+              onCopyLink={copyToClipboard}
             />
           </div>
 
           <div>
-            <Ranking 
-              rankingTop10={affiliateData.rankingTop10} 
-              userName={perfil?.nome_completo || "Você"} 
+            <Ranking
+              rankingTop10={affiliateData.rankingTop10}
+              userName={perfil?.nome_completo || "Você"}
             />
-            
             <SupportCommunity />
           </div>
         </div>
       </main>
-
-      <footer className="bg-gray-800 text-white py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <p className="text-sm">Alilancar Proteção Veicular © 2025</p>
-            </div>
-            <div className="flex space-x-4">
-              <a href="#" className="text-sm hover:text-gray-300">Política de Privacidade</a>
-              <a href="#" className="text-sm hover:text-gray-300">Termos de Uso</a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

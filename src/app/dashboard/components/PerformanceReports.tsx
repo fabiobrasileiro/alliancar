@@ -16,6 +16,7 @@ interface PerformanceReportsProps {
 }
 
 export default function PerformanceReports({ performance }: PerformanceReportsProps) {
+  console.log('Perfomance:',performance)
   return (
     <Card className="mb-8">
       <CardHeader className="flex flex-row items-center justify-between">

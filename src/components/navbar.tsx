@@ -52,7 +52,7 @@ export default function Navbar() {
   };
 
   const navigation = [
-    { name: "Dashboard", href: "/", current: false },
+    { name: "Dashboard", href: "/dashboard", current: false },
     { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Atividades", href: "/atividades", current: false },
