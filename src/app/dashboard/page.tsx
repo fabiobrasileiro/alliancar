@@ -24,7 +24,7 @@ export default function AffiliateDashboard() {
     saldoPendente: "R$ 0,00",
     vendasMes: 0,
     ranking: 0,
-    metaMensal: 0,
+    metaMensal: 1500,
     progresso: 0,
     vendasNecessarias: 0,
     performance: [],
@@ -64,11 +64,7 @@ export default function AffiliateDashboard() {
         .order('posicao', { ascending: true })
         .limit(10);
 
-      // Buscar metas
-      const { data: metas }: Metas = await supabase
-        .from('metas_afiliados')
-        .select('*')
-
+      
 
       // Formatar dados
       const performanceData = comissoes?.map(item => ({
@@ -87,14 +83,13 @@ export default function AffiliateDashboard() {
         total_comissao: item.total_comissao
       })) || [];
 
-      const metaMensal = metas?.valor_meta || 5000;
 
       setAffiliateData({
         saldoDisponivel: dashboard.receita_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
         saldoPendente: dashboard.receita_pendente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
         vendasMes: dashboard.numero_placas || 0,
         ranking: 0, // Você pode calcular isso baseado no ranking
-        metaMensal, // Valor fixo ou buscar de metas_afiliados
+        metaMensal: 1500, // Valor fixo ou buscar de metas_afiliados
         progresso: (dashboard.receita_total / 5000) * 100,
         vendasNecessarias: Math.ceil((5000 - dashboard.receita_total) / 100),
         performance: performanceData,

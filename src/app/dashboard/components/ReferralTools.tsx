@@ -8,14 +8,14 @@ interface ReferralToolsProps {
   linkAfiliado: string;
   qrCode: string;
   onCopyLink: () => void;
-  onShare: (platform: string) => void;
+  // onShare: (platform: string) => void;
 }
 
 export default function ReferralTools({
   linkAfiliado,
   qrCode,
   onCopyLink,
-  onShare
+  // onShare
 }: ReferralToolsProps) {
   return (
     <Card className="px-5 mb-8">
@@ -60,21 +60,21 @@ export default function ReferralTools({
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => onShare('whatsapp')}
+                  // onClick={() => onShare('whatsapp')}
                 >
                   WhatsApp
                 </Button>
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => onShare('instagram')}
+                  // onClick={() => onShare('instagram')}
                 >
                   Instagram
                 </Button>
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => onShare('facebook')}
+                  // onClick={() => onShare('facebook')}
                 >
                   Facebook
                 </Button>
