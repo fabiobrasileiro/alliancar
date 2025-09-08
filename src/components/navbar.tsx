@@ -15,6 +15,9 @@ import Link from "next/link";
 import Image from "next/image";
 import Alliancar from "../../public/alliancar.avif"
 import { useUser } from '@/context/UserContext';
+import { Button } from "./ui/button";
+import { CopyIcon } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 
 type ClassValue = string | false | null | undefined;
 
@@ -43,8 +46,13 @@ export default function Navbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const { user, perfil, loading } = useUser();
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // Você pode adicionar uma notificação de sucesso aqui
+  };
 
   const navigation = [
+    { name: "Dashboard", href: "/", current: false },
     { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Atividades", href: "/atividades", current: false },
@@ -79,7 +87,9 @@ export default function Navbar() {
           </div>
           <div className="flex flex-1 items-center justify-center  lg:justify-start">
             <div className="flex">
-              <Image src={Alliancar} width={150} height={150} alt="Alliancar" />
+              <Link href='/'>
+                <Image src={Alliancar} width={150} height={150} alt="Alliancar" />
+              </Link>
             </div>
             <div className="hidden sm:ml-6 lg:block">
               <div className="flex space-x-4">
@@ -101,56 +111,16 @@ export default function Navbar() {
             </div>
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-            {/* Notifications */}
-            {/* <div className="relative">
-              <button
-                type="button"
-                className="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-white"
-                onClick={() => setShowNotifications(!showNotifications)}
+            <div className="flex items-center">
+              <Button
+                variant="default"
+                className="mr-4 hidden md:flex "
+                onClick={() => copyToClipboard('/')}
               >
-                <span className="absolute -inset-1.5" />
-                <span className="sr-only">View notifications</span>
-                <BellIcon aria-hidden="true" className="size-6" />
-              </button>
+                <CopyIcon className="mr-2 h-4 w-4" /> Copiar Link
+              </Button>
 
-              {showNotifications && (
-                <div className="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-md bg-jelly-bean-900 py-1 outline -outline-offset-1 outline-white/10 shadow-lg">
-                  <div className="flex items-center justify-between p-4 border-b border-white/10">
-                    <div className="flex items-center gap-2">
-                      <BellIcon className="h-5 w-5 text-gray-300" />
-                      <h2 className="text-lg font-semibold text-white">
-                        Notificações
-                      </h2>
-                    </div>
-                    <button
-                      onClick={() => setShowNotifications(false)}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      <XMarkIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className="p-2">
-                    <div className="cursor-pointer hover:bg-white/5 rounded p-2">
-                      <h3 className="font-medium text-white">
-                        Cotações recebidas
-                      </h3>
-                      <span className="text-sm text-gray-400">
-                        Negociação recebida
-                      </span>
-                      <div className="text-xs text-gray-500 mt-1">
-                        21/07/2025 - 19:17 | ID: 4715630
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-2 border-t border-white/10">
-                    <button className="w-full mt-1 rounded-md bg-white/5 px-3 py-2 text-sm font-medium text-white hover:bg-white/10">
-                      Ver mais
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div> */}
-
+            </div>
             {/* afiliados dropdown */}
             <Menu as="div" className="relative ml-3 ">
               <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ">
