@@ -1,96 +1,136 @@
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ContactFilters as ContactFiltersType } from "./types";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ORIGEM_LEAD_OPTIONS } from "./types";
 
 interface ContactFiltersProps {
-  filters: ContactFiltersType;
-  onFilterChange: (field: keyof ContactFiltersType, value: string) => void;
-  onApplyFilters: () => void;
-  onClearFilters: () => void;
+  nome: string;
+  email: string;
+  celular: string;
+  cpfCnpj: string;
+  estado: string;
+  origemLead: string;
+  onNomeChange: (value: string) => void;
+  onEmailChange: (value: string) => void;
+  onCelularChange: (value: string) => void;
+  onCpfCnpjChange: (value: string) => void;
+  onEstadoChange: (value: string) => void;
+  onOrigemLeadChange: (value: string) => void;
+  onSearch: (e: React.FormEvent<HTMLFormElement>) => void; // Corrigido o tipo
+  onClear: () => void;
 }
 
-export default function ContactFilters({
-  filters,
-  onFilterChange,
-  onApplyFilters,
-  onClearFilters,
-}: ContactFiltersProps) {
+export const ContactFilters: React.FC<ContactFiltersProps> = ({
+  nome,
+  email,
+  celular,
+  cpfCnpj,
+  estado,
+  origemLead,
+  onNomeChange,
+  onEmailChange,
+  onCelularChange,
+  onCpfCnpjChange,
+  onEstadoChange,
+  onOrigemLeadChange,
+  onSearch,
+  onClear,
+}) => {
   return (
-    <Card className="p-4 mb-6">
-      <CardContent className="p-0">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div>
-            <Label htmlFor="nomeCompleto" className="text-sm font-medium">
-              Nome Completo
-            </Label>
-            <Input
-              id="nomeCompleto"
-              placeholder="Buscar por nome"
-              value={filters.nomeCompleto}
-              onChange={(e) => onFilterChange("nomeCompleto", e.target.value)}
-            />
+    <Card className="w-full md:min-w-96">
+      <CardContent className="p-6 md:p-8">
+        <form className="w-full" onSubmit={onSearch}>
+          <div className="flex flex-col gap-4 max-lg:w-full">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col">
+                <Label htmlFor="nome" className="text-jelly-bean-900">
+                  Nome
+                </Label>
+                <Input
+                  id="nome"
+                  value={nome}
+                  onChange={(e) => onNomeChange(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="email" className="text-jelly-bean-900">
+                  E-mail
+                </Label>
+                <Input
+                  id="email"
+                  value={email}
+                  onChange={(e) => onEmailChange(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="celular" className="text-jelly-bean-900">
+                  Celular
+                </Label>
+                <Input
+                  id="celular"
+                  value={celular}
+                  onChange={(e) => onCelularChange(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="cpfCnpj" className="text-jelly-bean-900">
+                  CPF/CNPJ
+                </Label>
+                <Input
+                  id="cpfCnpj"
+                  value={cpfCnpj}
+                  onChange={(e) => onCpfCnpjChange(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="estado" className="text-jelly-bean-900">
+                  Estado
+                </Label>
+                <Input
+                  id="estado"
+                  value={estado}
+                  onChange={(e) => onEstadoChange(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col">
+                <Label htmlFor="origemLead" className="text-jelly-bean-900">
+                  Origem do Lead
+                </Label>
+                <Select value={origemLead} onValueChange={onOrigemLeadChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a origem" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ORIGEM_LEAD_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="submit" className="bg-jelly-bean-900">
+                Aplicar Filtros
+              </Button>
+              <Button type="button" variant="outline" onClick={onClear}>
+                Limpar
+              </Button>
+            </div>
           </div>
-          
-          <div>
-            <Label htmlFor="telefone" className="text-sm font-medium">
-              Telefone
-            </Label>
-            <Input
-              id="telefone"
-              placeholder="Buscar por telefone"
-              value={filters.telefone}
-              onChange={(e) => onFilterChange("telefone", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="cpfCnpj" className="text-sm font-medium">
-              CPF/CNPJ
-            </Label>
-            <Input
-              id="cpfCnpj"
-              placeholder="Buscar por CPF/CNPJ"
-              value={filters.cpfCnpj}
-              onChange={(e) => onFilterChange("cpfCnpj", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="banco" className="text-sm font-medium">
-              Banco
-            </Label>
-            <Input
-              id="banco"
-              placeholder="Buscar por banco"
-              value={filters.banco}
-              onChange={(e) => onFilterChange("banco", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="estado" className="text-sm font-medium">
-              Estado
-            </Label>
-            <Input
-              id="estado"
-              placeholder="Buscar por estado"
-              value={filters.estado}
-              onChange={(e) => onFilterChange("estado", e.target.value)}
-            />
-          </div>
-          
-          <div className="flex flex-col justify-end space-y-2">
-            <Button onClick={onApplyFilters} className="w-full">
-              Aplicar Filtros
-            </Button>
-            <Button variant="outline" onClick={onClearFilters} className="w-full">
-              Limpar
-            </Button>
-          </div>
-        </div>
+        </form>
       </CardContent>
     </Card>
   );
-}
+};
