@@ -1,67 +1,29 @@
 "use client";
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { createClient } from "@/utils/supabase/client";
-import {
-  Dialog,
-  DialogPanel,
-  Transition,
-  TransitionChild,
-} from "@headlessui/react";
 import { toast } from "sonner";
 import { useUser } from "@/context/UserContext";
-import {
-  Select,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-interface Atividade {
-  id: number;
-  created_at: string;
-  titulo: string;
-  descricao: string;
-  responsavel: string;
-  responsavel_name: string;
-  prazo: string;
-  prioridade: "Alta" | "Normal" | "Baixa";
-  tipo: "Ligar" | "Whatsapp" | "Email" | "Visita" | "Previsão de fechamento";
-  status: "atrasada" | "hoje" | "planejada" | "concluida";
-}
-
-interface TypeFilters {
-  Visita: boolean;
-  Whatsapp: boolean;
-  Ligar: boolean;
-  Email: boolean;
-  Previsão_fechamento: boolean;
-}
-
-interface PriorityFilters {
-  Alta: boolean;
-  Normal: boolean;
-  Baixa: boolean;
-}
-
-interface Usuario {
-  id: string;
-  nome_completo: string;
-}
+import { 
+  Atividade, 
+  PriorityFilters, 
+  TypeFilters, 
+  Usuario, 
+  NovaAtividade 
+} from "./components/types";
+import { AtividadeCard } from "./components/AtividadeCard";
+import { FiltrosAtividades } from "./components/FiltrosAtividades";
+import { ModalAtividade } from "./components/ModalAtividade";
+import { EmptyState } from "./components/EmptyState";
 
 const AtividadesPage: React.FC = () => {
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [filteredAtividades, setFilteredAtividades] = useState<Atividade[]>([]);
-  const [activeTab, setActiveTab] = useState<
-    "atrasada" | "hoje" | "planejada" | "concluida"
-  >("hoje");
+  const [activeTab, setActiveTab] = useState<"atrasada" | "hoje" | "planejada" | "concluida">("hoje");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [typeFilters, setTypeFilters] = useState<TypeFilters>({
@@ -80,60 +42,78 @@ const AtividadesPage: React.FC = () => {
   const supabase = createClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
-  const [atividadeEditando, setAtividadeEditando] = useState<Atividade | null>(
-    null,
-  );
-  const [novaAtividade, setNovaAtividade] = useState({
+  const [atividadeEditando, setAtividadeEditando] = useState<Atividade | null>(null);
+  const { user } = useUser();
+  const [afiliadoId, setAfiliadoId] = useState<string>("");
+
+  const [novaAtividade, setNovaAtividade] = useState<NovaAtividade>({
     titulo: "",
     descricao: "",
-    responsavel: "",
-    responsavel_name: "",
-    prioridade: "Normal" as "Alta" | "Normal" | "Baixa",
-    tipo: "Ligar" as
-      | "Ligar"
-      | "Whatsapp"
-      | "Email"
-      | "Visita"
-      | "Previsão de fechamento",
+    afiliado_id: "",
+    prioridade: "Normal",
+    tipo: "Ligar",
     prazo: new Date().toISOString().split("T")[0],
   });
+
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [selectedUsuarios, setselectedUsuarios] = useState<Usuario[]>([]);
 
-  // Buscar usuarios do Supabase
+  
+
+  // Buscar afiliado_id do usuário autenticado
   useEffect(() => {
-    fetchafiliados();
-  }, [supabase]);
+    const fetchAfiliadoId = async () => {
+      if (!user?.id) return;
 
-  //procurar usuarios
-  const fetchafiliados = async () => {
-    try {
-      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("afiliados")
+          .select("id")
+          .eq("auth_id", user.id)
+          .single();
 
-      let { data: afiliados, error } = await supabase
-        .from("afiliados")
-        .select("nome_completo, id");
+        if (error) {
+          console.error("Erro ao buscar afiliado:", error);
+          return;
+        }
 
-      if (error) {
-        console.error("Erro ao buscar usuários:", error);
-        toast.error("Erro ao carregar usuários");
-        return;
+        if (data) {
+          setAfiliadoId(data.id);
+        }
+      } catch (error) {
+        console.error("Erro:", error);
       }
+    };
 
-
-      setUsuarios(afiliados || []);
-    } catch (error) {
-      console.error("Erro:", error);
-      toast.error("Erro ao carregar atividades");
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchAfiliadoId();
+  }, [user, supabase]);
 
   // Buscar atividades do Supabase
   useEffect(() => {
-    fetchAtividades();
-  }, [supabase]);
+    if (afiliadoId) {
+      fetchAtividades();
+      fetchUsuarios();
+    }
+  }, [afiliadoId, supabase]);
+
+  const fetchUsuarios = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("afiliados")
+        .select("id, nome_completo")
+        .order("nome_completo");
+
+      if (error) {
+        console.error("Erro ao buscar afiliados:", error);
+        return;
+      }
+
+      if (data) {
+        setUsuarios(data);
+      }
+    } catch (error) {
+      console.error("Erro:", error);
+    }
+  };
 
   const fetchAtividades = async () => {
     try {
@@ -142,7 +122,7 @@ const AtividadesPage: React.FC = () => {
       let { data, error } = await supabase
         .from("atividades")
         .select("*")
-        .order("prazo", { ascending: true });
+        
 
       if (error) {
         console.error("Erro ao buscar atividades:", error);
@@ -157,10 +137,7 @@ const AtividadesPage: React.FC = () => {
 
           if (atividade.prazo < hoje && atividade.status !== "concluida") {
             status = "atrasada";
-          } else if (
-            atividade.prazo === hoje &&
-            atividade.status !== "concluida"
-          ) {
+          } else if (atividade.prazo === hoje && atividade.status !== "concluida") {
             status = "hoje";
           } else if (atividade.status === "concluida") {
             status = "concluida";
@@ -200,36 +177,27 @@ const AtividadesPage: React.FC = () => {
       result = result.filter(
         (atividade) =>
           atividade.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          atividade.descricao.toLowerCase().includes(searchTerm.toLowerCase()),
+          atividade.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Filtrar por tipo, se algum tipo estiver selecionado
     const selectedTypes = Object.keys(typeFilters).filter(
-      (key) => typeFilters[key as keyof TypeFilters],
+      (key) => typeFilters[key as keyof TypeFilters]
     );
     if (selectedTypes.length > 0) {
       result = result.filter((atividade) =>
-        selectedTypes.includes(atividade.tipo),
+        selectedTypes.includes(atividade.tipo)
       );
     }
 
     // Filtrar por prioridade, se alguma prioridade estiver selecionada
     const selectedPriorities = Object.keys(priorityFilters).filter(
-      (key) => priorityFilters[key as keyof PriorityFilters],
+      (key) => priorityFilters[key as keyof PriorityFilters]
     );
     if (selectedPriorities.length > 0) {
-      // Mapear prioridades do filtro para o formato do banco
-      const priorityMap: Record<string, string> = {
-        Alta: "Alta",
-        Normal: "Normal",
-        Baixa: "Baixa",
-      };
-
       result = result.filter((atividade) =>
-        selectedPriorities
-          .map((p) => priorityMap[p])
-          .includes(atividade.prioridade),
+        selectedPriorities.includes(atividade.prioridade)
       );
     }
 
@@ -245,9 +213,7 @@ const AtividadesPage: React.FC = () => {
   };
 
   // Manipulador para alternar filtros de prioridade
-  const handlePriorityFilterChange = (
-    priority: keyof PriorityFilters,
-  ): void => {
+  const handlePriorityFilterChange = (priority: keyof PriorityFilters): void => {
     setPriorityFilters((prev) => ({
       ...prev,
       [priority]: !prev[priority],
@@ -288,9 +254,8 @@ const AtividadesPage: React.FC = () => {
     setAtividadeEditando(atividade);
     setNovaAtividade({
       titulo: atividade.titulo,
-      descricao: atividade.descricao,
-      responsavel_name: atividade.responsavel_name,
-      responsavel: atividade.responsavel,
+      descricao: atividade.descricao || "",
+      afiliado_id: atividade.afiliado_id,
       prioridade: atividade.prioridade,
       tipo: atividade.tipo,
       prazo: atividade.prazo,
@@ -304,7 +269,10 @@ const AtividadesPage: React.FC = () => {
     try {
       const { error } = await supabase
         .from("atividades")
-        .update({ status: "concluida" })
+        .update({ 
+          status: "concluida",
+          concluida_em: new Date().toISOString()
+        })
         .eq("id", id);
 
       if (error) {
@@ -312,7 +280,7 @@ const AtividadesPage: React.FC = () => {
       }
 
       toast.success("Atividade concluída com sucesso");
-      fetchAtividades(); // Recarregar a lista
+      fetchAtividades();
     } catch (error) {
       console.error("Erro ao concluir atividade:", error);
       toast.error("Erro ao concluir atividade");
@@ -324,7 +292,10 @@ const AtividadesPage: React.FC = () => {
     try {
       const { error } = await supabase
         .from("atividades")
-        .update({ status: "pendente" })
+        .update({ 
+          status: "pendente",
+          concluida_em: null
+        })
         .eq("id", id);
 
       if (error) {
@@ -332,7 +303,7 @@ const AtividadesPage: React.FC = () => {
       }
 
       toast.success("Atividade reaberta com sucesso");
-      fetchAtividades(); // Recarregar a lista
+      fetchAtividades();
     } catch (error) {
       console.error("Erro ao reabrir atividade:", error);
       toast.error("Erro ao reabrir atividade");
@@ -354,8 +325,7 @@ const AtividadesPage: React.FC = () => {
           {
             titulo: novaAtividade.titulo,
             descricao: novaAtividade.descricao,
-            responsavel: novaAtividade.responsavel,
-            responsavel_name: novaAtividade.responsavel_name,
+            afiliado_id: novaAtividade.afiliado_id || afiliadoId,
             prazo: novaAtividade.prazo,
             prioridade: novaAtividade.prioridade,
             tipo: novaAtividade.tipo,
@@ -377,8 +347,7 @@ const AtividadesPage: React.FC = () => {
           .update({
             titulo: novaAtividade.titulo,
             descricao: novaAtividade.descricao,
-            responsavel: novaAtividade.responsavel,
-            responsavel_name: novaAtividade.responsavel_name,
+            afiliado_id: novaAtividade.afiliado_id,
             prazo: novaAtividade.prazo,
             prioridade: novaAtividade.prioridade,
             tipo: novaAtividade.tipo,
@@ -397,8 +366,7 @@ const AtividadesPage: React.FC = () => {
       setNovaAtividade({
         titulo: "",
         descricao: "",
-        responsavel: "",
-        responsavel_name: "",
+        afiliado_id: "",
         prioridade: "Normal",
         tipo: "Ligar",
         prazo: new Date().toISOString().split("T")[0],
@@ -425,16 +393,56 @@ const AtividadesPage: React.FC = () => {
       }
 
       toast.success("Atividade excluída com sucesso");
-      fetchAtividades(); // Recarregar a lista
+      fetchAtividades();
     } catch (error) {
       console.error("Erro ao excluir atividade:", error);
       toast.error("Erro ao excluir atividade");
     }
   };
+  
+
+  // Buscar afiliado_id do usuário autenticado
+  useEffect(() => {
+    const fetchAfiliadoId = async () => {
+      if (!user?.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("afiliados")
+          .select("id")
+          .eq("auth_id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Erro ao buscar afiliado:", error);
+          return;
+        }
+
+        if (data) {
+          setAfiliadoId(data.id);
+        }
+      } catch (error) {
+        console.error("Erro:", error);
+      }
+    };
+
+    fetchAfiliadoId();
+  }, [user, supabase]);
+
+  // Buscar atividades do Supabase
+  useEffect(() => {
+    if (afiliadoId) {
+      fetchAtividades();
+      fetchUsuarios();
+    }
+  }, [afiliadoId, supabase]);
+
+
 
   return (
     <>
       <div className="px-5 py-3">
+        {/* Header */}
         <header className="flex flex-col flex-wrap">
           <h2 className="font-bold leading-tight m-0 text-slate-700 text-2xl">
             Atividades
@@ -473,8 +481,7 @@ const AtividadesPage: React.FC = () => {
                   setNovaAtividade({
                     titulo: "",
                     descricao: "",
-                    responsavel: "",
-                    responsavel_name: "",
+                    afiliado_id: afiliadoId,
                     prioridade: "Normal",
                     tipo: "Ligar",
                     prazo: new Date().toISOString().split("T")[0],
@@ -549,126 +556,25 @@ const AtividadesPage: React.FC = () => {
                     </div>
                   ) : (
                     <>
-                      {(
-                        ["atrasada", "hoje", "planejada", "concluida"] as const
-                      ).map((status) => (
+                      {(["atrasada", "hoje", "planejada", "concluida"] as const).map((status) => (
                         <TabsContent key={status} value={status}>
                           <div className="flex flex-col gap-4 mt-4">
-                            {filteredAtividades.filter(
-                              (a) => a.status === status,
-                            ).length > 0 ? (
+                            {filteredAtividades.filter((a) => a.status === status).length > 0 ? (
                               filteredAtividades
                                 .filter((a) => a.status === status)
                                 .map((atividade) => (
-                                  <Card key={atividade.id} className="p-4">
-                                    <div className="flex justify-between items-start flex-wrap">
-                                      <div className="flex-1">
-                                        <h4 className="font-semibold text-jelly-bean-950">
-                                          {atividade.titulo}
-                                        </h4>
-                                        <p className="text-sm text-jelly-bean-800 mt-1">
-                                          {atividade.descricao}
-                                        </p>
-                                        <div className="flex flex-wrap gap-3 mt-2">
-                                          <span className="text-xs bg-jelly-bean-100 text-jelly-bean-800 px-2 py-1 rounded capitalize">
-                                            Tipo: {atividade.tipo}
-                                          </span>
-                                          <span className="text-xs text-jelly-bean-800">
-                                            Prazo: {formatDate(atividade.prazo)}
-                                          </span>
-                                          <span className="text-xs text-jelly-bean-800">
-                                            Responsável:{" "}
-                                            {atividade.responsavel_name}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="flex md:flex-col flex-row mt-4 md:mt-0 items-end gap-2">
-                                        <Badge
-                                          variant={
-                                            atividade.prioridade === "Alta"
-                                              ? "red"
-                                              : atividade.prioridade ===
-                                                  "Normal"
-                                                ? "blue"
-                                                : "gray"
-                                          }
-                                          className="capitalize"
-                                        >
-                                          {atividade.prioridade === "Alta"
-                                            ? "Alta"
-                                            : atividade.prioridade === "Normal"
-                                              ? "Normal"
-                                              : "Baixa"}
-                                        </Badge>
-                                        <div className="flex gap-2">
-                                          {atividade.status !== "concluida" ? (
-                                            <>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() =>
-                                                  handleEdit(atividade)
-                                                }
-                                              >
-                                                Editar
-                                              </Button>
-                                              <Button
-                                                size="sm"
-                                                onClick={() =>
-                                                  handleConcluir(atividade.id)
-                                                }
-                                              >
-                                                Concluir
-                                              </Button>
-                                            </>
-                                          ) : (
-                                            <>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() =>
-                                                  handleReabrir(atividade.id)
-                                                }
-                                              >
-                                                Reabrir
-                                              </Button>
-                                              <Button
-                                                variant="default"
-                                                size="sm"
-                                                onClick={() =>
-                                                  handleExcluir(atividade.id)
-                                                }
-                                              >
-                                                Excluir
-                                              </Button>
-                                            </>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </Card>
+                                  <AtividadeCard
+                                    key={atividade.id}
+                                    atividade={atividade}
+                                    usuarios={usuarios}
+                                    onEdit={handleEdit}
+                                    onConcluir={handleConcluir}
+                                    onReabrir={handleReabrir}
+                                    onExcluir={handleExcluir}
+                                  />
                                 ))
                             ) : (
-                              <div className="flex flex-col gap-2 items-center my-8 w-full bg-slate-100 text-slate-500 p-8 rounded-md">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="80"
-                                  height="80"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="lucide lucide-inbox"
-                                >
-                                  <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
-                                  <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
-                                </svg>
-                                <p className="text-base text-slate-700 m-0">
-                                  Nenhuma atividade encontrada
-                                </p>
-                              </div>
+                              <EmptyState />
                             )}
                           </div>
                         </TabsContent>
@@ -680,318 +586,40 @@ const AtividadesPage: React.FC = () => {
             </Card>
           </div>
 
-          {/* Filtros expandíveis */}
           {showFilters && (
-            <Card className="p-4 w-full md:w-2/5  ">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold">Filtros</h3>
-                <Button variant="outline" size="sm" onClick={clearAllFilters}>
-                  Limpar Filtros
-                </Button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex flex-col">
-                  <Label htmlFor="search" className="mb-2">
-                    Buscar
-                  </Label>
-                  <Input
-                    id="search"
-                    placeholder="Buscar atividades..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex flex-col">
-                  <Label className="mb-2">Tipo</Label>
-                  <div className="space-y-2">
-                    {Object.keys(typeFilters).map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`type-${type}`}
-                          checked={typeFilters[type as keyof TypeFilters]}
-                          onChange={() =>
-                            handleTypeFilterChange(type as keyof TypeFilters)
-                          }
-                        />
-                        <label
-                          htmlFor={`type-${type}`}
-                          className="text-sm font-medium leading-none capitalize"
-                        >
-                          {type}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex flex-col">
-                  <Label className="mb-2">Prioridade</Label>
-                  <div className="space-y-2">
-                    {Object.keys(priorityFilters).map((priority) => (
-                      <div
-                        key={priority}
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={`priority-${priority}`}
-                          checked={
-                            priorityFilters[priority as keyof PriorityFilters]
-                          }
-                          onChange={() =>
-                            handlePriorityFilterChange(
-                              priority as keyof PriorityFilters,
-                            )
-                          }
-                        />
-                        <label
-                          htmlFor={`priority-${priority}`}
-                          className="text-sm font-medium leading-none capitalize"
-                        >
-                          {priority}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Card>
+            <FiltrosAtividades
+              searchTerm={searchTerm}
+              typeFilters={typeFilters}
+              priorityFilters={priorityFilters}
+              onSearchChange={setSearchTerm}
+              onTypeFilterChange={handleTypeFilterChange}
+              onPriorityFilterChange={handlePriorityFilterChange}
+              onClearFilters={clearAllFilters}
+              activeFiltersCount={activeFiltersCount}
+            />
           )}
         </div>
       </div>
 
-      <Transition show={isModalOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-50"
-          onClose={() => setIsModalOpen(false)}
-        >
-          <div className="fixed inset-0 z-10 overflow-y-auto">
-            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-              <TransitionChild
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                enterTo="opacity-100 translate-y-0 sm:scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              >
-                <DialogPanel className="relative transform overflow-hidden rounded-lg text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg bg-white">
-                  {/* Cabeçalho do modal */}
-                  <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                    <div className="sm:flex sm:items-start">
-                      <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                        <Dialog.Title
-                          as="h3"
-                          className="text-base font-semibold leading-6 text-gray-900 mb-4"
-                        >
-                          {modalMode === "create"
-                            ? "Nova Atividade"
-                            : "Editar Atividade"}
-                        </Dialog.Title>
-
-                        {/* Formulário do modal */}
-                        <div className="mt-2 space-y-4">
-                          {/* Campo Título */}
-                          <div className="grid w-full items-center gap-1.5">
-                            <Label
-                              htmlFor="titulo"
-                              className="text-sm font-medium"
-                            >
-                              Título *
-                            </Label>
-                            <Input
-                              type="text"
-                              id="titulo"
-                              placeholder="Digite o título da atividade"
-                              value={novaAtividade.titulo}
-                              onChange={(e) =>
-                                setNovaAtividade({
-                                  ...novaAtividade,
-                                  titulo: e.target.value,
-                                })
-                              }
-                              required
-                            />
-                          </div>
-
-                          {/* Campo Descrição */}
-                          <div className="grid w-full items-center gap-1.5">
-                            <Label
-                              htmlFor="descricao"
-                              className="text-sm font-medium"
-                            >
-                              Descrição
-                            </Label>
-                            <textarea
-                              id="descricao"
-                              rows={3}
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
-                              placeholder="Descreva a atividade..."
-                              value={novaAtividade.descricao}
-                              onChange={(e) =>
-                                setNovaAtividade({
-                                  ...novaAtividade,
-                                  descricao: e.target.value,
-                                })
-                              }
-                            />
-                          </div>
-
-                          {/* Campo Responsável */}
-                          <div className="grid w-full items-center gap-1.5">
-                            <Label
-                              htmlFor="responsavel"
-                              className="text-sm font-medium"
-                            >
-                              Responsável
-                            </Label>
-                            <select
-                              id="responsavel"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
-                              value={novaAtividade.responsavel}
-                              onChange={(e) => {
-                                const selectedUser = usuarios.find(
-                                  (u) => u.id === e.target.value,
-                                );
-                                setNovaAtividade({
-                                  ...novaAtividade,
-                                  responsavel: e.target.value,
-                                  responsavel_name:
-                                    selectedUser?.nome_completo || "",
-                                });
-                              }}
-                            >
-                              {usuarios?.map((usuario) => (
-                                <option value={usuario.id}>
-                                  {usuario.nome_completo}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Campo Prazo */}
-                          <div className="grid w-full items-center gap-1.5">
-                            <Label
-                              htmlFor="prazo"
-                              className="text-sm font-medium"
-                            >
-                              Prazo *
-                            </Label>
-                            <Input
-                              type="date"
-                              id="prazo"
-                              value={novaAtividade.prazo}
-                              onChange={(e) =>
-                                setNovaAtividade({
-                                  ...novaAtividade,
-                                  prazo: e.target.value,
-                                })
-                              }
-                              required
-                            />
-                          </div>
-
-                          {/* Campo Prioridade */}
-                          <div className="grid w-full items-center gap-1.5">
-                            <Label
-                              htmlFor="prioridade"
-                              className="text-sm font-medium"
-                            >
-                              Prioridade
-                            </Label>
-                            <select
-                              id="prioridade"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
-                              value={novaAtividade.prioridade}
-                              onChange={(e) =>
-                                setNovaAtividade({
-                                  ...novaAtividade,
-                                  prioridade: e.target.value as
-                                    | "Alta"
-                                    | "Normal"
-                                    | "Baixa",
-                                })
-                              }
-                            >
-                              <option value="Alta">Alta</option>
-                              <option value="Normal">Normal</option>
-                              <option value="Baixa">Baixa</option>
-                            </select>
-                          </div>
-
-                          {/* Campo Tipo */}
-                          <div className="grid w-full items-center gap-1.5">
-                            <Label
-                              htmlFor="tipo"
-                              className="text-sm font-medium"
-                            >
-                              Tipo
-                            </Label>
-                            <select
-                              id="tipo"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
-                              value={novaAtividade.tipo}
-                              onChange={(e) =>
-                                setNovaAtividade({
-                                  ...novaAtividade,
-                                  tipo: e.target.value as
-                                    | "Ligar"
-                                    | "Whatsapp"
-                                    | "Email"
-                                    | "Visita"
-                                    | "Previsão de fechamento",
-                                })
-                              }
-                            >
-                              <option value="ligacao">Ligação</option>
-                              <option value="tarefa">Tarefa</option>
-                              <option value="reuniao">Reunião</option>
-                              <option value="apresentacao">Apresentação</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Rodapé do modal com botões */}
-                  <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                    <button
-                      type="button"
-                      className="inline-flex w-full justify-center rounded-md bg-jelly-bean-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-jelly-bean-500 sm:ml-3 sm:w-auto"
-                      onClick={handleSaveAtividade}
-                    >
-                      {modalMode === "create"
-                        ? "Criar Atividade"
-                        : "Salvar Alterações"}
-                    </button>
-                    <button
-                      type="button"
-                      className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                      onClick={() => {
-                        setIsModalOpen(false);
-                        setNovaAtividade({
-                          titulo: "",
-                          descricao: "",
-                          responsavel: "",
-                          responsavel_name: "",
-                          prioridade: "Normal",
-                          tipo: "Ligar",
-                          prazo: new Date().toISOString().split("T")[0],
-                        });
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </DialogPanel>
-              </TransitionChild>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
+      <ModalAtividade
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setNovaAtividade({
+            titulo: "",
+            descricao: "",
+            afiliado_id: afiliadoId,
+            prioridade: "Normal",
+            tipo: "Ligar",
+            prazo: new Date().toISOString().split("T")[0],
+          });
+        }}
+        mode={modalMode}
+        atividade={novaAtividade}
+        usuarios={usuarios}
+        onChange={(field, value) => setNovaAtividade(prev => ({ ...prev, [field]: value }))}
+        onSave={handleSaveAtividade}
+      />
     </>
   );
 };

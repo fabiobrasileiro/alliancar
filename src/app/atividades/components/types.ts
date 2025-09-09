@@ -1,13 +1,14 @@
 export interface Atividade {
   id: number;
-  created_at: string;
   titulo: string;
   descricao: string;
-  responsavel: string;
+  afiliado_id: string;
+  prioridade: "Alta" | "Normal" | "Baixa";
+  tipo: "Ligar" | "Whatsapp" | "Email" | "Visita" | "Previsão de fechamento";
   prazo: string;
-  prioridade: "alta" | "media" | "baixa";
-  tipo: "reuniao" | "tarefa" | "ligacao" | "apresentacao";
   status: "atrasada" | "hoje" | "planejada" | "concluida";
+  concluida_em?: string;
+  criado_em: string;
 }
 
 export interface Usuario {
@@ -16,10 +17,10 @@ export interface Usuario {
 }
 
 export interface TypeFilters {
-  Visita: boolean;
-  Whatsapp: boolean;
   Ligar: boolean;
+  Whatsapp: boolean;
   Email: boolean;
+  Visita: boolean;
   Previsão_fechamento: boolean;
 }
 
@@ -29,11 +30,10 @@ export interface PriorityFilters {
   Baixa: boolean;
 }
 
-export interface NewActivityForm {
+export interface NovaAtividade {
   titulo: string;
   descricao: string;
-  responsavel: string;
-  responsavel_name: string;
+  afiliado_id: string;
   prioridade: "Alta" | "Normal" | "Baixa";
   tipo: "Ligar" | "Whatsapp" | "Email" | "Visita" | "Previsão de fechamento";
   prazo: string;
