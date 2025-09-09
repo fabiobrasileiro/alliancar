@@ -3,25 +3,36 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
+import { useUser } from "@/context/UserContext";
 
-interface hotlinks {
+interface Hotlink {
+  id: string;
   nome: string;
-  link: string;
+  url: string;
+  qrcode_url?: string;
+  cliques: number;
+  conversoes: number;
 }
 
 export default function Powerlinks() {
-  const [powerlinks, setPowerlinks] = useState<hotlinks[]>([]);
-  const supabase = createClient();
+  const [powerlinks, setPowerlinks] = useState<Hotlink[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+  const { user } = useUser();
 
-  const fetchDashboardData = async () => {
+  useEffect(() => {
+    if (user?.id) fetchPowerlinks();
+  }, [user]);
+
+  const fetchPowerlinks = async () => {
     try {
       setLoading(true);
 
-      // Buscar hotlinks
+      // Busca os hotlinks do afiliado
       const { data: hotlinks, error: hotlinksError } = await supabase
         .from("hotlinks")
-        .select("nome, link");
+        .select("*")
+        
 
       if (hotlinksError) {
         console.error("Erro ao buscar hotlinks:", hotlinksError);
@@ -30,22 +41,26 @@ export default function Powerlinks() {
 
       setPowerlinks(hotlinks || []);
     } catch (error) {
-      console.error("Erro ao buscar dados do dashboard:", error);
+      console.error("Erro ao buscar dados:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Executa ao montar
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  // Função de copiar link
-  const copyToClipboard = (text: string): void => {
+  const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     alert("Link copiado com sucesso!");
   };
+
+  if (loading) {
+    return (
+      <SidebarLayout>
+        <div className="p-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-jelly-bean-500 mx-auto"></div>
+        </div>
+      </SidebarLayout>
+    );
+  }
 
   return (
     <SidebarLayout>
@@ -53,44 +68,59 @@ export default function Powerlinks() {
         {/* Título */}
         <div>
           <h3 className="text-2xl font-semibold mb-2">Powerlinks</h3>
-          <p>
-            Estes são os seus powerlinks, envie ele para seus clientes para
-            receber diretamente os pedidos de cotação.
+          <p className="text-gray-600">
+            Estes são os seus powerlinks, envie para seus clientes para receber
+            diretamente os pedidos de cotação.
           </p>
         </div>
 
         {/* Lista de Powerlinks */}
-        <div className="space-y-6">
-          {powerlinks.map((link, idx) => (
-            <div
-              key={idx}
-              className="flex flex-col md:flex-row border border-gray-300 rounded-lg p-4 gap-4"
-            >
-              {/* QR code placeholder */}
-              <div className="w-36 h-36 bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400">QR</span>
-              </div>
+        <div className="space-y-4">
+          {powerlinks.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">
+              Nenhum powerlink encontrado.
+            </p>
+          ) : (
+            powerlinks.map((link) => (
+              <div
+                key={link.id}
+                className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm"
+              >
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* QR Code */}
+                  <div className="w-24 h-24 bg-gray-100 rounded flex items-center justify-center">
+                    {link.qrcode_url ? (
+                      <img
+                        src={link.qrcode_url}
+                        alt="QR Code"
+                        className="w-20 h-20"
+                      />
+                    ) : (
+                      <span className="text-gray-400 text-sm">QR Code</span>
+                    )}
+                  </div>
 
-              {/* Info e botão */}
-              <div className="flex-1 flex flex-col justify-between">
-                <div>
-                  <h4 className="font-semibold text-lg">{link.nome}</h4>
-                  <h4 className="text-gray-500 break-all">{link.link}</h4>
-                </div>
-                <div className="mt-4">
-                  <Button
-                    onClick={() => copyToClipboard(link.link)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    Copiar Link
-                  </Button>
+                  {/* Informações do link */}
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-lg mb-2">{link.nome}</h4>
+                    <p className="text-gray-600 text-sm break-all mb-2">
+                      {link.url}
+                    </p>
+                    {/* <div className="flex gap-4 text-sm text-gray-500 mb-3">
+                      <span>Cliques: {link.cliques}</span>
+                      <span>Conversões: {link.conversoes}</span>
+                    </div> */}
+                    <Button
+                      onClick={() => copyToClipboard(link.url)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Copiar Link
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-
-          {/* Estado de carregamento */}
-          {loading && <p>Carregando...</p>}
+            ))
+          )}
         </div>
       </div>
     </SidebarLayout>

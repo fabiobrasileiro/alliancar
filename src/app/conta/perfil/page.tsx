@@ -16,6 +16,7 @@ import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { useUser } from "@/context/UserContext";
 
 interface FormData {
   name: string;
@@ -64,12 +65,11 @@ const Afiliados = () => {
     passwordConfirmation: "",
     foto_perfil_url: ""
   });
+  const { user } = useUser();
 
-  // Estados para endereço e bancos
   const [enderecos, setEnderecos] = useState<any[]>([]);
   const [bancos, setBancos] = useState<any[]>([]);
 
-  // Buscar dados do perfil ao carregar
   useEffect(() => {
     fetchPerfil();
   }, []);
@@ -77,8 +77,6 @@ const Afiliados = () => {
   const fetchPerfil = async () => {
     try {
       setLoading(true);
-
-      // Buscar usuário autenticado
       const { data: { user }, error: userError } = await supabase.auth.getUser();
 
       if (userError || !user) {
@@ -86,35 +84,34 @@ const Afiliados = () => {
         return;
       }
 
-      // Buscar dados em paralelo
       const [perfilResponse, enderecosResponse, bancosResponse] = await Promise.all([
-        // Perfil do usuário na tabela afiliados
         supabase
           .from("afiliados")
           .select("*")
           .eq("auth_id", user.id)
           .single(),
 
-        // Endereços do usuário
         supabase
           .from("enderecos")
           .select("*")
-          .eq("usuario_id", user.id),
+          .eq("afiliado_id", user.id), // Alterado para afiliado_id
 
-        // Contas bancárias do usuário
         supabase
           .from("contas_bancarias")
           .select("*")
-          .eq("usuario_id", user.id)
+          .eq("afiliado_id", user.id) // Alterado para afiliado_id
       ]);
+
+      if (perfilResponse.error) throw perfilResponse.error;
+      if (enderecosResponse.error) throw enderecosResponse.error;
+      if (bancosResponse.error) throw bancosResponse.error;
 
       if (perfilResponse.data) {
         setPerfilId(perfilResponse.data.id);
-        
-        // Buscar endereço principal
-        const enderecoPrincipal = enderecosResponse.data?.find(e => e.principal) || 
-                                 enderecosResponse.data?.[0] || {};
-        
+
+        const enderecoPrincipal = enderecosResponse.data?.find(e => e.principal) ||
+          enderecosResponse.data?.[0] || {};
+
         setFormData({
           name: perfilResponse.data.nome_completo?.split(" ")[0] || "",
           fullName: perfilResponse.data.nome_completo || "",
@@ -124,10 +121,10 @@ const Afiliados = () => {
           mobile: perfilResponse.data.telefone || "",
           email: user.email || "",
           zipcode: enderecoPrincipal.cep || "",
-          address: enderecoPrincipal.endereco || "",
+          address: enderecoPrincipal.logradouro || "", // Alterado para logradouro
           addressNumber: enderecoPrincipal.numero || "",
           addressComplement: enderecoPrincipal.complemento || "",
-          addressNeighborhood: "",
+          addressNeighborhood: enderecoPrincipal.bairro || "", // Alterado para bairro
           addressState: enderecoPrincipal.estado || "",
           addressCity: enderecoPrincipal.cidade || "",
           currentPassword: "",
@@ -165,7 +162,6 @@ const Afiliados = () => {
     try {
       setSaving(true);
 
-      // Buscar usuário autenticado
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Usuário não autenticado");
@@ -183,9 +179,7 @@ const Afiliados = () => {
         })
         .eq("id", perfilId);
 
-      if (perfilError) {
-        throw perfilError;
-      }
+      if (perfilError) throw perfilError;
 
       // Verificar se já existe um endereço principal
       const enderecoExistente = enderecos.find(e => e.principal);
@@ -196,36 +190,34 @@ const Afiliados = () => {
           .from("enderecos")
           .update({
             cep: formData.zipcode,
-            endereco: formData.address,
+            logradouro: formData.address, // Alterado para logradouro
             numero: formData.addressNumber,
             complemento: formData.addressComplement,
             estado: formData.addressState,
             cidade: formData.addressCity,
+            bairro: formData.addressNeighborhood, // Alterado para bairro
             principal: true
           })
           .eq("id", enderecoExistente.id);
 
-        if (enderecoError) {
-          throw enderecoError;
-        }
+        if (enderecoError) throw enderecoError;
       } else {
         // Criar novo endereço
         const { error: enderecoError } = await supabase
           .from("enderecos")
           .insert({
-            usuario_id: user.id,
+            afiliado_id: user.id, // Alterado para afiliado_id
             cep: formData.zipcode,
-            endereco: formData.address,
+            logradouro: formData.address, // Alterado para logradouro
             numero: formData.addressNumber,
             complemento: formData.addressComplement,
             estado: formData.addressState,
             cidade: formData.addressCity,
+            bairro: formData.addressNeighborhood, // Alterado para bairro
             principal: true
           });
 
-        if (enderecoError) {
-          throw enderecoError;
-        }
+        if (enderecoError) throw enderecoError;
       }
 
       toast.success("Perfil atualizado com sucesso!");
@@ -279,20 +271,28 @@ const Afiliados = () => {
       const file = e.target.files?.[0];
       if (!file || !perfilId) return;
 
-      // Verificar se é uma imagem
       if (!file.type.startsWith('image/')) {
         toast.error("Por favor, selecione um arquivo de imagem");
         return;
       }
 
-      // Fazer upload para o Supabase Storage
+      // Buscar usuário autenticado para obter o ID
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        toast.error("Usuário não autenticado");
+        return;
+      }
+
       const fileExt = file.name.split('.').pop();
-      const fileName = `${perfilId}-${Math.random()}.${fileExt}`;
-      const filePath = `fotos-perfil/${fileName}`;
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `fotos-perfil/${user.id}/${fileName}`; // Inclui user ID no path
 
       const { error: uploadError } = await supabase.storage
         .from('afiliados')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
       if (uploadError) {
         throw uploadError;
@@ -313,7 +313,6 @@ const Afiliados = () => {
         throw updateError;
       }
 
-      // Atualizar estado local
       setFormData(prev => ({ ...prev, foto_perfil_url: publicUrl }));
       toast.success("Foto de perfil atualizada com sucesso!");
 
@@ -327,9 +326,18 @@ const Afiliados = () => {
     if (!perfilId || !formData.foto_perfil_url) return;
 
     try {
+      // Buscar usuário autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuário não autenticado");
+        return;
+      }
+
       // Extrair caminho do arquivo da URL
-      const urlParts = formData.foto_perfil_url.split('/');
-      const filePath = urlParts.slice(urlParts.indexOf('fotos-perfil')).join('/');
+      const url = new URL(formData.foto_perfil_url);
+      const pathParts = url.pathname.split('/');
+      const bucketIndex = pathParts.indexOf('afiliados');
+      const filePath = pathParts.slice(bucketIndex + 1).join('/');
 
       // Deletar arquivo do storage
       const { error: deleteError } = await supabase.storage
@@ -350,7 +358,6 @@ const Afiliados = () => {
         throw updateError;
       }
 
-      // Atualizar estado local
       setFormData(prev => ({ ...prev, foto_perfil_url: "" }));
       toast.success("Foto de perfil removida com sucesso!");
 
@@ -594,7 +601,7 @@ const Afiliados = () => {
                 />
                 {formData.foto_perfil_url && (
                   <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <span 
+                    <span
                       className="text-white cursor-pointer text-sm"
                       onClick={() => document.getElementById('fotoPerfilInput')?.click()}
                     >
@@ -605,8 +612,8 @@ const Afiliados = () => {
               </div>
 
               {formData.foto_perfil_url && (
-                <Button 
-                  className="mt-4" 
+                <Button
+                  className="mt-4"
                   variant="default"
                   onClick={handleDeleteFoto}
                 >
@@ -641,7 +648,7 @@ const Afiliados = () => {
               <p className="text-muted-foreground">Nenhuma conta bancária cadastrada</p>
             )}
 
-            <Button className="mt-4" onClick={() => {/* Lógica para adicionar conta bancária */}}>
+            <Button className="mt-4" onClick={() => {/* Lógica para adicionar conta bancária */ }}>
               Adicionar Conta Bancária
             </Button>
           </TabsContent>

@@ -23,14 +23,14 @@ type BadgeVariant = "default" | "blue" | "red" | "green" | "gray";
 
 interface Payout {
   id: string;
-  affiliate_id: string;
-  period_month: string;
-  total_cents: number;
+  afiliado_id: string;
+  valor: number;
+  descricao: string;
+  mes_referencia: string;
   status: string;
-  payment_method: string;
-  external_ref: string;
-  created_at: string;
-  paid_at: string | null;
+  data: string;
+  criado_em: string;
+  atualizado_em: string;
 }
 
 interface BancoData {
@@ -42,19 +42,20 @@ interface BancoData {
   digito_conta: string;
   principal: boolean;
   pix: string;
-  usuario_id: string;
+  afiliado_id: string;
 }
 
 interface EnderecoData {
   id: string;
   cep: string;
-  endereco: string;
+  logradouro: string;
   numero: string;
   complemento: string;
   estado: string;
   cidade: string;
+  bairro: string;
   principal: boolean;
-  usuario_id: string;
+  afiliado_id: string;
 }
 
 interface PerfilData {
@@ -62,18 +63,18 @@ interface PerfilData {
   nome_completo: string;
   cpf_cnpj: string;
   auth_id: string;
+  receita_pendente: number;
 }
 
 interface SaquesData {
   id: string;
-  associado_id: string;
-  data: string;
+  afiliado_id: string;
   valor: number;
   metodo: string;
-  referencia: string;
-  observacao: string;
   status: string;
-  created_at: string;
+  observacao: string;
+  criado_em: string;
+  processado_em: string | null;
 }
 
 export default function ContaDeSaqueIugu() {
@@ -90,7 +91,6 @@ export default function ContaDeSaqueIugu() {
   const [saques, setSaques] = useState<SaquesData[]>([]);
   const { user } = useUser();
 
-  // Buscar dados ao carregar
   useEffect(() => {
     if (user) {
       fetchData();
@@ -101,61 +101,68 @@ export default function ContaDeSaqueIugu() {
     try {
       setLoading(true);
 
-      // Buscar usuário autenticado
       const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
       if (userError || !authUser) {
         toast.error("Usuário não autenticado");
         return;
       }
 
-      // Buscar dados em paralelo para melhor performance
+      // Buscar perfil do afiliado
+      const { data: perfilData, error: perfilError } = await supabase
+        .from("afiliados")
+        .select("id, nome_completo, cpf_cnpj, auth_id, receita_pendente")
+        .eq("auth_id", authUser.id)
+        .single();
+
+      if (perfilError) {
+        console.error("Erro ao buscar perfil:", perfilError);
+        toast.error("Erro ao carregar perfil");
+        return;
+      }
+
+      if (!perfilData) {
+        toast.error("Perfil não encontrado");
+        return;
+      }
+
+      setPerfil(perfilData);
+      setSaldoDisponivel(perfilData.receita_pendente || 0);
+
+      // Buscar outros dados em paralelo
       const [
-        perfilResponse,
         bancosResponse,
         enderecosResponse,
         payoutsResponse,
         saquesResponse
       ] = await Promise.all([
-        // Perfil do usuário
-        supabase
-          .from("afiliados")
-          .select("id, nome_completo, cpf_cnpj, auth_id")
-          .eq("auth_id", authUser.id)
-          .single(),
-
-        // Contas bancárias
         supabase
           .from("contas_bancarias")
           .select("*")
-          .eq("usuario_id", authUser.id),
-
-        // Endereços
+          .eq("afiliado_id", user?.id),
+        
         supabase
           .from("enderecos")
           .select("*")
-          .eq("usuario_id", authUser.id)
+          .eq("afiliado_id", user?.id)
           .eq("principal", true)
           .single(),
-
-        // Pagamentos (comissões)
+        
         supabase
-          .from("pagamentos")
+          .from("comissoes")
           .select("*")
-          .eq("associado_id", authUser.id),
-
-        // Saques
+          .eq("afiliado_id", perfilData.id)
+          .eq("status", "pendente"),
+        
         supabase
           .from("saques")
           .select("*")
-          .eq("associado_id", authUser.id)
+          .eq("afiliado_id", user?.id)
+          .order("criado_em", { ascending: false })
       ]);
 
-      // Processar respostas
-      if (perfilResponse.data) setPerfil(perfilResponse.data);
-
+      // Processar contas bancárias
       if (bancosResponse.data) {
         setContasBancarias(bancosResponse.data);
-        // Definir conta principal como selecionada por padrão
         const contaPrincipal = bancosResponse.data.find(conta => conta.principal);
         if (contaPrincipal) {
           setContaSelecionada(contaPrincipal.id);
@@ -164,19 +171,17 @@ export default function ContaDeSaqueIugu() {
         }
       }
 
-      if (enderecosResponse.data) setEnderecoPrincipal(enderecosResponse.data);
-
-      if (payoutsResponse.data) {
-        setPayouts(payoutsResponse.data);
-
-        // Calcular saldo disponível (apenas com status "A receber")
-        const disponivel = payoutsResponse.data
-          .filter(payout => payout.status === "A receber")
-          .reduce((sum, payout) => sum + payout.comissao, 0);
-
-        setSaldoDisponivel(disponivel);
+      // Processar endereço
+      if (enderecosResponse.data) {
+        setEnderecoPrincipal(enderecosResponse.data);
       }
 
+      // Processar comissões (payouts)
+      if (payoutsResponse.data) {
+        setPayouts(payoutsResponse.data);
+      }
+
+      // Processar saques
       if (saquesResponse.data) {
         setSaques(saquesResponse.data);
       }
@@ -188,9 +193,7 @@ export default function ContaDeSaqueIugu() {
       setLoading(false);
     }
   };
-  console.log(saques)
 
-  // Formatar valor para moeda
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -198,26 +201,22 @@ export default function ContaDeSaqueIugu() {
     }).format(value);
   };
 
-  // Formatar data
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
-  // Obter cor do status
   const getStatusColor = (status: string): BadgeVariant => {
     const statusMap: Record<string, BadgeVariant> = {
-      "Pago": "green",
-      "Aprovado": "blue",
-      "Pendente": "gray",
-      "Rejeitado": "red",
-      "Processando": "blue",
-      "A receber": "gray",
-      "Recebido": "green"
+      "pago": "green",
+      "aprovado": "blue",
+      "pendente": "gray",
+      "rejeitado": "red",
+      "processando": "blue",
+      "concluido": "green"
     };
-    return statusMap[status] || "default";
+    return statusMap[status.toLowerCase()] || "default";
   };
 
-  // Validar valor do saque
   const validarValorSaque = (valor: number): { valido: boolean; mensagem?: string } => {
     if (!valor || valor <= 0) {
       return { valido: false, mensagem: "Valor deve ser maior que zero" };
@@ -234,10 +233,8 @@ export default function ContaDeSaqueIugu() {
     return { valido: true };
   };
 
-  // Processar saque
   const handleSaque = async () => {
     try {
-      // Converter valor para número
       const valor = parseFloat(valorSaque.replace(/\./g, "").replace(",", "."));
 
       const validacao = validarValorSaque(valor);
@@ -251,40 +248,46 @@ export default function ContaDeSaqueIugu() {
         return;
       }
 
+      if (!perfil) {
+        toast.error("Perfil não encontrado");
+        return;
+      }
+
       setProcessingSaque(true);
 
-      // Buscar dados da conta selecionada
       const conta = contasBancarias.find(c => c.id === contaSelecionada);
       if (!conta) {
         toast.error("Conta bancária não encontrada");
         return;
       }
 
-      // Buscar usuário autenticado
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
-        toast.error("Usuário não autenticado");
-        return;
-      }
-
-      // Criar saque na tabela saques
-      const { data: novoSaque, error } = await supabase
+      // Criar saque
+      const { error } = await supabase
         .from("saques")
         .insert({
-          associado_id: authUser.id,
-          data: new Date().toISOString(),
+          afiliado_id: user?.id,
           valor: valor,
-          metodo: "pix", // Você pode ajustar conforme necessário
-          referencia: `SAQUE-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          observacao: `Saque realizado para conta ${conta.banco} - Ag: ${conta.agencia} - CC: ${conta.conta}`,
-          status: "Processando"
-        })
-        .select()
-        .single();
+          metodo: "pix",
+          status: "processando",
+          observacao: `Saque para ${conta.banco} - Ag: ${conta.agencia} - CC: ${conta.conta}`
+        });
 
       if (error) {
         console.error("Erro ao criar saque:", error);
         throw error;
+      }
+
+      // Atualizar saldo pendente do afiliado
+      const { error: updateError } = await supabase
+        .from("afiliados")
+        .update({ 
+          receita_pendente: (perfil.receita_pendente || 0) - valor,
+          atualizado_em: new Date().toISOString()
+        })
+        .eq("id", perfil.id);
+
+      if (updateError) {
+        console.error("Erro ao atualizar saldo:", updateError);
       }
 
       toast.success("Saque solicitado com sucesso! Processamento em até 3 dias úteis.");
@@ -301,7 +304,6 @@ export default function ContaDeSaqueIugu() {
     }
   };
 
-  // Renderizar loading
   if (loading) {
     return (
       <SidebarLayout>
@@ -330,7 +332,6 @@ export default function ContaDeSaqueIugu() {
             <TabsTrigger value="historico">Histórico de Saques</TabsTrigger>
           </TabsList>
 
-          {/* Aba Conta de Saque */}
           <TabsContent value="conta">
             <Card>
               <CardContent className="space-y-6 p-6">
@@ -347,9 +348,10 @@ export default function ContaDeSaqueIugu() {
                   <h3 className="font-semibold">Endereço Principal</h3>
                   {enderecoPrincipal ? (
                     <p>
-                      {enderecoPrincipal.endereco}, {enderecoPrincipal.numero}
+                      {enderecoPrincipal.logradouro}, {enderecoPrincipal.numero}
                       {enderecoPrincipal.complemento && `, ${enderecoPrincipal.complemento}`}
                       <br />
+                      {enderecoPrincipal.bairro && `${enderecoPrincipal.bairro}, `}
                       {enderecoPrincipal.cidade} - {enderecoPrincipal.estado}
                       <br />
                       CEP: {enderecoPrincipal.cep}
@@ -402,7 +404,6 @@ export default function ContaDeSaqueIugu() {
             </Card>
           </TabsContent>
 
-          {/* Aba Sacar */}
           <TabsContent value="sacar">
             <Card>
               <CardContent className="grid md:grid-cols-2 gap-6 p-6">
@@ -461,7 +462,6 @@ export default function ContaDeSaqueIugu() {
                         className="text-right"
                         value={valorSaque}
                         onChange={(e) => {
-                          // Permitir apenas números e vírgula
                           const value = e.target.value.replace(/[^\d,]/g, "");
                           setValorSaque(value);
                         }}
@@ -481,7 +481,6 @@ export default function ContaDeSaqueIugu() {
             </Card>
           </TabsContent>
 
-          {/* Aba Histórico */}
           <TabsContent value="historico">
             <Card>
               <CardContent className="p-6">
@@ -498,14 +497,13 @@ export default function ContaDeSaqueIugu() {
                       <TableHead>Valor</TableHead>
                       <TableHead>Método</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Referência</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {saques.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={5}
+                          colSpan={4}
                           className="text-center py-8 text-muted-foreground"
                         >
                           Nenhum saque realizado
@@ -514,7 +512,7 @@ export default function ContaDeSaqueIugu() {
                     ) : (
                       saques.map((saque) => (
                         <TableRow key={saque.id}>
-                          <TableCell>{formatDate(saque.data)}</TableCell>
+                          <TableCell>{formatDate(saque.criado_em)}</TableCell>
                           <TableCell className="font-semibold">
                             {formatCurrency(saque.valor)}
                           </TableCell>
@@ -525,9 +523,6 @@ export default function ContaDeSaqueIugu() {
                             <Badge variant={getStatusColor(saque.status)}>
                               {saque.status}
                             </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {saque.referencia}
                           </TableCell>
                         </TableRow>
                       ))

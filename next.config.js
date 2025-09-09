@@ -1,5 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    domains: [
+      'cjsorrfgyfdblcvcalcj.supabase.co',
+      'localhost' // para desenvolvimento local
+    ],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
   eslint: {
     // Evita que o build falhe por erros de ESLint (Vercel bot)
     ignoreDuringBuilds: true,

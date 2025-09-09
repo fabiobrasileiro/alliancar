@@ -21,16 +21,19 @@ import {
 } from "@/components/ui/select";
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
+import { useUser } from "@/context/UserContext";
 
 interface Venda {
   id: string;
   data: string;
-  associado_id: string;
-  associado_name: string;
+  afiliado_id: string;
+  afiliado: {
+    nome_completo: string;
+  };
   placa: string;
   comissao: number;
   status: string;
-  pagamentos: number;
+  valor: number;
   data_criacao: string;
   data_atualizacao: string;
 }
@@ -39,16 +42,17 @@ export default function MinhasVendas() {
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filtroDataInicio, setFiltroDataInicio] = useState<string>("2025-08-01");
-  const [filtroDataFim, setFiltroDataFim] = useState<string>("2025-08-31");
+  const [filtroDataInicio, setFiltroDataInicio] = useState<string>("");
+  const [filtroDataFim, setFiltroDataFim] = useState<string>("");
   const [filtroStatus, setFiltroStatus] = useState<string>("");
   
   const supabase = createClient();
 
   // Calcular totais
   const totalVendas = vendas.length;
-  const totalValor = vendas.reduce((sum, venda) => sum + (venda.pagamentos || 0), 0);
+  const totalValor = vendas.reduce((sum, venda) => sum + (venda.valor || 0), 0);
   const totalComissao = vendas.reduce((sum, venda) => sum + (venda.comissao || 0), 0);
+  const {user} = useUser();
 
   useEffect(() => {
     fetchVendas();
@@ -59,11 +63,43 @@ export default function MinhasVendas() {
       setLoading(true);
       setError(null);
 
+      // Obter o usuário logado
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setError('Usuário não autenticado');
+        setLoading(false);
+        return;
+      }
+
+      // Buscar o afiliado baseado no auth_id do usuário
+      const { data: afiliado, error: errorAfiliado } = await supabase
+        .from('afiliados')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single();
+
+      if (errorAfiliado || !afiliado) {
+        setError('Afiliado não encontrado');
+        setLoading(false);
+        return;
+      }
+
       let query = supabase
         .from('pagamentos')
-        .select('*')
-        .order('data_criacao', { ascending: false });
+        .select(`*`)
+        .eq('afiliado_id', user?.id)
 
+      // Aplicar filtros de data
+      if (filtroDataInicio) {
+        query = query.gte('data', filtroDataInicio);
+      }
+      if (filtroDataFim) {
+        query = query.lte('data', filtroDataFim);
+      }
+      if (filtroStatus && filtroStatus !== 'todos') {
+        query = query.eq('status', filtroStatus);
+      }
 
       const { data: pagamentos, error } = await query;
 
@@ -73,8 +109,15 @@ export default function MinhasVendas() {
         return;
       }
 
-      console.log('Pagamentos:', pagamentos);
-      setVendas(pagamentos ?? []);
+      // Transformar os dados para o formato esperado
+      const vendasFormatadas = pagamentos ? pagamentos.map((pagamento: any) => ({
+        ...pagamento,
+        afiliado: {
+          nome_completo: pagamento.afiliados?.nome_completo || 'N/A'
+        }
+      })) : [];
+
+      setVendas(vendasFormatadas);
 
     } catch (err) {
       console.error('Erro inesperado:', err);
@@ -85,14 +128,32 @@ export default function MinhasVendas() {
   };
 
   const formatarData = (dataString: string) => {
-    return new Date(dataString).toLocaleDateString('pt-BR');
+    try {
+      return new Date(dataString).toLocaleDateString('pt-BR');
+    } catch {
+      return 'Data inválida';
+    }
   };
 
   const formatarMoeda = (valor: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(valor);
+    }).format(valor || 0);
+  };
+
+  const formatarStatus = (status: string) => {
+    const statusMap: { [key: string]: string } = {
+      'pendente': 'Pendente',
+      'pago': 'Pago',
+      'cancelado': 'Cancelado',
+      'processando': 'Processando',
+      'boleto_gerado': 'Boleto Gerado',
+      'aguardando_liberacao': 'Aguardando Liberação',
+      'a_receber': 'A receber'
+    };
+    
+    return statusMap[status.toLowerCase()] || status;
   };
 
   if (loading) {
@@ -138,12 +199,12 @@ export default function MinhasVendas() {
                   <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todos  ">Todos</SelectItem>
-                  <SelectItem value="Boleto Gerado">Boleto Gerado</SelectItem>
-                  <SelectItem value="Cancelado">Cancelado</SelectItem>
-                  <SelectItem value="Aguardando Liberação">Aguardando Liberação</SelectItem>
-                  <SelectItem value="A receber">A receber</SelectItem>
-                  <SelectItem value="Pago">Pago</SelectItem>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="boleto_gerado">Boleto Gerado</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                  <SelectItem value="aguardando_liberacao">Aguardando Liberação</SelectItem>
+                  <SelectItem value="a_receber">A receber</SelectItem>
+                  <SelectItem value="pago">Pago</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -181,7 +242,7 @@ export default function MinhasVendas() {
           <Card className="p-4 text-center">
             <div className="text-sm text-gray-600">Porcentagem da Comissão</div>
             <div className="text-xl font-bold text-purple-600">
-              {formatarMoeda(totalValor - totalComissao)}
+              {totalValor > 0 ? `${((totalComissao / totalValor) * 100).toFixed(1)}%` : '0%'}
             </div>
           </Card>
         </div>
@@ -212,19 +273,19 @@ export default function MinhasVendas() {
                   vendas.map((venda) => (
                     <TableRow key={venda.id}>
                       <TableCell>{formatarData(venda.data)}</TableCell>
-                      <TableCell>{venda.associado_name || 'N/A'}</TableCell>
+                      <TableCell>{venda.afiliado?.nome_completo || 'N/A'}</TableCell>
                       <TableCell>{venda.placa || 'N/A'}</TableCell>
-                      <TableCell>{formatarMoeda(venda.pagamentos)}</TableCell>
+                      <TableCell>{formatarMoeda(venda.valor)}</TableCell>
                       <TableCell>{formatarMoeda(venda.comissao)}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${
-                          venda.status === 'Pago' ? 'bg-green-100 text-green-800' :
-                          venda.status === 'Cancelado' ? 'bg-red-100 text-red-800' :
-                          venda.status === 'Aguardando Liberação' ? 'bg-yellow-100 text-yellow-800' :
-                          venda.status === 'A receber' ? 'bg-blue-100 text-blue-800' :
+                          venda.status === 'pago' ? 'bg-green-100 text-green-800' :
+                          venda.status === 'cancelado' ? 'bg-red-100 text-red-800' :
+                          venda.status === 'aguardando_liberacao' ? 'bg-yellow-100 text-yellow-800' :
+                          venda.status === 'a_receber' ? 'bg-blue-100 text-blue-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
-                          {venda.status}
+                          {formatarStatus(venda.status)}
                         </span>
                       </TableCell>
                       <TableCell>{formatarData(venda.data_criacao)}</TableCell>
