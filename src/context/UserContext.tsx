@@ -1,6 +1,7 @@
 'use client';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { createClient, User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
+import { createClient } from '@/utils/supabase/client'; // Use o client já configurado
 
 interface UserPerfil {
   id: string;
@@ -12,7 +13,7 @@ interface UserPerfil {
   receita_estimada: number;
   ativo: boolean;
   tipo_usuario: string;
-  roles: string;
+  tipo: string;
   criado_em: string;
   atualizado_em: string;
 }
@@ -23,11 +24,6 @@ interface UserContextType {
   loading: boolean;
   refetchPerfil: () => Promise<void>;
 }
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 const UserContext = createContext<UserContextType>({
   user: null,
@@ -40,6 +36,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [perfil, setPerfil] = useState<UserPerfil | null>(null);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient(); // Use o client já configurado
 
   const fetchPerfil = async (userId: string) => {
     try {
@@ -63,31 +60,49 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const refetchPerfil = async () => {
     if (user?.id) {
-      setLoading(true);
       const perfilData = await fetchPerfil(user.id);
       setPerfil(perfilData);
-      setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Obter sessão inicial
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        setUser(session.user);
-        const perfilData = await fetchPerfil(session.user.id);
-        setPerfil(perfilData);
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        setLoading(true);
+        
+        // Obter sessão inicial
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Erro ao obter sessão:", sessionError);
+          return;
+        }
+
+        if (mounted && session?.user) {
+          setUser(session.user);
+          const perfilData = await fetchPerfil(session.user.id);
+          if (mounted) {
+            setPerfil(perfilData);
+          }
+        }
+      } catch (error) {
+        console.error("Erro na inicialização do auth:", error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     };
 
-    getInitialSession();
+    initializeAuth();
 
     // Listener para mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+
         if (session?.user) {
           setUser(session.user);
           const perfilData = await fetchPerfil(session.user.id);
@@ -96,12 +111,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           setUser(null);
           setPerfil(null);
         }
-        setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   return (
     <UserContext.Provider value={{ user, perfil, loading, refetchPerfil }}>
@@ -110,4 +127,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useUser = () => useContext(UserContext);
+export const useUser = () => {
+  const context = useContext(UserContext);
+  
+  if (context === undefined) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
+  
+  return context;
+};

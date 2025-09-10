@@ -1,46 +1,19 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import Image from "next/image";
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { useUser } from "@/context/UserContext";
-
-interface FormData {
-  name: string;
-  fullName: string;
-  registration: string;
-  birthdate: string;
-  phone: string;
-  mobile: string;
-  email: string;
-  zipcode: string;
-  address: string;
-  addressNumber: string;
-  addressComplement: string;
-  addressNeighborhood: string;
-  addressState: string;
-  addressCity: string;
-  currentPassword: string;
-  password: string;
-  passwordConfirmation: string;
-  foto_perfil_url?: string;
-}
+import { FormData, Endereco, Banco, Bucket, NovoBanco } from "./components/types";
+import { DadosPessoaisForm } from "./components/DadosPessoaisForm";
+import { FotoPerfilTab } from "./components/FotoPerfilTab";
+import { DadosBancariosTab } from "./components/DadosBancariosTab";
+import { DadosAcessoTab } from "./components/DadosAcessoTab";
 
 const Afiliados = () => {
   const supabase = createClient();
+
   const [activeTab, setActiveTab] = useState("dados_pessoais");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -67,8 +40,9 @@ const Afiliados = () => {
   });
   const { user } = useUser();
 
-  const [enderecos, setEnderecos] = useState<any[]>([]);
-  const [bancos, setBancos] = useState<any[]>([]);
+  const [enderecos, setEnderecos] = useState<Endereco[]>([]);
+  const [bancos, setBancos] = useState<Banco[]>([]);
+  const [bucket, setBucket] = useState<Bucket[]>([]);
 
   useEffect(() => {
     fetchPerfil();
@@ -77,29 +51,17 @@ const Afiliados = () => {
   const fetchPerfil = async () => {
     try {
       setLoading(true);
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
 
-      if (userError || !user) {
+      if (userError || !authUser) {
         toast.error("Usuário não autenticado");
         return;
       }
 
       const [perfilResponse, enderecosResponse, bancosResponse] = await Promise.all([
-        supabase
-          .from("afiliados")
-          .select("*")
-          .eq("auth_id", user.id)
-          .single(),
-
-        supabase
-          .from("enderecos")
-          .select("*")
-          .eq("afiliado_id", user.id), // Alterado para afiliado_id
-
-        supabase
-          .from("contas_bancarias")
-          .select("*")
-          .eq("afiliado_id", user.id) // Alterado para afiliado_id
+        supabase.from("afiliados").select("*").eq("auth_id", authUser.id).single(),
+        supabase.from("enderecos").select("*").eq("afiliado_id", authUser.id),
+        supabase.from("contas_bancarias").select("*").eq("afiliado_id", authUser.id),
       ]);
 
       if (perfilResponse.error) throw perfilResponse.error;
@@ -108,30 +70,25 @@ const Afiliados = () => {
 
       if (perfilResponse.data) {
         setPerfilId(perfilResponse.data.id);
+        const enderecoPrincipal = enderecosResponse.data?.find(e => e.principal) || enderecosResponse.data?.[0] || {};
 
-        const enderecoPrincipal = enderecosResponse.data?.find(e => e.principal) ||
-          enderecosResponse.data?.[0] || {};
-
-        setFormData({
+        setFormData(prev => ({
+          ...prev,
           name: perfilResponse.data.nome_completo?.split(" ")[0] || "",
           fullName: perfilResponse.data.nome_completo || "",
           registration: perfilResponse.data.cpf_cnpj || "",
-          birthdate: "",
           phone: perfilResponse.data.telefone || "",
           mobile: perfilResponse.data.telefone || "",
-          email: user.email || "",
+          email: authUser.email || "",
           zipcode: enderecoPrincipal.cep || "",
-          address: enderecoPrincipal.logradouro || "", // Alterado para logradouro
+          address: enderecoPrincipal.logradouro || "",
           addressNumber: enderecoPrincipal.numero || "",
           addressComplement: enderecoPrincipal.complemento || "",
-          addressNeighborhood: enderecoPrincipal.bairro || "", // Alterado para bairro
+          addressNeighborhood: enderecoPrincipal.bairro || "",
           addressState: enderecoPrincipal.estado || "",
           addressCity: enderecoPrincipal.cidade || "",
-          currentPassword: "",
-          password: "",
-          passwordConfirmation: "",
           foto_perfil_url: perfilResponse.data.foto_perfil_url || ""
-        });
+        }));
       }
 
       if (enderecosResponse.data) setEnderecos(enderecosResponse.data);
@@ -147,10 +104,11 @@ const Afiliados = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setFormData((prev: FormData) => ({
-      ...prev,
-      [id]: value,
-    }));
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSavePersonalData = async () => {
@@ -163,6 +121,7 @@ const Afiliados = () => {
       setSaving(true);
 
       const { data: { user } } = await supabase.auth.getUser();
+
       if (!user) {
         toast.error("Usuário não autenticado");
         return;
@@ -366,6 +325,103 @@ const Afiliados = () => {
       toast.error("Erro ao remover foto de perfil");
     }
   };
+  // No seu componente principal (Afiliados.tsx)
+  const handleAddBanco = async (bancoData: NovoBanco) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      // Se for principal, remover principal de outras contas
+      if (bancoData.principal) {
+        await supabase
+          .from("contas_bancarias")
+          .update({ principal: false })
+          .eq("afiliado_id", user.id);
+      }
+
+      const { error } = await supabase
+        .from("contas_bancarias")
+        .insert([{ ...bancoData, afiliado_id: user.id }]);
+
+      if (error) throw error;
+
+      toast.success("Conta bancária adicionada com sucesso!");
+      fetchPerfil(); // Recarregar dados
+    } catch (error) {
+      console.error("Erro ao adicionar conta:", error);
+      toast.error("Erro ao adicionar conta bancária");
+    }
+  };
+
+  const handleEditBanco = async (id: string, bancoData: NovoBanco) => {
+    try {
+      // Se for principal, remover principal de outras contas
+      if (bancoData.principal) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase
+          .from("contas_bancarias")
+          .update({ principal: false })
+          .eq("afiliado_id", user?.id)
+          .neq("id", id);
+      }
+
+      const { error } = await supabase
+        .from("contas_bancarias")
+        .update(bancoData)
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Conta bancária atualizada com sucesso!");
+      fetchPerfil();
+    } catch (error) {
+      console.error("Erro ao editar conta:", error);
+      toast.error("Erro ao editar conta bancária");
+    }
+  };
+
+  const handleDeleteBanco = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("contas_bancarias")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Conta bancária excluída com sucesso!");
+      fetchPerfil();
+    } catch (error) {
+      console.error("Erro ao excluir conta:", error);
+      toast.error("Erro ao excluir conta bancária");
+    }
+  };
+
+  const handleSetPrincipal = async (id: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Remover principal de todas as contas
+      await supabase
+        .from("contas_bancarias")
+        .update({ principal: false })
+        .eq("afiliado_id", user?.id);
+
+      // Definir esta conta como principal
+      const { error } = await supabase
+        .from("contas_bancarias")
+        .update({ principal: true })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Conta principal definida com sucesso!");
+      fetchPerfil();
+    } catch (error) {
+      console.error("Erro ao definir conta principal:", error);
+      toast.error("Erro ao definir conta principal");
+    }
+  };
 
   return (
     <SidebarLayout>
@@ -381,323 +437,45 @@ const Afiliados = () => {
           </TabsList>
 
           <TabsContent value="dados_pessoais">
-            <div className="mb-4">
-              <p className="text-gray-600">
-                Aqui você pode configurar suas informações pessoais.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">
-                  Apelido
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  maxLength={256}
-                  value={formData.name}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fullName">
-                  Nome Completo <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  maxLength={256}
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="registration">CPF/CNPJ</Label>
-                <Input
-                  id="registration"
-                  type="text"
-                  maxLength={18}
-                  value={formData.registration}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="mobile">
-                  WhatsApp com DDD<span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="mobile"
-                  type="text"
-                  maxLength={32}
-                  value={formData.mobile}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">
-                  E-mail <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  maxLength={128}
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  disabled
-                />
-              </div>
-            </div>
-
-            <hr className="my-6 border-gray-300" />
-
-            <div className="mb-4">
-              <h4 className="text-lg font-semibold">Endereço</h4>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <div className="space-y-2">
-                <Label htmlFor="zipcode">
-                  CEP
-                </Label>
-                <Input
-                  id="zipcode"
-                  type="text"
-                  maxLength={10}
-                  value={formData.zipcode}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address">
-                  Endereço
-                </Label>
-                <Input
-                  id="address"
-                  type="text"
-                  maxLength={512}
-                  value={formData.address}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="addressNumber">
-                  Número
-                </Label>
-                <Input
-                  id="addressNumber"
-                  type="text"
-                  maxLength={32}
-                  value={formData.addressNumber}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="addressComplement">Complemento</Label>
-                <Input
-                  id="addressComplement"
-                  type="text"
-                  maxLength={64}
-                  value={formData.addressComplement}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="addressState">
-                  Estado
-                </Label>
-                <Select
-                  value={formData.addressState}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, addressState: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AC">Acre</SelectItem>
-                    <SelectItem value="AL">Alagoas</SelectItem>
-                    <SelectItem value="AP">Amapá</SelectItem>
-                    <SelectItem value="AM">Amazonas</SelectItem>
-                    <SelectItem value="BA">Bahia</SelectItem>
-                    <SelectItem value="CE">Ceará</SelectItem>
-                    <SelectItem value="DF">Distrito Federal</SelectItem>
-                    <SelectItem value="ES">Espírito Santo</SelectItem>
-                    <SelectItem value="GO">Goiás</SelectItem>
-                    <SelectItem value="MA">Maranhão</SelectItem>
-                    <SelectItem value="MT">Mato Grosso</SelectItem>
-                    <SelectItem value="MS">Mato Grosso do Sul</SelectItem>
-                    <SelectItem value="MG">Minas Gerais</SelectItem>
-                    <SelectItem value="PA">Pará</SelectItem>
-                    <SelectItem value="PB">Paraíba</SelectItem>
-                    <SelectItem value="PR">Paraná</SelectItem>
-                    <SelectItem value="PE">Pernambuco</SelectItem>
-                    <SelectItem value="PI">Piauí</SelectItem>
-                    <SelectItem value="RJ">Rio de Janeiro</SelectItem>
-                    <SelectItem value="RN">Rio Grande do Norte</SelectItem>
-                    <SelectItem value="RS">Rio Grande do Sul</SelectItem>
-                    <SelectItem value="RO">Rondônia</SelectItem>
-                    <SelectItem value="RR">Roraima</SelectItem>
-                    <SelectItem value="SC">Santa Catarina</SelectItem>
-                    <SelectItem value="SP">São Paulo</SelectItem>
-                    <SelectItem value="SE">Sergipe</SelectItem>
-                    <SelectItem value="TO">Tocantins</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="addressCity">
-                  Cidade
-                </Label>
-                <Input
-                  id="addressCity"
-                  type="text"
-                  value={formData.addressCity}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-
-            <Button
-              onClick={handleSavePersonalData}
-              className="mt-4"
-              disabled={loading || saving}
-            >
-              {saving ? "Salvando..." : "Salvar"}
-            </Button>
+            <DadosPessoaisForm
+              formData={formData}
+              loading={loading}
+              saving={saving}
+              onInputChange={handleInputChange}
+              onSelectChange={handleSelectChange}
+              onSave={handleSavePersonalData}
+            />
           </TabsContent>
 
           <TabsContent value="foto_perfil">
-            <div className="mt-5">
-              <Label>Faça upload da sua foto de perfil</Label>
-              <div className="mt-4">
-                <Input
-                  id="fotoPerfilInput"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleUploadFoto}
-                />
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <div className="relative w-32 h-32 border rounded-md overflow-hidden">
-                <Image
-                  width={128}
-                  height={128}
-                  src={formData.foto_perfil_url || "/placeholder-avatar.png"}
-                  alt="Foto de perfil"
-                  className="w-full h-full object-cover"
-                />
-                {formData.foto_perfil_url && (
-                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <span
-                      className="text-white cursor-pointer text-sm"
-                      onClick={() => document.getElementById('fotoPerfilInput')?.click()}
-                    >
-                      Alterar
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {formData.foto_perfil_url && (
-                <Button
-                  className="mt-4"
-                  variant="default"
-                  onClick={handleDeleteFoto}
-                >
-                  Remover Foto
-                </Button>
-              )}
-            </div>
+            <FotoPerfilTab
+              fotoPerfilUrl={formData.foto_perfil_url || ""}
+              onUploadFoto={handleUploadFoto}
+              onDeleteFoto={handleDeleteFoto}
+            />
           </TabsContent>
 
           <TabsContent value="dados_bancarios">
-            <div className="mb-6 mt-5">
-              <p className="text-gray-600">
-                Gerencie suas contas bancárias para recebimento de comissões.
-              </p>
-            </div>
-
-            {bancos.length > 0 ? (
-              <div className="space-y-4">
-                {bancos.map((banco) => (
-                  <div key={banco.id} className="p-4 border rounded-lg">
-                    <h4 className="font-semibold">{banco.banco}</h4>
-                    <p>Agência: {banco.agencia}-{banco.digito_agencia}</p>
-                    <p>Conta: {banco.conta}-{banco.digito_conta}</p>
-                    {banco.pix && <p>PIX: {banco.pix}</p>}
-                    {banco.principal && (
-                      <Badge variant="default" className="mt-2">Principal</Badge>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">Nenhuma conta bancária cadastrada</p>
-            )}
-
-            <Button className="mt-4" onClick={() => {/* Lógica para adicionar conta bancária */ }}>
-              Adicionar Conta Bancária
-            </Button>
+            <DadosBancariosTab
+              bancos={bancos}
+              onAddBanco={handleAddBanco}
+              onEditBanco={handleEditBanco}
+              onDeleteBanco={handleDeleteBanco}
+              onSetPrincipal={handleSetPrincipal}
+            />
           </TabsContent>
 
           <TabsContent value="dados_acesso">
-            <div className="mb-6 mt-5">
-              <p className="text-gray-600">
-                Tenha em mente que ao alterar a sua senha, nós lhe pediremos que
-                defina uma senha segura que contenha letras maiúsculas, minúsculas e números.
-              </p>
-            </div>
-
-            <div className="space-y-4 max-w-lg">
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword">Senha Atual</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  value={formData.currentPassword}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Nova Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="passwordConfirmation">
-                  Confirmar Nova Senha
-                </Label>
-                <Input
-                  id="passwordConfirmation"
-                  type="password"
-                  value={formData.passwordConfirmation}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <Button onClick={handleSavePassword} disabled={saving}>
-                {saving ? "Atualizando..." : "Atualizar Senha"}
-              </Button>
-            </div>
+            <DadosAcessoTab
+              formData={{
+                currentPassword: formData.currentPassword,
+                password: formData.password,
+                passwordConfirmation: formData.passwordConfirmation
+              }}
+              saving={saving}
+              onInputChange={handleInputChange}
+              onSavePassword={handleSavePassword}
+            />
           </TabsContent>
         </Tabs>
       </div>

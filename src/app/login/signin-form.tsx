@@ -42,7 +42,7 @@ export default function LoginForm() {
       );
       return;
     }
-    const redirectTo = searchParams.get("redirectedFrom") || "/";
+    const redirectTo = searchParams.get("redirectedFrom") || "/dashboard";
     router.replace(redirectTo);
   };
 

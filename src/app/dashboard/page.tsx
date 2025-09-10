@@ -55,7 +55,6 @@ export default function AffiliateDashboard() {
         .select('*, clientes(nome)')
         .limit(10);
 
-      console.log("comissoes: ", comissoes)
 
       // Buscar ranking
       const { data: ranking } = await supabase

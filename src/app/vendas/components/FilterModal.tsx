@@ -1,380 +1,406 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Filter, X } from "lucide-react";
-import { FilterData } from "./types";
+// import { useState } from 'react';
+// import { Button } from "@/components/ui/button";
+// import { Input } from "@/components/ui/input";
+// import { Badge } from "@/components/ui/badge";
+// import { Label } from "@/components/ui/label";
+// import { Checkbox } from "@/components/ui/checkbox";
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger,
+// } from "@/components/ui/dialog";
+// import { Filter, X, ChevronDown, ChevronUp, Calendar, Tag, Users, MapPin, Check } from "lucide-react";
 
-interface FilterModalProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  filterData: FilterData;
-  onFilterChange: <K extends keyof FilterData>(field: K, value: FilterData[K]) => void;
-  onSubmit: () => void;
-  onClear: () => void;
-  activeFilters: number;
-}
+// export interface StatusNegociacao {
+//   id: string;
+//   nome: string;
+// }
 
-export default function FilterModal({
-  isOpen,
-  onOpenChange,
-  filterData,
-  onFilterChange,
-  onSubmit,
-  onClear,
-  activeFilters,
-}: FilterModalProps) {
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center space-x-2">
-          <Filter className="w-4 h-4" />
-          <span>Filtrar</span>
-          <Badge variant="gray" className="ml-2">
-            {activeFilters}
-          </Badge>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto p-8">
-        <DialogHeader className="pb-6">
-          <DialogTitle className="flex items-center justify-between text-2xl font-bold">
-            <span>Filtros</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="h-10 w-10 hover:bg-gray-100"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </DialogTitle>
-        </DialogHeader>
+// export interface FilterData {
+//   tipoData: string;
+//   dataInicial: string;
+//   dataFinal: string;
+//   status: StatusNegociacao[];
+//   marcas: string[];
+//   modelos: string[];
+//   valorMin: number;
+//   valorMax: number;
+// }
 
-        <div className="space-y-8">
-          {/* Filtros de Data */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold border-b-2 border-blue-200 pb-3 text-blue-800">
-              📅 Filtros de Data
-            </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              <div className="lg:col-span-2">
-                <Label htmlFor="tipoData" className="text-base font-medium mb-3 block">
-                  Tipo de data
-                </Label>
-                <Select
-                  value={filterData.tipoData}
-                  onValueChange={(value) => onFilterChange("tipoData", value)}
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Data de criação</SelectItem>
-                    <SelectItem value="13">Data de atualização</SelectItem>
-                    <SelectItem value="10">Data de pagamento</SelectItem>
-                    <SelectItem value="11">Data de cadastro SGA</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="dataInicial" className="text-base font-medium mb-3 block">
-                  Data inicial
-                </Label>
-                <Input
-                  id="dataInicial"
-                  type="date"
-                  value={filterData.dataInicial}
-                  onChange={(e) => onFilterChange("dataInicial", e.target.value)}
-                  className="h-12 text-base"
-                />
-              </div>
-              <div>
-                <Label htmlFor="dataFinal" className="text-base font-medium mb-3 block">
-                  Data final
-                </Label>
-                <Input
-                  id="dataFinal"
-                  type="date"
-                  value={filterData.dataFinal}
-                  onChange={(e) => onFilterChange("dataFinal", e.target.value)}
-                  className="h-12 text-base"
-                />
-              </div>
-            </div>
-          </div>
+// interface FilterModalProps {
+//   isOpen: boolean;
+//   onOpenChange: (open: boolean) => void;
+//   filterData: FilterData;
+//   onFilterChange: <K extends keyof FilterData>(field: K, value: FilterData[K]) => void;
+//   onSubmit: () => void;
+//   onClear: () => void;
+//   activeFilters: number;
+// }
 
-          {/* Filtros de Seleção Múltipla */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold border-b-2 border-green-200 pb-3 text-green-800">
-              🎯 Filtros de Seleção
-            </h3>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              <div>
-                <Label htmlFor="cooperativas" className="text-base font-medium mb-3 block">
-                  Cooperativas
-                </Label>
-                <Select
-                  value={filterData.cooperativas[0] || ""}
-                  onValueChange={(value) => onFilterChange("cooperativas", [value])}
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="11375">ALLIANCAR CLUB</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+// // Dados de exemplo
+// const statusOptions: StatusNegociacao[] = [
+//   { id: "1", nome: "Em negociação" },
+//   { id: "2", nome: "Aprovado" },
+//   { id: "3", nome: "Recusado" },
+//   { id: "4", nome: "Cancelado" },
+// ];
 
-              <div>
-                <Label htmlFor="usuarios" className="text-base font-medium mb-3 block">
-                  Usuários
-                </Label>
-                <Select
-                  value={filterData.usuarios[0] || ""}
-                  onValueChange={(value) => onFilterChange("usuarios", [value])}
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="102447">Suporte PowerCRM</SelectItem>
-                    <SelectItem value="104079">Daniel</SelectItem>
-                    <SelectItem value="123998">Marcel Araújo</SelectItem>
-                    <SelectItem value="124886">Allan Fernandes de Almeida</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+// const marcaOptions = ["Toyota", "Honda", "Ford", "Chevrolet", "Volkswagen", "Fiat"];
+// const modeloOptions = ["Corolla", "Civic", "Focus", "Cruze", "Golf", "Uno"];
 
-              <div>
-                <Label htmlFor="origem" className="text-base font-medium mb-3 block">
-                  Origem
-                </Label>
-                <Select
-                  value={filterData.origem[0] || ""}
-                  onValueChange={(value) => onFilterChange("origem", [value])}
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="14584">Facebook</SelectItem>
-                    <SelectItem value="14585">Google</SelectItem>
-                    <SelectItem value="14586">Indicação</SelectItem>
-                    <SelectItem value="14587">Instagram</SelectItem>
-                    <SelectItem value="18180">Marcel</SelectItem>
-                    <SelectItem value="14840">Presencial</SelectItem>
-                    <SelectItem value="14588">Site</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+// export default function FilterModal({
+//   isOpen,
+//   onOpenChange,
+//   filterData,
+//   onFilterChange,
+//   onSubmit,
+//   onClear,
+//   activeFilters,
+// }: FilterModalProps) {
+//   const [expandedSections, setExpandedSections] = useState({
+//     data: true,
+//     status: true,
+//     veiculo: true,
+//     valor: true
+//   });
 
-              <div>
-                <Label htmlFor="subOrigem" className="text-base font-medium mb-3 block">
-                  Sub origem
-                </Label>
-                <Select
-                  value={filterData.subOrigem[0] || "none"}
-                  onValueChange={(value) =>
-                    onFilterChange("subOrigem", value === "none" ? [] : [value])
-                  }
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+//   const toggleSection = (section: keyof typeof expandedSections) => {
+//     setExpandedSections(prev => ({
+//       ...prev,
+//       [section]: !prev[section]
+//     }));
+//   };
 
-              <div className="xl:col-span-2">
-                <Label htmlFor="tagsAutomaticas" className="text-base font-medium mb-3 block">
-                  Tags automáticas
-                </Label>
-                <Select
-                  value={filterData.tagsAutomaticas}
-                  onValueChange={(value) => onFilterChange("tagsAutomaticas", value)}
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Selecione</SelectItem>
-                    <SelectItem value="5">Mostrar cotações do website</SelectItem>
-                    <SelectItem value="6">Mostrar cotações de hotlink</SelectItem>
-                    <SelectItem value="7">Mostrar cotações da pipeline</SelectItem>
-                    <SelectItem value="8">Mostrar cotações de listas importadas</SelectItem>
-                    <SelectItem value="9">Mostrar cotações de afiliados</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
+//   const handleStatusChange = (status: StatusNegociacao) => {
+//     const isSelected = filterData.status.some(s => s.id === status.id);
+//     let newStatus: StatusNegociacao[];
+    
+//     if (isSelected) {
+//       newStatus = filterData.status.filter(s => s.id !== status.id);
+//     } else {
+//       newStatus = [...filterData.status, status];
+//     }
+    
+//     onFilterChange("status", newStatus);
+//   };
 
-          {/* Filtros de Checkbox */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold border-b-2 border-purple-200 pb-3 text-purple-800">
-              ⚙️ Filtros Específicos
-            </h3>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Checkbox
-                  id="cartoesArquivados"
-                  checked={filterData.cartoesArquivados}
-                  onChange={(e) =>
-                    onFilterChange("cartoesArquivados", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="cartoesArquivados" className="text-base cursor-pointer">
-                  Mostrar apenas cartões arquivados
-                </Label>
-              </div>
+//   // const handleMarcaChange = (marca: string) => {
+//   //   const isSelected = filterData.marcas.includes(marca);
+//   //   let newMarcas: string[];
+    
+//   //   if (isSelected) {
+//   //     newMarcas = filterData.marcas.filter(m => m !== marca);
+//   //   } else {
+//   //     newMarcas = [...filterData.marcas, marca];
+//   //   }
+    
+//   //   onFilterChange("marcas", newMarcas);
+//   // };
 
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Checkbox
-                  id="cotaçõesPagas"
-                  checked={filterData.cotaçõesPagas}
-                  onChange={(e) =>
-                    onFilterChange("cotaçõesPagas", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="cotaçõesPagas" className="text-base cursor-pointer">
-                  Mostrar apenas cotações pagas
-                </Label>
-              </div>
+//   const handleModeloChange = (modelo: string) => {
+//     const isSelected = filterData.modelos.includes(modelo);
+//     let newModelos: string[];
+    
+//     if (isSelected) {
+//       newModelos = filterData.modelos.filter(m => m !== modelo);
+//     } else {
+//       newModelos = [...filterData.modelos, modelo];
+//     }
+    
+//     onFilterChange("modelos", newModelos);
+//   };
 
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Checkbox
-                  id="boletosNaoPagos"
-                  checked={filterData.boletosNaoPagos}
-                  onChange={(e) =>
-                    onFilterChange("boletosNaoPagos", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="boletosNaoPagos" className="text-base cursor-pointer">
-                  Mostrar boletos gerados e não pagos
-                </Label>
-              </div>
+//   const handleClear = () => {
+//     onClear();
+//   };
 
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Checkbox
-                  id="instalacaoRastreador"
-                  checked={filterData.instalacaoRastreador}
-                  onChange={(e) =>
-                    onFilterChange("instalacaoRastreador", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="instalacaoRastreador" className="text-base cursor-pointer">
-                  Instalação de Rastreador
-                </Label>
-              </div>
+//   const handleSubmit = () => {
+//     // Validação simples de datas
+//     if (filterData.dataInicial && filterData.dataFinal && filterData.dataInicial > filterData.dataFinal) {
+//       alert("Data inicial não pode ser maior que data final");
+//       return;
+//     }
+    
+//     onSubmit();
+//   };
 
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Checkbox
-                  id="cartoesExpirados"
-                  checked={filterData.cartoesExpirados}
-                  onChange={(e) =>
-                    onFilterChange("cartoesExpirados", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="cartoesExpirados" className="text-base cursor-pointer">
-                  Mostrar apenas cartões expirados
-                </Label>
-              </div>
+//   return (
+//     <Dialog open={isOpen} onOpenChange={onOpenChange}>
+//       <DialogTrigger asChild>
+//         <Button variant="outline" className="flex items-center gap-2 relative">
+//           <Filter className="w-4 h-4" />
+//           <span>Filtrar</span>
+//           {activeFilters > 0 && (
+//             <Badge variant="default" className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center p-0 rounded-full">
+//               {activeFilters}
+//             </Badge>
+//           )}
+//         </Button>
+//       </DialogTrigger>
+//       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+//         <DialogHeader className="pb-4">
+//           <div className="flex items-center justify-between">
+//             <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+//               <Filter className="w-5 h-5" />
+//               Filtros Avançados
+//             </DialogTitle>
+//             <Button
+//               variant="ghost"
+//               size="icon"
+//               onClick={() => onOpenChange(false)}
+//               className="h-8 w-8"
+//             >
+//               <X className="w-4 h-4" />
+//             </Button>
+//           </div>
+//         </DialogHeader>
 
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Checkbox
-                  id="cartoesAceitos"
-                  checked={filterData.cartoesAceitos}
-                  onChange={(e) =>
-                    onFilterChange("cartoesAceitos", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="cartoesAceitos" className="text-base cursor-pointer">
-                  Mostrar apenas cartões aceitos
-                </Label>
-              </div>
+//         <div className="space-y-6 py-2">
+//           {/* Filtros de Data */}
+//           <div className="border rounded-lg overflow-hidden">
+//             <button 
+//               className="flex items-center justify-between w-full p-4 bg-muted/50 hover:bg-muted/70 transition-colors"
+//               onClick={() => toggleSection('data')}
+//             >
+//               <div className="flex items-center gap-2">
+//                 <Calendar className="w-5 h-5" />
+//                 <span className="font-medium">Filtros de Data</span>
+//               </div>
+//               {expandedSections.data ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+//             </button>
+            
+//             {expandedSections.data && (
+//               <div className="p-4 space-y-4">
+//                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+//                   <div className="space-y-2">
+//                     <Label htmlFor="tipoData">Tipo de Data</Label>
+//                     <Select
+//                       value={filterData.tipoData}
+//                       onValueChange={(value) => onFilterChange("tipoData", value)}
+//                     >
+//                       <SelectTrigger>
+//                         <SelectValue placeholder="Selecione o tipo" />
+//                       </SelectTrigger>
+//                       <SelectContent>
+//                         <SelectItem value="criacao">Data de Criação</SelectItem>
+//                         <SelectItem value="atualizacao">Data de Atualização</SelectItem>
+//                         <SelectItem value="vencimento">Data de Vencimento</SelectItem>
+//                       </SelectContent>
+//                     </Select>
+//                   </div>
+                  
+//                   <div className="space-y-2">
+//                     <Label htmlFor="dataInicial">Data Inicial</Label>
+//                     <Input
+//                       id="dataInicial"
+//                       type="date"
+//                       value={filterData.dataInicial}
+//                       onChange={(e) => onFilterChange("dataInicial", e.target.value)}
+//                     />
+//                   </div>
+                  
+//                   <div className="space-y-2">
+//                     <Label htmlFor="dataFinal">Data Final</Label>
+//                     <Input
+//                       id="dataFinal"
+//                       type="date"
+//                       value={filterData.dataFinal}
+//                       onChange={(e) => onFilterChange("dataFinal", e.target.value)}
+//                     />
+//                   </div>
+//                 </div>
+//               </div>
+//             )}
+//           </div>
 
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Checkbox
-                  id="cartoesNaoAtendidos"
-                  checked={filterData.cartoesNaoAtendidos}
-                  onChange={(e) =>
-                    onFilterChange("cartoesNaoAtendidos", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="cartoesNaoAtendidos" className="text-base cursor-pointer">
-                  Mostrar apenas cartões não atendidos
-                </Label>
-              </div>
+//           {/* Filtros de Status */}
+//           <div className="border rounded-lg overflow-hidden">
+//             <button 
+//               className="flex items-center justify-between w-full p-4 bg-muted/50 hover:bg-muted/70 transition-colors"
+//               onClick={() => toggleSection('status')}
+//             >
+//               <div className="flex items-center gap-2">
+//                 <Tag className="w-5 h-5" />
+//                 <span className="font-medium">Status da Negociação</span>
+//                 {/* {filterData.status.length > 0 && (
+//                   <Badge variant="default" className="ml-2">
+//                     {filterData.status.length}
+//                   </Badge>
+//                 )} */}
+//               </div>
+//               {expandedSections.status ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+//             </button>
+            
+//             {expandedSections.status && (
+//               <div className="p-4">
+//                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+//                   {statusOptions.map((status) => {
+//                     // const isSelected = filterData.status.some(s => s.id === status.id);
+//                     return (
+//                       <div 
+//                         key={status.id} 
+//                         className={`flex items-center space-x-2 p-3 rounded-md border cursor-pointer transition-colors `}
+//                         onClick={() => handleStatusChange(status)}
+//                       >
+//                         <div className={`flex items-center justify-center w-5 h-5 rounded-md border `}>
+//                           <Check className="w-3 h-3" />
+//                         </div>
+//                         <Label className="cursor-pointer flex-1">{status.nome}</Label>
+//                       </div>
+//                     );
+//                   })}
+//                 </div>
+//               </div>
+//             )}
+//           </div>
 
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Checkbox
-                  id="ordenarAntigas"
-                  checked={filterData.ordenarAntigas}
-                  onChange={(e) =>
-                    onFilterChange("ordenarAntigas", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="ordenarAntigas" className="text-base cursor-pointer">
-                  Ordenar cartões pelas mais antigas
-                </Label>
-              </div>
-            </div>
-          </div>
-        </div>
+//           {/* Filtros de Veículo */}
+//           <div className="border rounded-lg overflow-hidden">
+//             <button 
+//               className="flex items-center justify-between w-full p-4 bg-muted/50 hover:bg-muted/70 transition-colors"
+//               onClick={() => toggleSection('veiculo')}
+//             >
+//               <div className="flex items-center gap-2">
+//                 <Users className="w-5 h-5" />
+//                 <span className="font-medium">Veículo</span>
+//                 {/* {(filterData.marcas.length > 0 || filterData.modelos.length > 0) && (
+//                   <Badge variant="default" className="ml-2">
+//                     {filterData.marcas.length + filterData.modelos.length}
+//                   </Badge>
+//                 )} */}
+//               </div>
+//               {expandedSections.veiculo ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+//             </button>
+            
+//             {/* {expandedSections.veiculo && (
+//               <div className="p-4 space-y-6">
+//                 <div className="space-y-3">
+//                   <Label>Marcas</Label>
+//                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+//                     {marcaOptions.map((marca) => {
+//                       const isSelected = filterData.marcas.includes(marca);
+//                       return (
+//                         <div 
+//                           key={marca} 
+//                           className={`flex items-center space-x-2 p-3 rounded-md border cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}`}
+//                           onClick={() => handleMarcaChange(marca)}
+//                         >
+//                           <div className={`flex items-center justify-center w-5 h-5 rounded-md border ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'}`}>
+//                             {isSelected && <Check className="w-3 h-3" />}
+//                           </div>
+//                           <Label className="cursor-pointer flex-1">{marca}</Label>
+//                         </div>
+//                       );
+//                     })}
+//                   </div>
+//                 </div>
+                
+//                 <div className="space-y-3">
+//                   <Label>Modelos</Label>
+//                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+//                     {modeloOptions.map((modelo) => {
+//                       const isSelected = filterData.modelos.includes(modelo);
+//                       return (
+//                         <div 
+//                           key={modelo} 
+//                           className={`flex items-center space-x-2 p-3 rounded-md border cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}`}
+//                           onClick={() => handleModeloChange(modelo)}
+//                         >
+//                           <div className={`flex items-center justify-center w-5 h-5 rounded-md border ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'}`}>
+//                             {isSelected && <Check className="w-3 h-3" />}
+//                           </div>
+//                           <Label className="cursor-pointer flex-1">{modelo}</Label>
+//                         </div>
+//                       );
+//                     })}
+//                   </div>
+//                 </div>
+//               </div>
+//             )} */}
+//           </div>
 
-        {/* Botões de Ação */}
-        <div className="flex justify-between items-center pt-8 border-t-2 border-gray-200 mt-8">
-          <Button
-            variant="outline"
-            onClick={onClear}
-            className="h-12 px-8 text-base font-medium hover:bg-red-50 hover:border-red-300 hover:text-red-700"
-          >
-            🗑️ Limpar Filtros
-          </Button>
-          <div className="flex space-x-4">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-12 px-8 text-base font-medium"
-            >
-              ❌ Cancelar
-            </Button>
-            <Button
-              onClick={onSubmit}
-              className="h-12 px-8 text-base font-medium bg-blue-600 hover:bg-blue-700 shadow-lg"
-            >
-              <Filter className="w-5 h-5 mr-3" />
-              ✅ Aplicar Filtros
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+//           {/* Filtros de Valor */}
+//           <div className="border rounded-lg overflow-hidden">
+//             <button 
+//               className="flex items-center justify-between w-full p-4 bg-muted/50 hover:bg-muted/70 transition-colors"
+//               onClick={() => toggleSection('valor')}
+//             >
+//               <div className="flex items-center gap-2">
+//                 <MapPin className="w-5 h-5" />
+//                 <span className="font-medium">Faixa de Valor</span>
+//                 {(filterData.valorMin > 0 || filterData.valorMax > 0) && (
+//                   <Badge variant="default" className="ml-2">
+//                     2
+//                   </Badge>
+//                 )}
+//               </div>
+//               {expandedSections.valor ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+//             </button>
+            
+//             {expandedSections.valor && (
+//               <div className="p-4">
+//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                   <div className="space-y-2">
+//                     <Label htmlFor="valorMin">Valor Mínimo (R$)</Label>
+//                     <Input
+//                       id="valorMin"
+//                       type="number"
+//                       min="0"
+//                       value={filterData.valorMin || ''}
+//                       onChange={(e) => onFilterChange("valorMin", Number(e.target.value))}
+//                       placeholder="0,00"
+//                     />
+//                   </div>
+                  
+//                   <div className="space-y-2">
+//                     <Label htmlFor="valorMax">Valor Máximo (R$)</Label>
+//                     <Input
+//                       id="valorMax"
+//                       type="number"
+//                       min="0"
+//                       value={filterData.valorMax || ''}
+//                       onChange={(e) => onFilterChange("valorMax", Number(e.target.value))}
+//                       placeholder="0,00"
+//                     />
+//                   </div>
+//                 </div>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+
+//         {/* Botões de Ação */}
+//         <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t">
+//           <Button
+//             variant="outline"
+//             onClick={handleClear}
+//             className="order-2 sm:order-1"
+//           >
+//             Limpar Filtros
+//           </Button>
+          
+//           <div className="flex gap-3 order-1 sm:order-2">
+//             <Button
+//               variant="outline"
+//               onClick={() => onOpenChange(false)}
+//             >
+//               Cancelar
+//             </Button>
+//             <Button onClick={handleSubmit}>
+//               Aplicar Filtros
+//             </Button>
+//           </div>
+//         </div>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// }

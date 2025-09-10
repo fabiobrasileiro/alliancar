@@ -23,8 +23,9 @@ interface NewNegotiationModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   formData: NewNegotiationForm;
-  onFormChange: (field: keyof NewNegotiationForm, value: string | boolean) => void;
-  onSubmit: () => void;
+  onFormChange: (field: keyof NewNegotiationForm, value: string | boolean | number) => void;
+  onSubmit: (formData: NewNegotiationForm) => Promise<void>;
+  loading?: boolean;
 }
 
 export default function NewNegotiationModal({
@@ -33,7 +34,20 @@ export default function NewNegotiationModal({
   formData,
   onFormChange,
   onSubmit,
+  loading = false,
 }: NewNegotiationModalProps) {
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await onSubmit(formData);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Erro ao criar negociação:', error);
+    }
+  };
+  console.log(formData)
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
@@ -57,54 +71,13 @@ export default function NewNegotiationModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSubmit();
-          }}
-          className="space-y-8"
-        >
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Dados do Veículo */}
           <div className="space-y-6">
             <h3 className="text-xl font-semibold border-b-2 border-blue-200 pb-3 text-blue-800">
               🚗 Dados do Veículo
             </h3>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              <div>
-                <Label htmlFor="cooperativa" className="text-base font-medium mb-3 block">
-                  Cooperativa *
-                </Label>
-                <Select
-                  value={formData.cooperativa}
-                  onValueChange={(value) => onFormChange("cooperativa", value)}
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="11375">ALLIANCAR CLUB</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="tipoVeiculo" className="text-base font-medium mb-3 block">
-                  Tipo de veículo *
-                </Label>
-                <Select
-                  value={formData.tipoVeiculo}
-                  onValueChange={(value) => onFormChange("tipoVeiculo", value)}
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Carro/utilitário pequeno</SelectItem>
-                    <SelectItem value="1">Moto</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div>
                 <Label htmlFor="placa" className="text-base font-medium mb-3 block">
                   Placa *
@@ -114,9 +87,11 @@ export default function NewNegotiationModal({
                   type="text"
                   value={formData.placa}
                   onChange={(e) => onFormChange("placa", e.target.value.toUpperCase())}
-                  placeholder="ABC-1234"
+                  placeholder="ABC1D23"
                   className="h-12 text-base font-mono"
-                  maxLength={8}
+                  maxLength={7}
+                  pattern="[A-Z]{3}[0-9][A-Z0-9][0-9]{2}"
+                  required
                 />
               </div>
 
@@ -124,70 +99,66 @@ export default function NewNegotiationModal({
                 <Label htmlFor="marca" className="text-base font-medium mb-3 block">
                   Marca *
                 </Label>
-                <Select
+                <Input
+                  id="marca"
+                  type="text"
                   value={formData.marca}
-                  onValueChange={(value) => onFormChange("marca", value)}
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fiat">Fiat</SelectItem>
-                    <SelectItem value="chevrolet">Chevrolet</SelectItem>
-                    <SelectItem value="volkswagen">Volkswagen</SelectItem>
-                    <SelectItem value="ford">Ford</SelectItem>
-                    <SelectItem value="honda">Honda</SelectItem>
-                    <SelectItem value="toyota">Toyota</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="anoModelo" className="text-base font-medium mb-3 block">
-                  Ano modelo *
-                </Label>
-                <Select
-                  value={formData.anoModelo}
-                  onValueChange={(value) => onFormChange("anoModelo", value)}
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 26 }, (_, i) => 2025 - i).map((year) => (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => onFormChange("marca", e.target.value)}
+                  placeholder="Ex: Volkswagen, Fiat, Chevrolet"
+                  className="h-12 text-base"
+                  required
+                />
               </div>
 
               <div>
                 <Label htmlFor="modelo" className="text-base font-medium mb-3 block">
                   Modelo *
                 </Label>
-                <Select
+                <Input
+                  id="modelo"
+                  type="text"
                   value={formData.modelo}
-                  onValueChange={(value) => onFormChange("modelo", value)}
-                >
-                  <SelectTrigger className="h-12 text-base">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="palio">Palio</SelectItem>
-                    <SelectItem value="gol">Gol</SelectItem>
-                    <SelectItem value="onix">Onix</SelectItem>
-                    <SelectItem value="ka">Ka</SelectItem>
-                    <SelectItem value="civic">Civic</SelectItem>
-                    <SelectItem value="corolla">Corolla</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => onFormChange("modelo", e.target.value)}
+                  placeholder="Ex: Gol, Palio, Onix"
+                  className="h-12 text-base"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="ano_modelo" className="text-base font-medium mb-3 block">
+                  Ano Modelo *
+                </Label>
+                <Input
+                  id="ano_modelo"
+                  type="text"
+                  value={formData.ano_modelo}
+                  onChange={(e) => onFormChange("ano_modelo", e.target.value)}
+                  placeholder="2024"
+                  className="h-12 text-base"
+                  maxLength={4}
+                  pattern="[0-9]{4}"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="valor_negociado" className="text-base font-medium mb-3 block">
+                  Valor Negociado (R$)
+                </Label>
+                <Input
+                  id="valor_negociado"
+                  type="number"
+                  step="0.01"
+                  value={formData.valor_negociado || ''}
+                  onChange={(e) => onFormChange("valor_negociado", parseFloat(e.target.value) || 0)}
+                  placeholder="0,00"
+                  className="h-12 text-base"
+                />
               </div>
             </div>
           </div>
 
-          {/* Dados do Cliente */}
           <div className="space-y-6">
             <h3 className="text-xl font-semibold border-b-2 border-green-200 pb-3 text-green-800">
               👤 Dados do Cliente
@@ -283,73 +254,26 @@ export default function NewNegotiationModal({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="0">Selecione</SelectItem>
-                    <SelectItem value="14584">Facebook</SelectItem>
+                    <SelectItem value="Facebook">Facebook</SelectItem>
                     <SelectItem value="14585">Google</SelectItem>
-                    <SelectItem value="14586">Indicação</SelectItem>
-                    <SelectItem value="14587">Instagram</SelectItem>
-                    <SelectItem value="14840">Presencial</SelectItem>
-                    <SelectItem value="14588">Site</SelectItem>
+                    <SelectItem value="Indicação">Indicação</SelectItem>
+                    <SelectItem value="Instagram">Instagram</SelectItem>
+                    <SelectItem value="Presencial">Presencial</SelectItem>
+                    <SelectItem value="Site">Site</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
-
-          {/* Opções Adicionais */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold border-b-2 border-purple-200 pb-3 text-purple-800">
-              ⚙️ Opções Adicionais
-            </h3>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Checkbox
-                  id="veiculoTrabalho"
-                  checked={formData.veiculoTrabalho}
-                  onChange={(e) =>
-                    onFormChange("veiculoTrabalho", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="veiculoTrabalho" className="text-base cursor-pointer">
-                  Veículo de trabalho (Táxi/Uber)?
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <Checkbox
-                  id="enviarCotacao"
-                  checked={formData.enviarCotacao}
-                  onChange={(e) =>
-                    onFormChange("enviarCotacao", e.target.checked)
-                  }
-                  className="w-5 h-5"
-                />
-                <Label htmlFor="enviarCotacao" className="text-base cursor-pointer">
-                  Enviar cotação por e-mail
-                </Label>
-              </div>
-            </div>
-          </div>
-
-          {/* Botões de Ação */}
-          <div className="flex justify-end space-x-4 pt-8 border-t-2 border-gray-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-12 px-8 text-base font-medium"
-            >
-              ❌ Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="h-12 px-8 text-base font-medium bg-green-600 hover:bg-green-700 shadow-lg"
-            >
-              ✅ Criar Negociação
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="h-12 px-8 text-base font-medium bg-green-600 hover:bg-green-700 shadow-lg"
+          >
+            {loading ? 'Criando...' : '✅ Criar Negociação'}
+          </Button>
         </form>
-      </DialogContent>
+      </  DialogContent >
     </Dialog>
   );
 }

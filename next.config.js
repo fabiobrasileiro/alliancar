@@ -5,7 +5,14 @@ const nextConfig = {
       'cjsorrfgyfdblcvcalcj.supabase.co',
       'localhost' // para desenvolvimento local
     ],
+
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'example.com',
+        port: '',
+        pathname: '/**',
+      },
       {
         protocol: 'https',
         hostname: '*.supabase.co',

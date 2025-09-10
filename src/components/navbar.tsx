@@ -9,15 +9,16 @@ import {
   MenuItem,
   MenuItems,
 } from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Alliancar from "../../public/alliancar.avif"
 import { useUser } from '@/context/UserContext';
 import { Button } from "./ui/button";
 import { CopyIcon } from "lucide-react";
-import { DropdownMenu, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 type ClassValue = string | false | null | undefined;
 
@@ -40,15 +41,51 @@ export function formatDateBR(isoString: string): string {
   });
 }
 
-
-
 export default function Navbar() {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const { user, perfil, loading } = useUser();
+  const supabase = createClient();
+  const { user, perfil } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [perfilData, setPerfilData] = useState<any>(null);
+
+  useEffect(() => {
+    fetchPerfil();
+  }, []);
+
+  const fetchPerfil = async () => {
+    try {
+      setLoading(true);
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !authUser) {
+        toast.error("Usuário não autenticado");
+        return;
+      }
+
+      const { data: perfilResponse, error: perfilError } = await supabase
+        .from("afiliados")
+        .select("*")
+        .eq("auth_id", authUser.id)
+        .single();
+
+      if (perfilError) {
+        console.error("Erro ao buscar perfil:", perfilError);
+        return;
+      }
+
+      if (perfilResponse) {
+        setPerfilData(perfilResponse);
+      }
+    } catch (error) {
+      console.error("Erro:", error);
+      toast.error("Erro ao carregar perfil");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // Você pode adicionar uma notificação de sucesso aqui
+    toast.success("Link copiado para a área de transferência!");
   };
 
   const navigation = [
@@ -58,9 +95,13 @@ export default function Navbar() {
     { name: "Atividades", href: "/atividades", current: false },
     { name: "Minha Conta", href: "/conta", current: false },
     { name: "Relatórios", href: "/relatorios", current: false },
-    // { name: "Financeiro", href: "/financeiro", current: false },
-    // { name: 'Minha Empresa', href: '/empresa', current: false },
-    // { name: 'Ferramentas', href: '/ferramentas', current: false },
+  ];
+  const navigationAfiliado = [
+    { name: "Dashboard", href: "/dashboard", current: false },
+    { name: "Vendas", href: "/vendas", current: false },
+    { name: "Contatos", href: "/contatos", current: false },
+    { name: "Atividades", href: "/atividades", current: false },
+    { name: "Minha Conta", href: "/conta", current: false },
   ];
 
   return (
@@ -85,7 +126,7 @@ export default function Navbar() {
               />
             </DisclosureButton>
           </div>
-          <div className="flex flex-1 items-center justify-center  lg:justify-start">
+          <div className="flex flex-1 items-center justify-center lg:justify-start">
             <div className="flex">
               <Link href='/'>
                 <Image src={Alliancar} width={150} height={150} alt="Alliancar" />
@@ -93,20 +134,37 @@ export default function Navbar() {
             </div>
             <div className="hidden sm:ml-6 lg:block">
               <div className="flex space-x-4">
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={classNames(
-                      item.current
-                        ? "bg-jelly-bean-950/50 text-white"
-                        : "text-gray-300 hover:bg-white/5 hover:text-white",
-                      "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    )}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+                {perfil?.tipo === 'administrador' ? (
+                  navigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={classNames(
+                        item.current
+                          ? "bg-jelly-bean-950/50 text-white"
+                          : "text-gray-300 hover:bg-white/5 hover:text-white",
+                        "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      )}
+                    >
+                      {item.name}
+                    </Link>
+                  ))
+                ) : (
+                  navigationAfiliado.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={classNames(
+                        item.current
+                          ? "bg-jelly-bean-950/50 text-white"
+                          : "text-gray-300 hover:bg-white/5 hover:text-white",
+                        "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      )}
+                    >
+                      {item.name}
+                    </Link>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -114,50 +172,44 @@ export default function Navbar() {
             <div className="flex items-center">
               <Button
                 variant="default"
-                className="mr-4 hidden md:flex "
+                className="mr-4 hidden md:flex"
                 onClick={() => copyToClipboard('/')}
               >
                 <CopyIcon className="mr-2 h-4 w-4" /> Copiar Link
               </Button>
-
             </div>
+
             {/* afiliados dropdown */}
-            <Menu as="div" className="relative ml-3 ">
-              <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ">
+            <Menu as="div" className="relative ml-3">
+              <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                 <span className="absolute -inset-1.5" />
-                <span className="sr-only ">Open user menu</span>
-                <h6 className="size-8 rounded-full bg-jelly-bean-600 outline -outline-offset-1 outline-white/10 text-white flex justify-center items-center font-bold text-sm">{perfil?.nome_completo.toUpperCase().slice(0, 2)}</h6>
+                <span className="sr-only">Open user menu</span>
+                <h6 className="size-8 rounded-full bg-jelly-bean-600 outline -outline-offset-1 outline-white/10 text-white flex justify-center items-center font-bold text-sm">
+                  {perfilData?.nome_completo?.toUpperCase().slice(0, 2) || perfil?.nome_completo?.toUpperCase().slice(0, 2) || "US"}
+                </h6>
               </MenuButton>
 
               <MenuItems
                 transition
-                className="absolute right-0 z-10 mt-2 w-64 origin-top-right rounded-md bg-gray-800 py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+                className="absolute right-0 z-10 mt-2 w-64 origin-top-right rounded-md bg-gray-50 py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
               >
                 <div className="flex items-center gap-3 px-4 py-2 border-b border-white/10">
-                  <h6 className="size-10 rounded-full bg-jelly-bean-600 outline -outline-offset-1 outline-white/10 text-white flex justify-center items-center font-bold text-sm">{perfil?.nome_completo.toUpperCase().slice(0, 2)}</h6>
+
                   <div>
-                    <p className="font-medium text-default">{perfil?.nome_completo}</p>
-                    <p className="text-sm text-default">
+                    <p className="font-medium text-white">{perfilData?.nome_completo || perfil?.nome_completo || "Usuário"}</p>
+                    <p className="text-sm text-gray-300">
                       {user?.email}
                     </p>
-                    <p className="text-[10px] text-default mt-1">
+                    <p className="text-[10px] text-gray-400 mt-1">
                       Último acesso: {formatDateBR(user?.last_sign_in_at ?? "")}
                     </p>
                   </div>
                 </div>
-                {/* <MenuItem>
-                  <a
-                    href="https://powercrm.zendesk.com/hc/pt-br/requests/new"
-                    target="_blank"
-                    className="block px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
-                  >
-                    Central de ajuda
-                  </a>
-                </MenuItem> */}
+
                 <MenuItem>
                   <Link
                     href="/logout"
-                    className="block px-4 py-2 text-sm text-gray-300 data-focus:bg-white/5 data-focus:outline-hidden"
+                    className="block px-4 py-2 text-sm text-jelly-bean-600 data-focus:bg-white/5 data-focus:outline-hidden"
                   >
                     Sair
                   </Link>

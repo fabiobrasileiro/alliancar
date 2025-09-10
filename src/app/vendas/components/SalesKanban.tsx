@@ -1,64 +1,87 @@
+// components/SalesKanban.tsx
 import { Button } from "@/components/ui/button";
 import { MoreVertical } from "lucide-react";
 import SalesCard from "./SalesCard";
-import { SaleCard } from "./types";
+import { Negociacao, StatusNegociacao } from "./types";
 
 interface Column {
-  id: SaleCard["status"];
+  id: StatusNegociacao;
   title: string;
   count: number;
   color: string;
 }
 
 interface SalesKanbanProps {
-  cards: SaleCard[];
+  negociacoes: Negociacao[];
   loading: boolean;
-  onDragStart?: (ev: React.DragEvent, cardId: string) => void;
+  onDragStart?: (ev: React.DragEvent, negociacaoId: string) => void;
   onDragOver?: (ev: React.DragEvent) => void;
-  onDrop?: (ev: React.DragEvent, status: SaleCard["status"]) => void;
+  onDrop?: (ev: React.DragEvent, status: StatusNegociacao) => void;
 }
 
 export default function SalesKanban({ 
-  cards, 
+  negociacoes, 
   loading, 
   onDragStart, 
   onDragOver, 
   onDrop 
 }: SalesKanbanProps) {
-  const getCardsForColumn = (status: SaleCard["status"]) => {
-    return cards.filter((card) => card.status === status);
+  const getCardsForColumn = (status: StatusNegociacao) => {
+    return negociacoes.filter((negociacao) => negociacao.status === status);
   };
+
+  const convertNegociacaoToSaleCard = (negociacao: Negociacao) => ({
+    id: negociacao.id,
+    clientName: negociacao.contato_nome || 'Cliente',
+    date: new Date(negociacao.criado_em).toLocaleDateString('pt-BR'),
+    vehicle: `${negociacao.marca} ${negociacao.modelo} ${negociacao.ano_modelo}`,
+    price: negociacao.valor_negociado 
+      ? `R$ ${negociacao.valor_negociado.toLocaleString('pt-BR')}` 
+      : 'Valor não informado',
+    status: negociacao.status,
+    tags: [],
+    hasTracker: false,
+    isAccepted: false,
+    isExpired: false,
+    daysInStage: Math.floor((Date.now() - new Date(negociacao.criado_em).getTime()) / (1000 * 60 * 60 * 24)),
+    user: 'Usuário',
+    placa: negociacao.placa,
+    marca: negociacao.marca,
+    modelo: negociacao.modelo,
+    ano_modelo: negociacao.ano_modelo,
+    valor_negociado: negociacao.valor_negociado
+  });
 
   const getColumns = (): Column[] => {
     return [
       {
-        id: "quotation" as const,
+        id: "Cotação recebida",
         title: "Cotações recebidas",
-        count: cards.filter((c) => c.status === "quotation").length,
+        count: negociacoes.filter((n) => n.status === "Cotação recebida").length,
         color: "bg-blue-50",
       },
       {
-        id: "negotiation" as const,
+        id: "Em negociação",
         title: "Em negociação",
-        count: cards.filter((c) => c.status === "negotiation").length,
+        count: negociacoes.filter((n) => n.status === "Em negociação").length,
         color: "bg-orange-50",
       },
       {
-        id: "inspection" as const,
+        id: "Vistoria",
         title: "Vistorias",
-        count: cards.filter((c) => c.status === "inspection").length,
+        count: negociacoes.filter((n) => n.status === "Vistoria").length,
         color: "bg-purple-50",
       },
       {
-        id: "ready" as const,
+        id: "Liberada para cadastro",
         title: "Liberadas para cadastro",
-        count: cards.filter((c) => c.status === "ready").length,
+        count: negociacoes.filter((n) => n.status === "Liberada para cadastro").length,
         color: "bg-green-50",
       },
       {
-        id: "closed" as const,
+        id: "Venda concretizada",
         title: "Vendas concretizadas",
-        count: cards.filter((c) => c.status === "closed").length,
+        count: negociacoes.filter((n) => n.status === "Venda concretizada").length,
         color: "bg-emerald-50",
       },
     ];
@@ -69,7 +92,7 @@ export default function SalesKanban({
       {getColumns().map((column) => (
         <div 
           key={column.id} 
-          className={`${column.color} rounded-lg p-4`}
+          className={`${column.color} rounded-lg p-4 min-h-[600px]`}
           onDragOver={onDragOver}
           onDrop={(ev) => onDrop?.(ev, column.id)}
         >
@@ -93,10 +116,10 @@ export default function SalesKanban({
             {loading ? (
               <div className="text-sm text-gray-600">Carregando...</div>
             ) : (
-              getCardsForColumn(column.id).map((card) => (
+              getCardsForColumn(column.id).map((negociacao) => (
                 <SalesCard 
-                  key={card.id} 
-                  card={card} 
+                  key={negociacao.id} 
+                  card={convertNegociacaoToSaleCard(negociacao)} 
                   onDragStart={onDragStart} 
                 />
               ))
