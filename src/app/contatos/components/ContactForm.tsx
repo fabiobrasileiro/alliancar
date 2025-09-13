@@ -123,7 +123,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               <Checkbox
                 id="veiculo_trabalho"
                 checked={contact.veiculo_trabalho || false}
-                onChange={(e) => onContactChange("veiculo_trabalho", e.target.checked)}
+                onChange={(e) => onContactChange("veiculo_trabalho", e.target)}
               />
               <Label htmlFor="veiculo_trabalho">Veículo de Trabalho</Label>
             </div>
@@ -133,7 +133,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               <Checkbox
                 id="enviar_cotacao_email"
                 checked={contact.enviar_cotacao_email || false}
-                onChange={(e) => onContactChange("enviar_cotacao_email", e.target.checked)}
+                onChange={(e) => onContactChange("enviar_cotacao_email", e.target)}
               />
               <Label htmlFor="enviar_cotacao_email">Enviar Cotação por E-mail</Label>
             </div>
