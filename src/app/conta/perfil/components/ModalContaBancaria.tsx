@@ -33,7 +33,7 @@ export const ModalContaBancaria: React.FC<ModalContaBancariaProps> = ({
     digito_conta: editingBanco?.digito_conta || "",
     chave_pix: editingBanco?.pix || "",
     principal: editingBanco?.principal || false,
-    titular: editingBanco?.titular || ""
+    titular: editingBanco?.titular || "",
   });
 
   const bancosBrasileiros = [
@@ -47,7 +47,7 @@ export const ModalContaBancaria: React.FC<ModalContaBancariaProps> = ({
     "Sicredi",
     "Sicoob",
     "Banrisul",
-    "Outro"
+    "Outro",
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,13 +56,13 @@ export const ModalContaBancaria: React.FC<ModalContaBancariaProps> = ({
   };
 
   const handleInputChange = (field: keyof NovoBanco, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleCheckboxChange = (checked: boolean | "indeterminate") => {
     // Converter para boolean (tratando "indeterminate" como false)
     const isChecked = checked === true;
-    setFormData(prev => ({ ...prev, principal: isChecked }));
+    setFormData((prev) => ({ ...prev, principal: isChecked }));
   };
 
   return (
@@ -113,7 +113,9 @@ export const ModalContaBancaria: React.FC<ModalContaBancariaProps> = ({
               <Input
                 id="digito_agencia"
                 value={formData.digito_agencia}
-                onChange={(e) => handleInputChange("digito_agencia", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("digito_agencia", e.target.value)
+                }
                 placeholder="0"
                 maxLength={1}
               />
@@ -135,7 +137,9 @@ export const ModalContaBancaria: React.FC<ModalContaBancariaProps> = ({
               <Input
                 id="digito_conta"
                 value={formData.digito_conta}
-                onChange={(e) => handleInputChange("digito_conta", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("digito_conta", e.target.value)
+                }
                 placeholder="0"
                 maxLength={1}
                 required
@@ -151,7 +155,7 @@ export const ModalContaBancaria: React.FC<ModalContaBancariaProps> = ({
                 placeholder="Chave PIX (opcional)"
               />
             </div>
-             <div className="space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="pix">Titular</Label>
               <Input
                 id="titular"

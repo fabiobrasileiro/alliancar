@@ -8,12 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { useUser } from "@/context/UserContext";
-import { 
-  Atividade, 
-  PriorityFilters, 
-  TypeFilters, 
-  Usuario, 
-  NovaAtividade 
+import {
+  Atividade,
+  PriorityFilters,
+  TypeFilters,
+  Usuario,
+  NovaAtividade,
 } from "./components/types";
 import { AtividadeCard } from "./components/AtividadeCard";
 import { FiltrosAtividades } from "./components/FiltrosAtividades";
@@ -23,7 +23,9 @@ import { EmptyState } from "./components/EmptyState";
 const AtividadesPage: React.FC = () => {
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [filteredAtividades, setFilteredAtividades] = useState<Atividade[]>([]);
-  const [activeTab, setActiveTab] = useState<"atrasada" | "hoje" | "planejada" | "concluida">("hoje");
+  const [activeTab, setActiveTab] = useState<
+    "atrasada" | "hoje" | "planejada" | "concluida"
+  >("hoje");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [typeFilters, setTypeFilters] = useState<TypeFilters>({
@@ -42,7 +44,9 @@ const AtividadesPage: React.FC = () => {
   const supabase = createClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
-  const [atividadeEditando, setAtividadeEditando] = useState<Atividade | null>(null);
+  const [atividadeEditando, setAtividadeEditando] = useState<Atividade | null>(
+    null,
+  );
   const { user } = useUser();
   const [afiliadoId, setAfiliadoId] = useState<string>("");
 
@@ -56,8 +60,6 @@ const AtividadesPage: React.FC = () => {
   });
 
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-
-  
 
   // Buscar afiliado_id do usuário autenticado
   useEffect(() => {
@@ -119,10 +121,7 @@ const AtividadesPage: React.FC = () => {
     try {
       setLoading(true);
 
-      let { data, error } = await supabase
-        .from("atividades")
-        .select("*")
-        
+      let { data, error } = await supabase.from("atividades").select("*");
 
       if (error) {
         console.error("Erro ao buscar atividades:", error);
@@ -137,7 +136,10 @@ const AtividadesPage: React.FC = () => {
 
           if (atividade.prazo < hoje && atividade.status !== "concluida") {
             status = "atrasada";
-          } else if (atividade.prazo === hoje && atividade.status !== "concluida") {
+          } else if (
+            atividade.prazo === hoje &&
+            atividade.status !== "concluida"
+          ) {
             status = "hoje";
           } else if (atividade.status === "concluida") {
             status = "concluida";
@@ -177,27 +179,27 @@ const AtividadesPage: React.FC = () => {
       result = result.filter(
         (atividade) =>
           atividade.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          atividade.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
+          atividade.descricao?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
     // Filtrar por tipo, se algum tipo estiver selecionado
     const selectedTypes = Object.keys(typeFilters).filter(
-      (key) => typeFilters[key as keyof TypeFilters]
+      (key) => typeFilters[key as keyof TypeFilters],
     );
     if (selectedTypes.length > 0) {
       result = result.filter((atividade) =>
-        selectedTypes.includes(atividade.tipo)
+        selectedTypes.includes(atividade.tipo),
       );
     }
 
     // Filtrar por prioridade, se alguma prioridade estiver selecionada
     const selectedPriorities = Object.keys(priorityFilters).filter(
-      (key) => priorityFilters[key as keyof PriorityFilters]
+      (key) => priorityFilters[key as keyof PriorityFilters],
     );
     if (selectedPriorities.length > 0) {
       result = result.filter((atividade) =>
-        selectedPriorities.includes(atividade.prioridade)
+        selectedPriorities.includes(atividade.prioridade),
       );
     }
 
@@ -213,7 +215,9 @@ const AtividadesPage: React.FC = () => {
   };
 
   // Manipulador para alternar filtros de prioridade
-  const handlePriorityFilterChange = (priority: keyof PriorityFilters): void => {
+  const handlePriorityFilterChange = (
+    priority: keyof PriorityFilters,
+  ): void => {
     setPriorityFilters((prev) => ({
       ...prev,
       [priority]: !prev[priority],
@@ -269,9 +273,9 @@ const AtividadesPage: React.FC = () => {
     try {
       const { error } = await supabase
         .from("atividades")
-        .update({ 
+        .update({
           status: "concluida",
-          concluida_em: new Date().toISOString()
+          concluida_em: new Date().toISOString(),
         })
         .eq("id", id);
 
@@ -292,9 +296,9 @@ const AtividadesPage: React.FC = () => {
     try {
       const { error } = await supabase
         .from("atividades")
-        .update({ 
+        .update({
           status: "pendente",
-          concluida_em: null
+          concluida_em: null,
         })
         .eq("id", id);
 
@@ -399,7 +403,6 @@ const AtividadesPage: React.FC = () => {
       toast.error("Erro ao excluir atividade");
     }
   };
-  
 
   // Buscar afiliado_id do usuário autenticado
   useEffect(() => {
@@ -436,8 +439,6 @@ const AtividadesPage: React.FC = () => {
       fetchUsuarios();
     }
   }, [afiliadoId, supabase]);
-
-
 
   return (
     <>
@@ -556,10 +557,14 @@ const AtividadesPage: React.FC = () => {
                     </div>
                   ) : (
                     <>
-                      {(["atrasada", "hoje", "planejada", "concluida"] as const).map((status) => (
+                      {(
+                        ["atrasada", "hoje", "planejada", "concluida"] as const
+                      ).map((status) => (
                         <TabsContent key={status} value={status}>
                           <div className="flex flex-col gap-4 mt-4">
-                            {filteredAtividades.filter((a) => a.status === status).length > 0 ? (
+                            {filteredAtividades.filter(
+                              (a) => a.status === status,
+                            ).length > 0 ? (
                               filteredAtividades
                                 .filter((a) => a.status === status)
                                 .map((atividade) => (
@@ -617,7 +622,9 @@ const AtividadesPage: React.FC = () => {
         mode={modalMode}
         atividade={novaAtividade}
         usuarios={usuarios}
-        onChange={(field, value) => setNovaAtividade(prev => ({ ...prev, [field]: value }))}
+        onChange={(field, value) =>
+          setNovaAtividade((prev) => ({ ...prev, [field]: value }))
+        }
         onSave={handleSaveAtividade}
       />
     </>

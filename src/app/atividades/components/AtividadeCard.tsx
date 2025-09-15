@@ -45,7 +45,8 @@ export const AtividadeCard: React.FC<AtividadeCardProps> = ({
             </span>
             <span className="text-xs text-jelly-bean-800">
               Responsável:{" "}
-              {usuarios.find(u => u.id === atividade.afiliado_id)?.nome_completo || atividade.afiliado_id}
+              {usuarios.find((u) => u.id === atividade.afiliado_id)
+                ?.nome_completo || atividade.afiliado_id}
             </span>
           </div>
         </div>
@@ -55,8 +56,8 @@ export const AtividadeCard: React.FC<AtividadeCardProps> = ({
               atividade.prioridade === "Alta"
                 ? "red"
                 : atividade.prioridade === "Normal"
-                ? "blue"
-                : "gray"
+                  ? "blue"
+                  : "gray"
             }
             className="capitalize"
           >
@@ -72,10 +73,7 @@ export const AtividadeCard: React.FC<AtividadeCardProps> = ({
                 >
                   Editar
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={() => onConcluir(atividade.id)}
-                >
+                <Button size="sm" onClick={() => onConcluir(atividade.id)}>
                   Concluir
                 </Button>
               </>

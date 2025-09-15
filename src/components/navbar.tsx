@@ -13,8 +13,8 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import Alliancar from "../../public/alliancar.avif"
-import { useUser } from '@/context/UserContext';
+import Alliancar from "../../public/alliancar.avif";
+import { useUser } from "@/context/UserContext";
 import { Button } from "./ui/button";
 import { CopyIcon } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
@@ -54,7 +54,10 @@ export default function Navbar() {
   const fetchPerfil = async () => {
     try {
       setLoading(true);
-      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+        error: userError,
+      } = await supabase.auth.getUser();
 
       if (userError || !authUser) {
         toast.error("Usuário não autenticado");
@@ -128,43 +131,46 @@ export default function Navbar() {
           </div>
           <div className="flex flex-1 items-center justify-center lg:justify-start">
             <div className="flex">
-              <Link href='/'>
-                <Image src={Alliancar} width={150} height={150} alt="Alliancar" />
+              <Link href="/">
+                <Image
+                  src={Alliancar}
+                  width={150}
+                  height={150}
+                  alt="Alliancar"
+                />
               </Link>
             </div>
             <div className="hidden sm:ml-6 lg:block">
               <div className="flex space-x-4">
-                {perfil?.tipo === 'administrador' ? (
-                  navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={classNames(
-                        item.current
-                          ? "bg-jelly-bean-950/50 text-white"
-                          : "text-gray-300 hover:bg-white/5 hover:text-white",
-                        "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      )}
-                    >
-                      {item.name}
-                    </Link>
-                  ))
-                ) : (
-                  navigationAfiliado.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={classNames(
-                        item.current
-                          ? "bg-jelly-bean-950/50 text-white"
-                          : "text-gray-300 hover:bg-white/5 hover:text-white",
-                        "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      )}
-                    >
-                      {item.name}
-                    </Link>
-                  ))
-                )}
+                {perfil?.tipo === "administrador"
+                  ? navigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={classNames(
+                          item.current
+                            ? "bg-jelly-bean-950/50 text-white"
+                            : "text-gray-300 hover:bg-white/5 hover:text-white",
+                          "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        )}
+                      >
+                        {item.name}
+                      </Link>
+                    ))
+                  : navigationAfiliado.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={classNames(
+                          item.current
+                            ? "bg-jelly-bean-950/50 text-white"
+                            : "text-gray-300 hover:bg-white/5 hover:text-white",
+                          "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        )}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
               </div>
             </div>
           </div>
@@ -173,7 +179,7 @@ export default function Navbar() {
               <Button
                 variant="default"
                 className="mr-4 hidden md:flex"
-                onClick={() => copyToClipboard('/')}
+                onClick={() => copyToClipboard("/")}
               >
                 <CopyIcon className="mr-2 h-4 w-4" /> Copiar Link
               </Button>
@@ -185,7 +191,9 @@ export default function Navbar() {
                 <span className="absolute -inset-1.5" />
                 <span className="sr-only">Open user menu</span>
                 <h6 className="size-8 rounded-full bg-jelly-bean-600 outline -outline-offset-1 outline-white/10 text-white flex justify-center items-center font-bold text-sm">
-                  {perfilData?.nome_completo?.toUpperCase().slice(0, 2) || perfil?.nome_completo?.toUpperCase().slice(0, 2) || "US"}
+                  {perfilData?.nome_completo?.toUpperCase().slice(0, 2) ||
+                    perfil?.nome_completo?.toUpperCase().slice(0, 2) ||
+                    "US"}
                 </h6>
               </MenuButton>
 
@@ -194,12 +202,13 @@ export default function Navbar() {
                 className="absolute right-0 z-10 mt-2 w-64 origin-top-right rounded-md bg-gray-50 py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
               >
                 <div className="flex items-center gap-3 px-4 py-2 border-b border-white/10">
-
                   <div>
-                    <p className="font-medium text-white">{perfilData?.nome_completo || perfil?.nome_completo || "Usuário"}</p>
-                    <p className="text-sm text-gray-300">
-                      {user?.email}
+                    <p className="font-medium text-white">
+                      {perfilData?.nome_completo ||
+                        perfil?.nome_completo ||
+                        "Usuário"}
                     </p>
+                    <p className="text-sm text-gray-300">{user?.email}</p>
                     <p className="text-[10px] text-gray-400 mt-1">
                       Último acesso: {formatDateBR(user?.last_sign_in_at ?? "")}
                     </p>

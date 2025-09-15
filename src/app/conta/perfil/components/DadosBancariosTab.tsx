@@ -58,11 +58,17 @@ export const DadosBancariosTab: React.FC<DadosBancariosTabProps> = ({
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <h4 className="font-semibold">{banco.banco}</h4>
-                  <p>Agência: {banco.agencia}-{banco.digito_agencia}</p>
-                  <p>Conta: {banco.conta}-{banco.digito_conta}</p>
+                  <p>
+                    Agência: {banco.agencia}-{banco.digito_agencia}
+                  </p>
+                  <p>
+                    Conta: {banco.conta}-{banco.digito_conta}
+                  </p>
                   {banco.pix && <p>PIX: {banco.pix}</p>}
                   {banco.principal && (
-                    <Badge variant="default" className="mt-2">Principal</Badge>
+                    <Badge variant="default" className="mt-2">
+                      Principal
+                    </Badge>
                   )}
                 </div>
                 <div className="flex space-x-2">
@@ -95,7 +101,9 @@ export const DadosBancariosTab: React.FC<DadosBancariosTabProps> = ({
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground">Nenhuma conta bancária cadastrada</p>
+        <p className="text-muted-foreground">
+          Nenhuma conta bancária cadastrada
+        </p>
       )}
 
       <Button className="mt-4" onClick={() => setIsModalOpen(true)}>

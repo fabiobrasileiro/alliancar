@@ -133,9 +133,13 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               <Checkbox
                 id="enviar_cotacao_email"
                 checked={contact.enviar_cotacao_email || false}
-                onChange={(e) => onContactChange("enviar_cotacao_email", e.target)}
+                onChange={(e) =>
+                  onContactChange("enviar_cotacao_email", e.target)
+                }
               />
-              <Label htmlFor="enviar_cotacao_email">Enviar Cotação por E-mail</Label>
+              <Label htmlFor="enviar_cotacao_email">
+                Enviar Cotação por E-mail
+              </Label>
             </div>
           </div>
         </div>

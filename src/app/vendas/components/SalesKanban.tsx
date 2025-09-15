@@ -19,12 +19,12 @@ interface SalesKanbanProps {
   onDrop?: (ev: React.DragEvent, status: StatusNegociacao) => void;
 }
 
-export default function SalesKanban({ 
-  negociacoes, 
-  loading, 
-  onDragStart, 
-  onDragOver, 
-  onDrop 
+export default function SalesKanban({
+  negociacoes,
+  loading,
+  onDragStart,
+  onDragOver,
+  onDrop,
 }: SalesKanbanProps) {
   const getCardsForColumn = (status: StatusNegociacao) => {
     return negociacoes.filter((negociacao) => negociacao.status === status);
@@ -32,24 +32,27 @@ export default function SalesKanban({
 
   const convertNegociacaoToSaleCard = (negociacao: Negociacao) => ({
     id: negociacao.id,
-    clientName: negociacao.contato_nome || 'Cliente',
-    date: new Date(negociacao.criado_em).toLocaleDateString('pt-BR'),
+    clientName: negociacao.contato_nome || "Cliente",
+    date: new Date(negociacao.criado_em).toLocaleDateString("pt-BR"),
     vehicle: `${negociacao.marca} ${negociacao.modelo} ${negociacao.ano_modelo}`,
-    price: negociacao.valor_negociado 
-      ? `R$ ${negociacao.valor_negociado.toLocaleString('pt-BR')}` 
-      : 'Valor não informado',
+    price: negociacao.valor_negociado
+      ? `R$ ${negociacao.valor_negociado.toLocaleString("pt-BR")}`
+      : "Valor não informado",
     status: negociacao.status,
     tags: [],
     hasTracker: false,
     isAccepted: false,
     isExpired: false,
-    daysInStage: Math.floor((Date.now() - new Date(negociacao.criado_em).getTime()) / (1000 * 60 * 60 * 24)),
-    user: 'Usuário',
+    daysInStage: Math.floor(
+      (Date.now() - new Date(negociacao.criado_em).getTime()) /
+        (1000 * 60 * 60 * 24),
+    ),
+    user: "Usuário",
     placa: negociacao.placa,
     marca: negociacao.marca,
     modelo: negociacao.modelo,
     ano_modelo: negociacao.ano_modelo,
-    valor_negociado: negociacao.valor_negociado
+    valor_negociado: negociacao.valor_negociado,
   });
 
   const getColumns = (): Column[] => {
@@ -57,7 +60,8 @@ export default function SalesKanban({
       {
         id: "Cotação recebida",
         title: "Cotações recebidas",
-        count: negociacoes.filter((n) => n.status === "Cotação recebida").length,
+        count: negociacoes.filter((n) => n.status === "Cotação recebida")
+          .length,
         color: "bg-blue-50",
       },
       {
@@ -75,13 +79,15 @@ export default function SalesKanban({
       {
         id: "Liberada para cadastro",
         title: "Liberadas para cadastro",
-        count: negociacoes.filter((n) => n.status === "Liberada para cadastro").length,
+        count: negociacoes.filter((n) => n.status === "Liberada para cadastro")
+          .length,
         color: "bg-green-50",
       },
       {
         id: "Venda concretizada",
         title: "Vendas concretizadas",
-        count: negociacoes.filter((n) => n.status === "Venda concretizada").length,
+        count: negociacoes.filter((n) => n.status === "Venda concretizada")
+          .length,
         color: "bg-emerald-50",
       },
     ];
@@ -90,8 +96,8 @@ export default function SalesKanban({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
       {getColumns().map((column) => (
-        <div 
-          key={column.id} 
+        <div
+          key={column.id}
           className={`${column.color} rounded-lg p-4 min-h-[600px]`}
           onDragOver={onDragOver}
           onDrop={(ev) => onDrop?.(ev, column.id)}
@@ -117,10 +123,10 @@ export default function SalesKanban({
               <div className="text-sm text-gray-600">Carregando...</div>
             ) : (
               getCardsForColumn(column.id).map((negociacao) => (
-                <SalesCard 
-                  key={negociacao.id} 
-                  card={convertNegociacaoToSaleCard(negociacao)} 
-                  onDragStart={onDragStart} 
+                <SalesCard
+                  key={negociacao.id}
+                  card={convertNegociacaoToSaleCard(negociacao)}
+                  onDragStart={onDragStart}
                 />
               ))
             )}

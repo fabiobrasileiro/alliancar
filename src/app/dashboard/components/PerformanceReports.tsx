@@ -15,8 +15,10 @@ interface PerformanceReportsProps {
   performance: Performance[];
 }
 
-export default function PerformanceReports({ performance }: PerformanceReportsProps) {
-  console.log('Perfomance:',performance)
+export default function PerformanceReports({
+  performance,
+}: PerformanceReportsProps) {
+  console.log("Perfomance:", performance);
   return (
     <Card className="mb-8">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -43,7 +45,11 @@ export default function PerformanceReports({ performance }: PerformanceReportsPr
                 <TableCell>{item.comissao}</TableCell>
                 <TableCell>
                   <Badge
-                    className={item.status === "pago" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}
+                    className={
+                      item.status === "pago"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }
                   >
                     {item.status}
                   </Badge>

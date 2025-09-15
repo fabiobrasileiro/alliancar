@@ -31,8 +31,7 @@ export default function Powerlinks() {
       // Busca os hotlinks do afiliado
       const { data: hotlinks, error: hotlinksError } = await supabase
         .from("hotlinks")
-        .select("*")
-        
+        .select("*");
 
       if (hotlinksError) {
         console.error("Erro ao buscar hotlinks:", hotlinksError);

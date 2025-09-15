@@ -27,16 +27,8 @@ export default function ReferralTools({
           <div>
             <Label htmlFor="affiliate-link">Seu link exclusivo</Label>
             <div className="flex mt-1">
-              <Input
-                id="affiliate-link"
-                value={linkAfiliado}
-                readOnly
-              />
-              <Button
-                variant="outline"
-                className="ml-2"
-                onClick={onCopyLink}
-              >
+              <Input id="affiliate-link" value={linkAfiliado} readOnly />
+              <Button variant="outline" className="ml-2" onClick={onCopyLink}>
                 <CopyIcon className="h-4 w-4" />
               </Button>
             </div>
@@ -45,11 +37,7 @@ export default function ReferralTools({
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="border rounded-lg p-4 flex flex-col items-center">
               <div className="bg-white p-2 rounded">
-                <img
-                  src={qrCode}
-                  alt="QR Code"
-                  className="h-32 w-32"
-                />
+                <img src={qrCode} alt="QR Code" className="h-32 w-32" />
               </div>
               <p className="mt-2 text-sm text-gray-600">QR Code</p>
             </div>

@@ -11,33 +11,33 @@ export default function OverviewCards({
   saldoDisponivel,
   saldoPendente,
   vendasMes,
-  ranking
+  ranking,
 }: OverviewCardsProps) {
   const cards = [
     {
       title: "Comissão Adesão",
       value: saldoDisponivel,
       icon: "💰",
-      color: "text-green-500"
+      color: "text-green-500",
     },
     {
       title: "Comissão Recorrente",
       value: saldoPendente,
       icon: "💰",
-      color: "text-blue-500"
+      color: "text-blue-500",
     },
     {
       title: "Total de Placas/Mês",
       value: vendasMes.toString(),
       icon: "📊",
-      color: "text-purple-500"
+      color: "text-purple-500",
     },
     {
       title: "Ranking Atual",
       value: `Posição ${ranking}`,
       icon: "🏆",
-      color: "text-yellow-500"
-    }
+      color: "text-yellow-500",
+    },
   ];
 
   return (

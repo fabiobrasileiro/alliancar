@@ -51,17 +51,15 @@ export default function FinanceiroPage() {
       setLoading(true);
 
       let { data: pagamentos, error } = await supabase
-        .from('pagamentos')
-        .select('*')
+        .from("pagamentos")
+        .select("*")
         .order("data", { ascending: false });
-
 
       if (error) {
         console.error("Erro ao buscar usuários:", error);
         toast.error("Erro ao carregar usuários");
         return;
       }
-
 
       setPagamentos(pagamentos || []);
     } catch (error) {

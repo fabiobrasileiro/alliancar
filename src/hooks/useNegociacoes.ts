@@ -1,14 +1,14 @@
 // hooks/useNegociacoes.ts
-import { useState, useEffect } from 'react';
-import { negociacoesService } from '@/lib/supabase';
-import { Negociacao, StatusNegociacao } from '@/app/vendas/components/types';
-import { useUser } from '@/context/UserContext';
+import { useState, useEffect } from "react";
+import { negociacoesService } from "@/lib/supabase";
+import { Negociacao, StatusNegociacao } from "@/app/vendas/components/types";
+import { useUser } from "@/context/UserContext";
 
 export function useNegociacoes() {
   const [negociacoes, setNegociacoes] = useState<Negociacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const {user, perfil} = useUser();
+  const { user, perfil } = useUser();
 
   const loadNegociacoes = async () => {
     try {
@@ -16,29 +16,39 @@ export function useNegociacoes() {
       const data = await negociacoesService.getAllNegociacoes();
       setNegociacoes(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar negociações');
+      setError(
+        err instanceof Error ? err.message : "Erro ao carregar negociações",
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const updateNegociacaoStatus = async (id: string, status: StatusNegociacao) => {
+  const updateNegociacaoStatus = async (
+    id: string,
+    status: StatusNegociacao,
+  ) => {
     try {
       const updated = await negociacoesService.updateStatus(id, status);
-      setNegociacoes(prev => prev.map(n => n.id === id ? { ...n, ...updated } : n));
+      setNegociacoes((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, ...updated } : n)),
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao atualizar status');
+      setError(err instanceof Error ? err.message : "Erro ao atualizar status");
       throw err;
     }
   };
 
   const createNegociacao = async (formData: any) => {
     try {
-      const novaNegociacao = await negociacoesService.createNegociacao(formData, perfil?.id);
-      setNegociacoes(prev => [novaNegociacao, ...prev]);
+      const novaNegociacao = await negociacoesService.createNegociacao(
+        formData,
+        perfil?.id,
+      );
+      setNegociacoes((prev) => [novaNegociacao, ...prev]);
       return novaNegociacao;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao criar negociação');
+      setError(err instanceof Error ? err.message : "Erro ao criar negociação");
       throw err;
     }
   };
@@ -53,6 +63,6 @@ export function useNegociacoes() {
     error,
     loadNegociacoes,
     updateNegociacaoStatus,
-    createNegociacao
+    createNegociacao,
   };
 }

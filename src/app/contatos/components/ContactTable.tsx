@@ -43,7 +43,9 @@ export const ContactTable: React.FC<ContactTableProps> = ({
             <TableHead className="pl-8 w-10">
               <Checkbox
                 aria-label="Selecionar todos"
-                checked={selectedContacts.length === rows.length && rows.length > 0}
+                checked={
+                  selectedContacts.length === rows.length && rows.length > 0
+                }
                 onChange={onToggleSelectAll}
               />
             </TableHead>
@@ -91,7 +93,11 @@ export const ContactTable: React.FC<ContactTableProps> = ({
                 <TableCell>{renderValue(r.origem_lead)}</TableCell>
                 <TableCell className="w-16 text-center">
                   <div className="flex justify-center space-x-2">
-                    <Button variant="default" size="sm" onClick={() => onEdit(r)}>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => onEdit(r)}
+                    >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"
@@ -108,7 +114,11 @@ export const ContactTable: React.FC<ContactTableProps> = ({
                         <path d="M15 5l4 4" />
                       </svg>
                     </Button>
-                    <Button variant="default" size="sm" onClick={() => onDelete(r.id)}>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => onDelete(r.id)}
+                    >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="16"

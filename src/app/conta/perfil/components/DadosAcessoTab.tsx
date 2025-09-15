@@ -25,7 +25,8 @@ export const DadosAcessoTab: React.FC<DadosAcessoTabProps> = ({
       <div className="mb-6 mt-5">
         <p className="text-gray-600">
           Tenha em mente que ao alterar a sua senha, nós lhe pediremos que
-          defina uma senha segura que contenha letras maiúsculas, minúsculas e números.
+          defina uma senha segura que contenha letras maiúsculas, minúsculas e
+          números.
         </p>
       </div>
 
@@ -51,9 +52,7 @@ export const DadosAcessoTab: React.FC<DadosAcessoTabProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="passwordConfirmation">
-            Confirmar Nova Senha
-          </Label>
+          <Label htmlFor="passwordConfirmation">Confirmar Nova Senha</Label>
           <Input
             id="passwordConfirmation"
             type="password"

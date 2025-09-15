@@ -30,7 +30,7 @@ export default function AffiliateDashboard() {
     performance: [],
     linkAfiliado: "",
     qrCode: "",
-    rankingTop10: []
+    rankingTop10: [],
   });
 
   useEffect(() => {
@@ -42,50 +42,60 @@ export default function AffiliateDashboard() {
       setLoading(true);
       // Buscar dados principais
       const { data: dashboard } = await supabase
-        .from('afiliados')
-        .select('*')
-        .eq('auth_id', user?.id)
+        .from("afiliados")
+        .select("*")
+        .eq("auth_id", user?.id)
         .single();
 
       if (!dashboard) return;
 
       // Buscar comissões (performance)
       const { data: comissoes } = await supabase
-        .from('comissoes')
-        .select('*, clientes(nome)')
+        .from("comissoes")
+        .select("*, clientes(nome)")
         .limit(10);
-
 
       // Buscar ranking
       const { data: ranking } = await supabase
-        .from('ranking_afiliados')
-        .select('*, afiliados(nome_completo)')
-        .order('posicao', { ascending: true })
+        .from("ranking_afiliados")
+        .select("*, afiliados(nome_completo)")
+        .order("posicao", { ascending: true })
         .limit(10);
 
-      
-
       // Formatar dados
-      const performanceData = comissoes?.map(item => ({
-        id: item.id,
-        data: new Date(item.criado_em).toLocaleDateString('pt-BR'),
-        cliente: item.clientes?.nome || 'Cliente',
-        valor: item.valor_contrato.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-        comissao: item.valor_comissao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-        status: item.status
-      })) || [];
+      const performanceData =
+        comissoes?.map((item) => ({
+          id: item.id,
+          data: new Date(item.criado_em).toLocaleDateString("pt-BR"),
+          cliente: item.clientes?.nome || "Cliente",
+          valor: item.valor_contrato.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }),
+          comissao: item.valor_comissao.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }),
+          status: item.status,
+        })) || [];
 
-      const rankingData = ranking?.map((item, index) => ({
-        posicao: index + 1,
-        nome: item.afiliados?.nome_completo || "Afiliado",
-        vendas: item.total_vendas,
-        total_comissao: item.total_comissao
-      })) || [];
-
+      const rankingData =
+        ranking?.map((item, index) => ({
+          posicao: index + 1,
+          nome: item.afiliados?.nome_completo || "Afiliado",
+          vendas: item.total_vendas,
+          total_comissao: item.total_comissao,
+        })) || [];
 
       setAffiliateData({
-        saldoDisponivel: dashboard.receita_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-        saldoPendente: dashboard.receita_pendente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+        saldoDisponivel: dashboard.receita_total.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }),
+        saldoPendente: dashboard.receita_pendente.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }),
         vendasMes: dashboard.numero_placas || 0,
         ranking: 0, // Você pode calcular isso baseado no ranking
         metaMensal: 1500, // Valor fixo ou buscar de metas_afiliados
@@ -94,9 +104,8 @@ export default function AffiliateDashboard() {
         performance: performanceData,
         linkAfiliado: `https://seusite.com/afiliado/${dashboard.id}`,
         qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://seusite.com/afiliado/${dashboard.id}`,
-        rankingTop10: rankingData
+        rankingTop10: rankingData,
       });
-
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
     } finally {
@@ -121,7 +130,9 @@ export default function AffiliateDashboard() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b py-4">
         <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard de Afiliado</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Dashboard de Afiliado
+          </h1>
         </div>
       </header>
 

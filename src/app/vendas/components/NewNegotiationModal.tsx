@@ -23,7 +23,10 @@ interface NewNegotiationModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   formData: NewNegotiationForm;
-  onFormChange: (field: keyof NewNegotiationForm, value: string | boolean | number) => void;
+  onFormChange: (
+    field: keyof NewNegotiationForm,
+    value: string | boolean | number,
+  ) => void;
   onSubmit: (formData: NewNegotiationForm) => Promise<void>;
   loading?: boolean;
 }
@@ -36,17 +39,16 @@ export default function NewNegotiationModal({
   onSubmit,
   loading = false,
 }: NewNegotiationModalProps) {
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await onSubmit(formData);
       onOpenChange(false);
     } catch (error) {
-      console.error('Erro ao criar negociação:', error);
+      console.error("Erro ao criar negociação:", error);
     }
   };
-  console.log(formData)
+  console.log(formData);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -79,14 +81,19 @@ export default function NewNegotiationModal({
             </h3>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               <div>
-                <Label htmlFor="placa" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="placa"
+                  className="text-base font-medium mb-3 block"
+                >
                   Placa *
                 </Label>
                 <Input
                   id="placa"
                   type="text"
                   value={formData.placa}
-                  onChange={(e) => onFormChange("placa", e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    onFormChange("placa", e.target.value.toUpperCase())
+                  }
                   placeholder="ABC1D23"
                   className="h-12 text-base font-mono"
                   maxLength={7}
@@ -96,7 +103,10 @@ export default function NewNegotiationModal({
               </div>
 
               <div>
-                <Label htmlFor="marca" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="marca"
+                  className="text-base font-medium mb-3 block"
+                >
                   Marca *
                 </Label>
                 <Input
@@ -111,7 +121,10 @@ export default function NewNegotiationModal({
               </div>
 
               <div>
-                <Label htmlFor="modelo" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="modelo"
+                  className="text-base font-medium mb-3 block"
+                >
                   Modelo *
                 </Label>
                 <Input
@@ -126,7 +139,10 @@ export default function NewNegotiationModal({
               </div>
 
               <div>
-                <Label htmlFor="ano_modelo" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="ano_modelo"
+                  className="text-base font-medium mb-3 block"
+                >
                   Ano Modelo *
                 </Label>
                 <Input
@@ -143,15 +159,23 @@ export default function NewNegotiationModal({
               </div>
 
               <div>
-                <Label htmlFor="valor_negociado" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="valor_negociado"
+                  className="text-base font-medium mb-3 block"
+                >
                   Valor Negociado (R$)
                 </Label>
                 <Input
                   id="valor_negociado"
                   type="number"
                   step="0.01"
-                  value={formData.valor_negociado || ''}
-                  onChange={(e) => onFormChange("valor_negociado", parseFloat(e.target.value) || 0)}
+                  value={formData.valor_negociado || ""}
+                  onChange={(e) =>
+                    onFormChange(
+                      "valor_negociado",
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
                   placeholder="0,00"
                   className="h-12 text-base"
                 />
@@ -165,7 +189,10 @@ export default function NewNegotiationModal({
             </h3>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               <div>
-                <Label htmlFor="nomeContato" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="nomeContato"
+                  className="text-base font-medium mb-3 block"
+                >
                   Nome para contato *
                 </Label>
                 <Input
@@ -179,7 +206,10 @@ export default function NewNegotiationModal({
               </div>
 
               <div>
-                <Label htmlFor="email" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="email"
+                  className="text-base font-medium mb-3 block"
+                >
                   E-mail
                 </Label>
                 <Input
@@ -193,7 +223,10 @@ export default function NewNegotiationModal({
               </div>
 
               <div>
-                <Label htmlFor="celular" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="celular"
+                  className="text-base font-medium mb-3 block"
+                >
                   Celular
                 </Label>
                 <Input
@@ -207,7 +240,10 @@ export default function NewNegotiationModal({
               </div>
 
               <div>
-                <Label htmlFor="estado" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="estado"
+                  className="text-base font-medium mb-3 block"
+                >
                   Estado
                 </Label>
                 <Select
@@ -228,7 +264,10 @@ export default function NewNegotiationModal({
               </div>
 
               <div>
-                <Label htmlFor="cidade" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="cidade"
+                  className="text-base font-medium mb-3 block"
+                >
                   Cidade
                 </Label>
                 <Input
@@ -242,7 +281,10 @@ export default function NewNegotiationModal({
               </div>
 
               <div>
-                <Label htmlFor="origemLead" className="text-base font-medium mb-3 block">
+                <Label
+                  htmlFor="origemLead"
+                  className="text-base font-medium mb-3 block"
+                >
                   Origem do lead
                 </Label>
                 <Select
@@ -270,10 +312,10 @@ export default function NewNegotiationModal({
             disabled={loading}
             className="h-12 px-8 text-base font-medium bg-green-600 hover:bg-green-700 shadow-lg"
           >
-            {loading ? 'Criando...' : '✅ Criar Negociação'}
+            {loading ? "Criando..." : "✅ Criar Negociação"}
           </Button>
         </form>
-      </  DialogContent >
+      </DialogContent>
     </Dialog>
   );
 }

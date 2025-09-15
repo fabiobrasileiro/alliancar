@@ -83,39 +83,39 @@
 //   const handleStatusChange = (status: StatusNegociacao) => {
 //     const isSelected = filterData.status.some(s => s.id === status.id);
 //     let newStatus: StatusNegociacao[];
-    
+
 //     if (isSelected) {
 //       newStatus = filterData.status.filter(s => s.id !== status.id);
 //     } else {
 //       newStatus = [...filterData.status, status];
 //     }
-    
+
 //     onFilterChange("status", newStatus);
 //   };
 
 //   // const handleMarcaChange = (marca: string) => {
 //   //   const isSelected = filterData.marcas.includes(marca);
 //   //   let newMarcas: string[];
-    
+
 //   //   if (isSelected) {
 //   //     newMarcas = filterData.marcas.filter(m => m !== marca);
 //   //   } else {
 //   //     newMarcas = [...filterData.marcas, marca];
 //   //   }
-    
+
 //   //   onFilterChange("marcas", newMarcas);
 //   // };
 
 //   const handleModeloChange = (modelo: string) => {
 //     const isSelected = filterData.modelos.includes(modelo);
 //     let newModelos: string[];
-    
+
 //     if (isSelected) {
 //       newModelos = filterData.modelos.filter(m => m !== modelo);
 //     } else {
 //       newModelos = [...filterData.modelos, modelo];
 //     }
-    
+
 //     onFilterChange("modelos", newModelos);
 //   };
 
@@ -129,7 +129,7 @@
 //       alert("Data inicial não pode ser maior que data final");
 //       return;
 //     }
-    
+
 //     onSubmit();
 //   };
 
@@ -167,7 +167,7 @@
 //         <div className="space-y-6 py-2">
 //           {/* Filtros de Data */}
 //           <div className="border rounded-lg overflow-hidden">
-//             <button 
+//             <button
 //               className="flex items-center justify-between w-full p-4 bg-muted/50 hover:bg-muted/70 transition-colors"
 //               onClick={() => toggleSection('data')}
 //             >
@@ -177,7 +177,7 @@
 //               </div>
 //               {expandedSections.data ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
 //             </button>
-            
+
 //             {expandedSections.data && (
 //               <div className="p-4 space-y-4">
 //                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -197,7 +197,7 @@
 //                       </SelectContent>
 //                     </Select>
 //                   </div>
-                  
+
 //                   <div className="space-y-2">
 //                     <Label htmlFor="dataInicial">Data Inicial</Label>
 //                     <Input
@@ -207,7 +207,7 @@
 //                       onChange={(e) => onFilterChange("dataInicial", e.target.value)}
 //                     />
 //                   </div>
-                  
+
 //                   <div className="space-y-2">
 //                     <Label htmlFor="dataFinal">Data Final</Label>
 //                     <Input
@@ -224,7 +224,7 @@
 
 //           {/* Filtros de Status */}
 //           <div className="border rounded-lg overflow-hidden">
-//             <button 
+//             <button
 //               className="flex items-center justify-between w-full p-4 bg-muted/50 hover:bg-muted/70 transition-colors"
 //               onClick={() => toggleSection('status')}
 //             >
@@ -239,15 +239,15 @@
 //               </div>
 //               {expandedSections.status ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
 //             </button>
-            
+
 //             {expandedSections.status && (
 //               <div className="p-4">
 //                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 //                   {statusOptions.map((status) => {
 //                     // const isSelected = filterData.status.some(s => s.id === status.id);
 //                     return (
-//                       <div 
-//                         key={status.id} 
+//                       <div
+//                         key={status.id}
 //                         className={`flex items-center space-x-2 p-3 rounded-md border cursor-pointer transition-colors `}
 //                         onClick={() => handleStatusChange(status)}
 //                       >
@@ -265,7 +265,7 @@
 
 //           {/* Filtros de Veículo */}
 //           <div className="border rounded-lg overflow-hidden">
-//             <button 
+//             <button
 //               className="flex items-center justify-between w-full p-4 bg-muted/50 hover:bg-muted/70 transition-colors"
 //               onClick={() => toggleSection('veiculo')}
 //             >
@@ -280,7 +280,7 @@
 //               </div>
 //               {expandedSections.veiculo ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
 //             </button>
-            
+
 //             {/* {expandedSections.veiculo && (
 //               <div className="p-4 space-y-6">
 //                 <div className="space-y-3">
@@ -289,8 +289,8 @@
 //                     {marcaOptions.map((marca) => {
 //                       const isSelected = filterData.marcas.includes(marca);
 //                       return (
-//                         <div 
-//                           key={marca} 
+//                         <div
+//                           key={marca}
 //                           className={`flex items-center space-x-2 p-3 rounded-md border cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}`}
 //                           onClick={() => handleMarcaChange(marca)}
 //                         >
@@ -303,15 +303,15 @@
 //                     })}
 //                   </div>
 //                 </div>
-                
+
 //                 <div className="space-y-3">
 //                   <Label>Modelos</Label>
 //                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
 //                     {modeloOptions.map((modelo) => {
 //                       const isSelected = filterData.modelos.includes(modelo);
 //                       return (
-//                         <div 
-//                           key={modelo} 
+//                         <div
+//                           key={modelo}
 //                           className={`flex items-center space-x-2 p-3 rounded-md border cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'}`}
 //                           onClick={() => handleModeloChange(modelo)}
 //                         >
@@ -330,7 +330,7 @@
 
 //           {/* Filtros de Valor */}
 //           <div className="border rounded-lg overflow-hidden">
-//             <button 
+//             <button
 //               className="flex items-center justify-between w-full p-4 bg-muted/50 hover:bg-muted/70 transition-colors"
 //               onClick={() => toggleSection('valor')}
 //             >
@@ -345,7 +345,7 @@
 //               </div>
 //               {expandedSections.valor ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
 //             </button>
-            
+
 //             {expandedSections.valor && (
 //               <div className="p-4">
 //                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -360,7 +360,7 @@
 //                       placeholder="0,00"
 //                     />
 //                   </div>
-                  
+
 //                   <div className="space-y-2">
 //                     <Label htmlFor="valorMax">Valor Máximo (R$)</Label>
 //                     <Input
@@ -387,7 +387,7 @@
 //           >
 //             Limpar Filtros
 //           </Button>
-          
+
 //           <div className="flex gap-3 order-1 sm:order-2">
 //             <Button
 //               variant="outline"

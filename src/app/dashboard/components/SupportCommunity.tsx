@@ -13,12 +13,14 @@ export default function SupportCommunity() {
   const faqs = [
     {
       question: "Como recebo minhas comissões?",
-      answer: "Suas comissões são pagas via PIX toda sexta-feira para vendas aprovadas até a quarta-feira da mesma semana. Certifique-se de ter cadastrado sua chave PIX no painel do afiliado."
+      answer:
+        "Suas comissões são pagas via PIX toda sexta-feira para vendas aprovadas até a quarta-feira da mesma semana. Certifique-se de ter cadastrado sua chave PIX no painel do afiliado.",
     },
     {
       question: "Quando cai o pagamento?",
-      answer: "Os pagamentos são processados às quintas-feiras e creditados em sua conta na sexta-feira. Pagamentos de comissões recorrentes ocorrem todo dia 10 de cada mês."
-    }
+      answer:
+        "Os pagamentos são processados às quintas-feiras e creditados em sua conta na sexta-feira. Pagamentos de comissões recorrentes ocorrem todo dia 10 de cada mês.",
+    },
   ];
 
   return (
@@ -42,7 +44,10 @@ export default function SupportCommunity() {
               {faqs.map((faq, index) => (
                 <Dialog key={index}>
                   <DialogTrigger asChild>
-                    <Button variant="ghost" className="w-full justify-start text-sm h-8">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-sm h-8"
+                    >
                       {faq.question}
                     </Button>
                   </DialogTrigger>

@@ -45,14 +45,17 @@ export default function MinhasVendas() {
   const [filtroDataInicio, setFiltroDataInicio] = useState<string>("");
   const [filtroDataFim, setFiltroDataFim] = useState<string>("");
   const [filtroStatus, setFiltroStatus] = useState<string>("");
-  
+
   const supabase = createClient();
 
   // Calcular totais
   const totalVendas = vendas.length;
   const totalValor = vendas.reduce((sum, venda) => sum + (venda.valor || 0), 0);
-  const totalComissao = vendas.reduce((sum, venda) => sum + (venda.comissao || 0), 0);
-  const {user} = useUser();
+  const totalComissao = vendas.reduce(
+    (sum, venda) => sum + (venda.comissao || 0),
+    0,
+  );
+  const { user } = useUser();
 
   useEffect(() => {
     fetchVendas();
@@ -64,64 +67,67 @@ export default function MinhasVendas() {
       setError(null);
 
       // Obter o usuário logado
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        setError('Usuário não autenticado');
+        setError("Usuário não autenticado");
         setLoading(false);
         return;
       }
 
       // Buscar o afiliado baseado no auth_id do usuário
       const { data: afiliado, error: errorAfiliado } = await supabase
-        .from('afiliados')
-        .select('id')
-        .eq('auth_id', user.id)
+        .from("afiliados")
+        .select("id")
+        .eq("auth_id", user.id)
         .single();
 
       if (errorAfiliado || !afiliado) {
-        setError('Afiliado não encontrado');
+        setError("Afiliado não encontrado");
         setLoading(false);
         return;
       }
 
       let query = supabase
-        .from('pagamentos')
+        .from("pagamentos")
         .select(`*`)
-        .eq('afiliado_id', user?.id)
+        .eq("afiliado_id", user?.id);
 
       // Aplicar filtros de data
       if (filtroDataInicio) {
-        query = query.gte('data', filtroDataInicio);
+        query = query.gte("data", filtroDataInicio);
       }
       if (filtroDataFim) {
-        query = query.lte('data', filtroDataFim);
+        query = query.lte("data", filtroDataFim);
       }
-      if (filtroStatus && filtroStatus !== 'todos') {
-        query = query.eq('status', filtroStatus);
+      if (filtroStatus && filtroStatus !== "todos") {
+        query = query.eq("status", filtroStatus);
       }
 
       const { data: pagamentos, error } = await query;
 
       if (error) {
-        console.error('Erro ao buscar pagamentos:', error);
+        console.error("Erro ao buscar pagamentos:", error);
         setError(error.message);
         return;
       }
 
       // Transformar os dados para o formato esperado
-      const vendasFormatadas = pagamentos ? pagamentos.map((pagamento: any) => ({
-        ...pagamento,
-        afiliado: {
-          nome_completo: pagamento.afiliados?.nome_completo || 'N/A'
-        }
-      })) : [];
+      const vendasFormatadas = pagamentos
+        ? pagamentos.map((pagamento: any) => ({
+            ...pagamento,
+            afiliado: {
+              nome_completo: pagamento.afiliados?.nome_completo || "N/A",
+            },
+          }))
+        : [];
 
       setVendas(vendasFormatadas);
-
     } catch (err) {
-      console.error('Erro inesperado:', err);
-      setError('Erro ao carregar vendas');
+      console.error("Erro inesperado:", err);
+      setError("Erro ao carregar vendas");
     } finally {
       setLoading(false);
     }
@@ -129,30 +135,30 @@ export default function MinhasVendas() {
 
   const formatarData = (dataString: string) => {
     try {
-      return new Date(dataString).toLocaleDateString('pt-BR');
+      return new Date(dataString).toLocaleDateString("pt-BR");
     } catch {
-      return 'Data inválida';
+      return "Data inválida";
     }
   };
 
   const formatarMoeda = (valor: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(valor || 0);
   };
 
   const formatarStatus = (status: string) => {
     const statusMap: { [key: string]: string } = {
-      'pendente': 'Pendente',
-      'pago': 'Pago',
-      'cancelado': 'Cancelado',
-      'processando': 'Processando',
-      'boleto_gerado': 'Boleto Gerado',
-      'aguardando_liberacao': 'Aguardando Liberação',
-      'a_receber': 'A receber'
+      pendente: "Pendente",
+      pago: "Pago",
+      cancelado: "Cancelado",
+      processando: "Processando",
+      boleto_gerado: "Boleto Gerado",
+      aguardando_liberacao: "Aguardando Liberação",
+      a_receber: "A receber",
     };
-    
+
     return statusMap[status.toLowerCase()] || status;
   };
 
@@ -186,8 +192,8 @@ export default function MinhasVendas() {
             </div>
             <div>
               <span className="block mb-1 text-sm">Até:</span>
-              <Input 
-                type="date" 
+              <Input
+                type="date"
                 value={filtroDataFim}
                 onChange={(e) => setFiltroDataFim(e.target.value)}
               />
@@ -202,7 +208,9 @@ export default function MinhasVendas() {
                   <SelectItem value="todos">Todos</SelectItem>
                   <SelectItem value="boleto_gerado">Boleto Gerado</SelectItem>
                   <SelectItem value="cancelado">Cancelado</SelectItem>
-                  <SelectItem value="aguardando_liberacao">Aguardando Liberação</SelectItem>
+                  <SelectItem value="aguardando_liberacao">
+                    Aguardando Liberação
+                  </SelectItem>
                   <SelectItem value="a_receber">A receber</SelectItem>
                   <SelectItem value="pago">Pago</SelectItem>
                 </SelectContent>
@@ -231,18 +239,20 @@ export default function MinhasVendas() {
               {formatarMoeda(totalValor)}
             </div>
           </Card>
-          
+
           <Card className="p-4 text-center">
             <div className="text-sm text-gray-600">Comissão Total</div>
             <div className="text-xl font-bold text-green-600">
               {formatarMoeda(totalComissao)}
             </div>
           </Card>
-          
+
           <Card className="p-4 text-center">
             <div className="text-sm text-gray-600">Porcentagem da Comissão</div>
             <div className="text-xl font-bold text-purple-600">
-              {totalValor > 0 ? `${((totalComissao / totalValor) * 100).toFixed(1)}%` : '0%'}
+              {totalValor > 0
+                ? `${((totalComissao / totalValor) * 100).toFixed(1)}%`
+                : "0%"}
             </div>
           </Card>
         </div>
@@ -265,7 +275,10 @@ export default function MinhasVendas() {
               <TableBody>
                 {vendas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-gray-500 py-4">
+                    <TableCell
+                      colSpan={7}
+                      className="text-center text-gray-500 py-4"
+                    >
                       Nenhuma venda encontrada
                     </TableCell>
                   </TableRow>
@@ -273,18 +286,26 @@ export default function MinhasVendas() {
                   vendas.map((venda) => (
                     <TableRow key={venda.id}>
                       <TableCell>{formatarData(venda.data)}</TableCell>
-                      <TableCell>{venda.afiliado?.nome_completo || 'N/A'}</TableCell>
-                      <TableCell>{venda.placa || 'N/A'}</TableCell>
+                      <TableCell>
+                        {venda.afiliado?.nome_completo || "N/A"}
+                      </TableCell>
+                      <TableCell>{venda.placa || "N/A"}</TableCell>
                       <TableCell>{formatarMoeda(venda.valor)}</TableCell>
                       <TableCell>{formatarMoeda(venda.comissao)}</TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          venda.status === 'pago' ? 'bg-green-100 text-green-800' :
-                          venda.status === 'cancelado' ? 'bg-red-100 text-red-800' :
-                          venda.status === 'aguardando_liberacao' ? 'bg-yellow-100 text-yellow-800' :
-                          venda.status === 'a_receber' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            venda.status === "pago"
+                              ? "bg-green-100 text-green-800"
+                              : venda.status === "cancelado"
+                                ? "bg-red-100 text-red-800"
+                                : venda.status === "aguardando_liberacao"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : venda.status === "a_receber"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
                           {formatarStatus(venda.status)}
                         </span>
                       </TableCell>

@@ -10,7 +10,14 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { ContactRow } from "./components/types";
@@ -57,7 +64,7 @@ export default function ContatosPage() {
     cidade: "",
     origem_lead: "",
     veiculo_trabalho: false,
-    enviar_cotacao_email: false
+    enviar_cotacao_email: false,
   });
   const [afiliadoId, setAfiliadoId] = useState<string>("");
 
@@ -130,7 +137,6 @@ export default function ContatosPage() {
     }
   };
 
-
   // Buscar dados quando a página mudar
   useEffect(() => {
     fetchData();
@@ -168,7 +174,7 @@ export default function ContatosPage() {
       origem_lead: "",
       veiculo_trabalho: false,
       enviar_cotacao_email: false,
-      afiliado_id: afiliadoId // Usar o ID do afiliado, não do usuário auth
+      afiliado_id: afiliadoId, // Usar o ID do afiliado, não do usuário auth
     });
     setIsAddDialogOpen(true);
   };
@@ -179,12 +185,10 @@ export default function ContatosPage() {
       // Garantir que o afiliado_id está definido
       const contactToSave = {
         ...newContact,
-        afiliado_id: newContact.afiliado_id || afiliadoId
+        afiliado_id: newContact.afiliado_id || afiliadoId,
       };
 
-      const { error } = await supabase
-        .from("contatos")
-        .insert([contactToSave]);
+      const { error } = await supabase.from("contatos").insert([contactToSave]);
 
       if (error) {
         console.error("Erro detalhado:", error);
@@ -249,7 +253,7 @@ export default function ContatosPage() {
     setSelectedContacts((prev) =>
       prev.includes(id)
         ? prev.filter((contactId) => contactId !== id)
-        : [...prev, id]
+        : [...prev, id],
     );
   };
 
@@ -274,7 +278,9 @@ export default function ContatosPage() {
 
       if (error) throw error;
 
-      toast.success(`${selectedContacts.length} contatos deletados com sucesso`);
+      toast.success(
+        `${selectedContacts.length} contatos deletados com sucesso`,
+      );
       setSelectedContacts([]);
       fetchData();
     } catch (error) {
@@ -397,7 +403,9 @@ export default function ContatosPage() {
           title="Adicionar Novo Contato"
           description="Preencha os dados do novo contato."
           contact={newContact}
-          onContactChange={(field, value) => setNewContact(prev => ({ ...prev, [field]: value }))}
+          onContactChange={(field, value) =>
+            setNewContact((prev) => ({ ...prev, [field]: value }))
+          }
           onSave={handleSaveNew}
           onCancel={() => setIsAddDialogOpen(false)}
         />
@@ -409,7 +417,11 @@ export default function ContatosPage() {
           title="Editar Contato"
           description="Faça as alterações necessárias nos dados do contato."
           contact={editingContact || {}}
-          onContactChange={(field, value) => setEditingContact(prev => prev ? { ...prev, [field]: value } : null)}
+          onContactChange={(field, value) =>
+            setEditingContact((prev) =>
+              prev ? { ...prev, [field]: value } : null,
+            )
+          }
           onSave={handleSaveEdit}
           onCancel={() => setIsEditDialogOpen(false)}
         />
