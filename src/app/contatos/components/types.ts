@@ -23,5 +23,5 @@ export const ORIGEM_LEAD_OPTIONS = [
   "Indicação",
   "Instagram",
   "Presencial",
-  "Site"
+  "Site",
 ] as const;

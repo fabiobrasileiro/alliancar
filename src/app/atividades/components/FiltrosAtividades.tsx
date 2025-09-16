@@ -62,7 +62,7 @@ export const FiltrosAtividades: React.FC<FiltrosAtividadesProps> = ({
                   htmlFor={`type-${type}`}
                   className="text-sm font-medium leading-none capitalize"
                 >
-                  {type.replace('_', ' ')}
+                  {type.replace("_", " ")}
                 </label>
               </div>
             ))}
@@ -77,7 +77,9 @@ export const FiltrosAtividades: React.FC<FiltrosAtividadesProps> = ({
                 <Checkbox
                   id={`priority-${priority}`}
                   checked={priorityFilters[priority as keyof PriorityFilters]}
-                  onChange={() => onPriorityFilterChange(priority as keyof PriorityFilters)}
+                  onChange={() =>
+                    onPriorityFilterChange(priority as keyof PriorityFilters)
+                  }
                 />
                 <label
                   htmlFor={`priority-${priority}`}

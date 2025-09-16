@@ -23,7 +23,7 @@ export const negociacoesService = {
         contatos:nome,
         contatos:email,
         contatos:celular
-      `
+      `,
       )
       .order("criado_em", { ascending: false });
 
@@ -41,7 +41,7 @@ export const negociacoesService = {
         contatos:nome,
         contatos:email,
         contatos:celular
-      `
+      `,
       )
       .eq("status", status)
       .order("criado_em", { ascending: false });
@@ -128,5 +128,355 @@ export const negociacoesService = {
 
     if (error) throw error;
     return data as AvaliacaoVenda[];
+  },
+};
+
+// Serviço de relatórios
+export const relatoriosService = {
+  // Buscar dados do dashboard do afiliado
+  async getDashboardAfiliado(afiliadoId?: string) {
+    const { data, error } = await supabase
+      .from("view_dashboard_afiliado")
+      .select(
+        `
+        id,
+        nome_completo,
+        email,
+        numero_placas,
+        receita_total,
+        receita_pendente,
+        total_clientes,
+        clientes_ativos,
+        comissao_total,
+        comissao_recebida,
+        comissao_pendente,
+        total_conquistas,
+        ranking_atual
+      `,
+      )
+      .eq(afiliadoId ? "id" : "1", afiliadoId || "1");
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Buscar performance do afiliado
+  async getPerformanceAfiliado(afiliadoId?: string) {
+    const { data, error } = await supabase
+      .from("view_performance_afiliado")
+      .select(
+        `
+        id,
+        afiliado_id,
+        cliente_id,
+        cliente_nome,
+        placa_veiculo,
+        valor_contrato,
+        porcentagem_comissao,
+        valor_comissao,
+        mes_referencia,
+        status,
+        data_pagamento,
+        data_formatada,
+        valor_formatado,
+        comissao_formatada
+      `,
+      )
+      .eq("afiliado_id", afiliadoId || "1");
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Buscar ranking top 10
+  async getRankingTop10() {
+    const { data, error } = await supabase
+      .from("ranking_afiliados")
+      .select(
+        `
+        id,
+        afiliado_id,
+        mes_referencia,
+        posicao,
+        total_vendas,
+        total_comissao,
+        afiliados:afiliado_id(nome_completo)
+      `,
+      )
+      .order("posicao", { ascending: true })
+      .limit(10);
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Buscar negociações com avaliações
+  async getNegociacoesAvaliacoes(filters?: {
+    afiliadoId?: string;
+    dataInicio?: string;
+    dataFim?: string;
+    status?: string;
+  }) {
+    let query = supabase.from("vw_negociacoes_avaliacoes").select(`
+      id,
+      placa,
+      ano_modelo,
+      modelo,
+      marca,
+      afiliado_id,
+      contato_id,
+      status,
+      valor_negociado,
+      observacoes,
+      criado_em,
+      atualizado_em,
+      status_avaliacao,
+      valor_comissao,
+      aprovado,
+      data_aprovacao,
+      contatos:contato_id(nome, email, celular)
+    `);
+
+    if (filters?.afiliadoId) {
+      query = query.eq("afiliado_id", filters.afiliadoId);
+    }
+    if (filters?.dataInicio) {
+      query = query.gte("criado_em", filters.dataInicio);
+    }
+    if (filters?.dataFim) {
+      query = query.lte("criado_em", filters.dataFim);
+    }
+    if (filters?.status) {
+      query = query.eq("status", filters.status);
+    }
+
+    query = query.order("criado_em", { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+
+  // Buscar comissões da view de performance
+  async getComissoes(filters?: {
+    afiliadoId?: string;
+    dataInicio?: string;
+    dataFim?: string;
+  }) {
+    let query = supabase.from("view_performance_afiliado").select(`
+      id,
+      afiliado_id,
+      cliente_nome,
+      valor_comissao,
+      porcentagem_comissao,
+      mes_referencia,
+      status,
+      data_pagamento
+    `);
+
+    if (filters?.afiliadoId) {
+      query = query.eq("afiliado_id", filters.afiliadoId);
+    }
+    if (filters?.dataInicio) {
+      query = query.gte("mes_referencia", filters.dataInicio);
+    }
+    if (filters?.dataFim) {
+      query = query.lte("mes_referencia", filters.dataFim);
+    }
+
+    query = query.order("mes_referencia", { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+
+  // Buscar pagamentos
+  async getPagamentos(filters?: {
+    afiliadoId?: string;
+    dataInicio?: string;
+    dataFim?: string;
+  }) {
+    let query = supabase.from("pagamentos").select(`
+      id,
+      afiliado_id,
+      valor,
+      descricao,
+      mes_referencia,
+      status,
+      data,
+      criado_em,
+      atualizado_em,
+      afiliados:afiliado_id(nome_completo)
+    `);
+
+    if (filters?.afiliadoId) {
+      query = query.eq("afiliado_id", filters.afiliadoId);
+    }
+    if (filters?.dataInicio) {
+      query = query.gte("data", filters.dataInicio);
+    }
+    if (filters?.dataFim) {
+      query = query.lte("data", filters.dataFim);
+    }
+
+    query = query.order("data", { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+
+  // Buscar saques
+  async getSaques(filters?: {
+    afiliadoId?: string;
+    dataInicio?: string;
+    dataFim?: string;
+  }) {
+    let query = supabase.from("saques").select(`
+      id,
+      afiliado_id,
+      valor,
+      metodo,
+      dados_banco,
+      status,
+      observacao,
+      criado_em,
+      processado_em,
+      afiliados:afiliado_id(nome_completo)
+    `);
+
+    if (filters?.afiliadoId) {
+      query = query.eq("afiliado_id", filters.afiliadoId);
+    }
+    if (filters?.dataInicio) {
+      query = query.gte("criado_em", filters.dataInicio);
+    }
+    if (filters?.dataFim) {
+      query = query.lte("criado_em", filters.dataFim);
+    }
+
+    query = query.order("criado_em", { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+
+  // Buscar metas dos afiliados
+  async getMetasAfiliados(afiliadoId?: string) {
+    let query = supabase.from("metas_afiliados").select(`
+      id,
+      afiliado_id,
+      mes_referencia,
+      valor_meta,
+      vendas_meta,
+      atingido,
+      criado_em,
+      afiliados:afiliado_id(nome_completo)
+    `);
+
+    if (afiliadoId) {
+      query = query.eq("afiliado_id", afiliadoId);
+    }
+
+    query = query.order("criado_em", { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+
+  // Buscar ranking de afiliados
+  async getRankingAfiliados() {
+    const { data, error } = await supabase
+      .from("ranking_afiliados")
+      .select(
+        `
+        *,
+        afiliados:afiliado_id(nome_completo)
+      `,
+      )
+      .order("posicao", { ascending: true });
+
+    if (error) throw error;
+    return data;
+  },
+
+  // Buscar atividades por período
+  async getAtividades(filters?: {
+    afiliadoId?: string;
+    dataInicio?: string;
+    dataFim?: string;
+    tipo?: string;
+  }) {
+    let query = supabase.from("atividades").select(`
+      id,
+      afiliado_id,
+      titulo,
+      descricao,
+      prazo,
+      prioridade,
+      tipo,
+      status,
+      concluida_em,
+      criado_em,
+      afiliados:afiliado_id(nome_completo)
+    `);
+
+    if (filters?.afiliadoId) {
+      query = query.eq("afiliado_id", filters.afiliadoId);
+    }
+    if (filters?.dataInicio) {
+      query = query.gte("prazo", filters.dataInicio);
+    }
+    if (filters?.dataFim) {
+      query = query.lte("prazo", filters.dataFim);
+    }
+    if (filters?.tipo) {
+      query = query.eq("tipo", filters.tipo);
+    }
+
+    query = query.order("prazo", { ascending: false });
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+
+  // Buscar estatísticas resumidas
+  async getEstatisticasResumo(filters?: {
+    afiliadoId?: string;
+    dataInicio?: string;
+    dataFim?: string;
+  }) {
+    // Buscar contagem de negociações por status
+    let negociacoesQuery = supabase
+      .from("negociacoes")
+      .select("status", { count: "exact" });
+
+    if (filters?.afiliadoId) {
+      negociacoesQuery = negociacoesQuery.eq("afiliado_id", filters.afiliadoId);
+    }
+    if (filters?.dataInicio) {
+      negociacoesQuery = negociacoesQuery.gte("criado_em", filters.dataInicio);
+    }
+    if (filters?.dataFim) {
+      negociacoesQuery = negociacoesQuery.lte("criado_em", filters.dataFim);
+    }
+
+    const [negociacoesResult, comissoesResult, pagamentosResult] =
+      await Promise.all([
+        negociacoesQuery,
+        supabase.from("comissoes").select("valor", { count: "exact" }),
+        supabase.from("pagamentos").select("valor", { count: "exact" }),
+      ]);
+
+    return {
+      negociacoes: negociacoesResult.data || [],
+      totalNegociacoes: negociacoesResult.count || 0,
+      totalComissoes: comissoesResult.count || 0,
+      totalPagamentos: pagamentosResult.count || 0,
+    };
   },
 };

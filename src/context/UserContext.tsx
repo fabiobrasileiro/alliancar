@@ -1,7 +1,13 @@
-'use client';
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User } from '@supabase/supabase-js';
-import { createClient } from '@/utils/supabase/client'; // Use o client já configurado
+"use client";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import { User } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client"; // Use o client já configurado
 
 interface UserPerfil {
   id: string;
@@ -41,16 +47,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const fetchPerfil = async (userId: string) => {
     try {
       const { data: perfilData, error: perfilError } = await supabase
-        .from('afiliados')
-        .select('*')
-        .eq('auth_id', userId)
+        .from("afiliados")
+        .select("*")
+        .eq("auth_id", userId)
         .maybeSingle();
 
       if (perfilError) {
         console.error("Erro ao buscar perfil:", perfilError);
         return null;
       }
-      
+
       return perfilData;
     } catch (error) {
       console.error("Erro na busca do perfil:", error);
@@ -71,10 +77,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const initializeAuth = async () => {
       try {
         setLoading(true);
-        
+
         // Obter sessão inicial
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
         if (sessionError) {
           console.error("Erro ao obter sessão:", sessionError);
           return;
@@ -99,20 +108,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth();
 
     // Listener para mudanças de auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
 
-        if (session?.user) {
-          setUser(session.user);
-          const perfilData = await fetchPerfil(session.user.id);
-          setPerfil(perfilData);
-        } else {
-          setUser(null);
-          setPerfil(null);
-        }
+      if (session?.user) {
+        setUser(session.user);
+        const perfilData = await fetchPerfil(session.user.id);
+        setPerfil(perfilData);
+      } else {
+        setUser(null);
+        setPerfil(null);
       }
-    );
+    });
 
     return () => {
       mounted = false;
@@ -129,10 +138,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 export const useUser = () => {
   const context = useContext(UserContext);
-  
+
   if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
+    throw new Error("useUser must be used within a UserProvider");
   }
-  
+
   return context;
 };

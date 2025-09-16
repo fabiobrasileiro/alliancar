@@ -1,16 +1,12 @@
 // types.ts
-export type StatusNegociacao = 
-  | 'Cotação recebida'
-  | 'Em negociação'
-  | 'Vistoria'
-  | 'Liberada para cadastro'
-  | 'Venda concretizada';
+export type StatusNegociacao =
+  | "Cotação recebida"
+  | "Em negociação"
+  | "Vistoria"
+  | "Liberada para cadastro"
+  | "Venda concretizada";
 
-export type StatusPagamento = 
-  | 'pendente'
-  | 'processando'
-  | 'pago'
-  | 'falha';
+export type StatusPagamento = "pendente" | "processando" | "pago" | "falha";
 
 export interface Negociacao {
   id: string;

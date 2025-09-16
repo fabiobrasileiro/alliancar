@@ -5,7 +5,13 @@ import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { useUser } from "@/context/UserContext";
-import { FormData, Endereco, Banco, Bucket, NovoBanco } from "./components/types";
+import {
+  FormData,
+  Endereco,
+  Banco,
+  Bucket,
+  NovoBanco,
+} from "./components/types";
 import { DadosPessoaisForm } from "./components/DadosPessoaisForm";
 import { FotoPerfilTab } from "./components/FotoPerfilTab";
 import { DadosBancariosTab } from "./components/DadosBancariosTab";
@@ -36,7 +42,7 @@ const Afiliados = () => {
     currentPassword: "",
     password: "",
     passwordConfirmation: "",
-    foto_perfil_url: ""
+    foto_perfil_url: "",
   });
   const { user } = useUser();
 
@@ -51,18 +57,29 @@ const Afiliados = () => {
   const fetchPerfil = async () => {
     try {
       setLoading(true);
-      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+        error: userError,
+      } = await supabase.auth.getUser();
 
       if (userError || !authUser) {
         toast.error("Usuário não autenticado");
         return;
       }
 
-      const [perfilResponse, enderecosResponse, bancosResponse] = await Promise.all([
-        supabase.from("afiliados").select("*").eq("auth_id", authUser.id).single(),
-        supabase.from("enderecos").select("*").eq("afiliado_id", authUser.id),
-        supabase.from("contas_bancarias").select("*").eq("afiliado_id", authUser.id),
-      ]);
+      const [perfilResponse, enderecosResponse, bancosResponse] =
+        await Promise.all([
+          supabase
+            .from("afiliados")
+            .select("*")
+            .eq("auth_id", authUser.id)
+            .single(),
+          supabase.from("enderecos").select("*").eq("afiliado_id", authUser.id),
+          supabase
+            .from("contas_bancarias")
+            .select("*")
+            .eq("afiliado_id", authUser.id),
+        ]);
 
       if (perfilResponse.error) throw perfilResponse.error;
       if (enderecosResponse.error) throw enderecosResponse.error;
@@ -70,9 +87,12 @@ const Afiliados = () => {
 
       if (perfilResponse.data) {
         setPerfilId(perfilResponse.data.id);
-        const enderecoPrincipal = enderecosResponse.data?.find(e => e.principal) || enderecosResponse.data?.[0] || {};
+        const enderecoPrincipal =
+          enderecosResponse.data?.find((e) => e.principal) ||
+          enderecosResponse.data?.[0] ||
+          {};
 
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           name: perfilResponse.data.nome_completo?.split(" ")[0] || "",
           fullName: perfilResponse.data.nome_completo || "",
@@ -87,13 +107,12 @@ const Afiliados = () => {
           addressNeighborhood: enderecoPrincipal.bairro || "",
           addressState: enderecoPrincipal.estado || "",
           addressCity: enderecoPrincipal.cidade || "",
-          foto_perfil_url: perfilResponse.data.foto_perfil_url || ""
+          foto_perfil_url: perfilResponse.data.foto_perfil_url || "",
         }));
       }
 
       if (enderecosResponse.data) setEnderecos(enderecosResponse.data);
       if (bancosResponse.data) setBancos(bancosResponse.data);
-
     } catch (error) {
       console.error("Erro:", error);
       toast.error("Erro ao carregar perfil");
@@ -104,11 +123,11 @@ const Afiliados = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
+    setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
   const handleSelectChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSavePersonalData = async () => {
@@ -120,7 +139,9 @@ const Afiliados = () => {
     try {
       setSaving(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) {
         toast.error("Usuário não autenticado");
@@ -141,7 +162,7 @@ const Afiliados = () => {
       if (perfilError) throw perfilError;
 
       // Verificar se já existe um endereço principal
-      const enderecoExistente = enderecos.find(e => e.principal);
+      const enderecoExistente = enderecos.find((e) => e.principal);
 
       if (enderecoExistente) {
         // Atualizar endereço existente
@@ -155,7 +176,7 @@ const Afiliados = () => {
             estado: formData.addressState,
             cidade: formData.addressCity,
             bairro: formData.addressNeighborhood, // Alterado para bairro
-            principal: true
+            principal: true,
           })
           .eq("id", enderecoExistente.id);
 
@@ -173,7 +194,7 @@ const Afiliados = () => {
             estado: formData.addressState,
             cidade: formData.addressCity,
             bairro: formData.addressNeighborhood, // Alterado para bairro
-            principal: true
+            principal: true,
           });
 
         if (enderecoError) throw enderecoError;
@@ -230,27 +251,30 @@ const Afiliados = () => {
       const file = e.target.files?.[0];
       if (!file || !perfilId) return;
 
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         toast.error("Por favor, selecione um arquivo de imagem");
         return;
       }
 
       // Buscar usuário autenticado para obter o ID
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
       if (userError || !user) {
         toast.error("Usuário não autenticado");
         return;
       }
 
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}-${Math.random()}.${fileExt}`;
       const filePath = `fotos-perfil/${user.id}/${fileName}`; // Inclui user ID no path
 
       const { error: uploadError } = await supabase.storage
-        .from('afiliados')
+        .from("afiliados")
         .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true
+          cacheControl: "3600",
+          upsert: true,
         });
 
       if (uploadError) {
@@ -258,9 +282,9 @@ const Afiliados = () => {
       }
 
       // Obter URL pública
-      const { data: { publicUrl } } = supabase.storage
-        .from('afiliados')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("afiliados").getPublicUrl(filePath);
 
       // Atualizar perfil com a URL da foto
       const { error: updateError } = await supabase
@@ -272,9 +296,8 @@ const Afiliados = () => {
         throw updateError;
       }
 
-      setFormData(prev => ({ ...prev, foto_perfil_url: publicUrl }));
+      setFormData((prev) => ({ ...prev, foto_perfil_url: publicUrl }));
       toast.success("Foto de perfil atualizada com sucesso!");
-
     } catch (error) {
       console.error("Erro ao fazer upload da foto:", error);
       toast.error("Erro ao atualizar foto de perfil");
@@ -286,7 +309,9 @@ const Afiliados = () => {
 
     try {
       // Buscar usuário autenticado
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Usuário não autenticado");
         return;
@@ -294,13 +319,13 @@ const Afiliados = () => {
 
       // Extrair caminho do arquivo da URL
       const url = new URL(formData.foto_perfil_url);
-      const pathParts = url.pathname.split('/');
-      const bucketIndex = pathParts.indexOf('afiliados');
-      const filePath = pathParts.slice(bucketIndex + 1).join('/');
+      const pathParts = url.pathname.split("/");
+      const bucketIndex = pathParts.indexOf("afiliados");
+      const filePath = pathParts.slice(bucketIndex + 1).join("/");
 
       // Deletar arquivo do storage
       const { error: deleteError } = await supabase.storage
-        .from('afiliados')
+        .from("afiliados")
         .remove([filePath]);
 
       if (deleteError) {
@@ -317,9 +342,8 @@ const Afiliados = () => {
         throw updateError;
       }
 
-      setFormData(prev => ({ ...prev, foto_perfil_url: "" }));
+      setFormData((prev) => ({ ...prev, foto_perfil_url: "" }));
       toast.success("Foto de perfil removida com sucesso!");
-
     } catch (error) {
       console.error("Erro ao remover foto:", error);
       toast.error("Erro ao remover foto de perfil");
@@ -328,7 +352,9 @@ const Afiliados = () => {
   // No seu componente principal (Afiliados.tsx)
   const handleAddBanco = async (bancoData: NovoBanco) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
       // Se for principal, remover principal de outras contas
@@ -357,7 +383,9 @@ const Afiliados = () => {
     try {
       // Se for principal, remover principal de outras contas
       if (bancoData.principal) {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         await supabase
           .from("contas_bancarias")
           .update({ principal: false })
@@ -399,7 +427,9 @@ const Afiliados = () => {
 
   const handleSetPrincipal = async (id: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       // Remover principal de todas as contas
       await supabase
@@ -470,7 +500,7 @@ const Afiliados = () => {
               formData={{
                 currentPassword: formData.currentPassword,
                 password: formData.password,
-                passwordConfirmation: formData.passwordConfirmation
+                passwordConfirmation: formData.passwordConfirmation,
               }}
               saving={saving}
               onInputChange={handleInputChange}

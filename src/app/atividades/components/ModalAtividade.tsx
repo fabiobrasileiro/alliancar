@@ -46,13 +46,21 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                 <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                   <div className="sm:flex sm:items-start">
                     <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                      <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900 mb-4">
-                        {mode === "create" ? "Nova Atividade" : "Editar Atividade"}
+                      <Dialog.Title
+                        as="h3"
+                        className="text-base font-semibold leading-6 text-gray-900 mb-4"
+                      >
+                        {mode === "create"
+                          ? "Nova Atividade"
+                          : "Editar Atividade"}
                       </Dialog.Title>
 
                       <div className="mt-2 space-y-4">
                         <div className="grid w-full items-center gap-1.5">
-                          <Label htmlFor="titulo" className="text-sm font-medium">
+                          <Label
+                            htmlFor="titulo"
+                            className="text-sm font-medium"
+                          >
                             Título *
                           </Label>
                           <Input
@@ -66,7 +74,10 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                         </div>
 
                         <div className="grid w-full items-center gap-1.5">
-                          <Label htmlFor="descricao" className="text-sm font-medium">
+                          <Label
+                            htmlFor="descricao"
+                            className="text-sm font-medium"
+                          >
                             Descrição
                           </Label>
                           <textarea
@@ -75,19 +86,26 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
                             placeholder="Descreva a atividade..."
                             value={atividade.descricao}
-                            onChange={(e) => onChange("descricao", e.target.value)}
+                            onChange={(e) =>
+                              onChange("descricao", e.target.value)
+                            }
                           />
                         </div>
 
                         <div className="grid w-full items-center gap-1.5">
-                          <Label htmlFor="afiliado_id" className="text-sm font-medium">
+                          <Label
+                            htmlFor="afiliado_id"
+                            className="text-sm font-medium"
+                          >
                             Responsável
                           </Label>
                           <select
                             id="afiliado_id"
                             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
                             value={atividade.afiliado_id}
-                            onChange={(e) => onChange("afiliado_id", e.target.value)}
+                            onChange={(e) =>
+                              onChange("afiliado_id", e.target.value)
+                            }
                           >
                             <option value="">Selecione um responsável</option>
                             {usuarios.map((usuario) => (
@@ -99,7 +117,10 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                         </div>
 
                         <div className="grid w-full items-center gap-1.5">
-                          <Label htmlFor="prazo" className="text-sm font-medium">
+                          <Label
+                            htmlFor="prazo"
+                            className="text-sm font-medium"
+                          >
                             Prazo *
                           </Label>
                           <Input
@@ -112,14 +133,19 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                         </div>
 
                         <div className="grid w-full items-center gap-1.5">
-                          <Label htmlFor="prioridade" className="text-sm font-medium">
+                          <Label
+                            htmlFor="prioridade"
+                            className="text-sm font-medium"
+                          >
                             Prioridade
                           </Label>
                           <select
                             id="prioridade"
                             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
                             value={atividade.prioridade}
-                            onChange={(e) => onChange("prioridade", e.target.value)}
+                            onChange={(e) =>
+                              onChange("prioridade", e.target.value)
+                            }
                           >
                             <option value="Alta">Alta</option>
                             <option value="Normal">Normal</option>
@@ -141,7 +167,9 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                             <option value="Whatsapp">Whatsapp</option>
                             <option value="Email">Email</option>
                             <option value="Visita">Visita</option>
-                            <option value="Previsão de fechamento">Previsão de fechamento</option>
+                            <option value="Previsão de fechamento">
+                              Previsão de fechamento
+                            </option>
                           </select>
                         </div>
                       </div>
@@ -155,7 +183,9 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                     className="inline-flex w-full justify-center rounded-md bg-jelly-bean-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-jelly-bean-500 sm:ml-3 sm:w-auto"
                     onClick={onSave}
                   >
-                    {mode === "create" ? "Criar Atividade" : "Salvar Alterações"}
+                    {mode === "create"
+                      ? "Criar Atividade"
+                      : "Salvar Alterações"}
                   </button>
                   <button
                     type="button"

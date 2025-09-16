@@ -10,7 +10,7 @@ interface GoalsProgressProps {
 export default function GoalsProgress({
   metaMensal,
   progresso,
-  vendasNecessarias
+  vendasNecessarias,
 }: GoalsProgressProps) {
   const progressPercentage = Math.round((progresso / metaMensal) * 100);
 
@@ -24,19 +24,20 @@ export default function GoalsProgress({
           <div>
             <div className="flex justify-between mb-1">
               <span className="text-sm font-medium">
-                Meta do mês: R$ {metaMensal.toLocaleString('pt-BR')}
+                Meta do mês: R$ {metaMensal.toLocaleString("pt-BR")}
               </span>
               <span className="text-sm font-medium">{progressPercentage}%</span>
             </div>
             <Progress value={progressPercentage} className="h-2" />
             <p className="text-sm text-gray-600 mt-2">
-              Já alcançado: R$ {progresso.toLocaleString('pt-BR')}
+              Já alcançado: R$ {progresso.toLocaleString("pt-BR")}
             </p>
           </div>
 
           <div className="bg-blue-50 p-4 rounded-lg">
             <p className="text-blue-800 font-medium">
-              Faltam apenas {vendasNecessarias} vendas para bater sua meta mensal 🎯
+              Faltam apenas {vendasNecessarias} vendas para bater sua meta
+              mensal 🎯
             </p>
           </div>
         </div>

@@ -13,7 +13,13 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
@@ -81,7 +87,8 @@ export default function ContaDeSaqueIugu() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [perfil, setPerfil] = useState<PerfilData | null>(null);
-  const [enderecoPrincipal, setEnderecoPrincipal] = useState<EnderecoData | null>(null);
+  const [enderecoPrincipal, setEnderecoPrincipal] =
+    useState<EnderecoData | null>(null);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [saldoDisponivel, setSaldoDisponivel] = useState(0);
   const [valorSaque, setValorSaque] = useState("");
@@ -101,7 +108,10 @@ export default function ContaDeSaqueIugu() {
     try {
       setLoading(true);
 
-      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+        error: userError,
+      } = await supabase.auth.getUser();
       if (userError || !authUser) {
         toast.error("Usuário não autenticado");
         return;
@@ -133,37 +143,39 @@ export default function ContaDeSaqueIugu() {
         bancosResponse,
         enderecosResponse,
         payoutsResponse,
-        saquesResponse
+        saquesResponse,
       ] = await Promise.all([
         supabase
           .from("contas_bancarias")
           .select("*")
           .eq("afiliado_id", user?.id),
-        
+
         supabase
           .from("enderecos")
           .select("*")
           .eq("afiliado_id", user?.id)
           .eq("principal", true)
           .single(),
-        
+
         supabase
           .from("comissoes")
           .select("*")
           .eq("afiliado_id", perfilData.id)
           .eq("status", "pendente"),
-        
+
         supabase
           .from("saques")
           .select("*")
           .eq("afiliado_id", user?.id)
-          .order("criado_em", { ascending: false })
+          .order("criado_em", { ascending: false }),
       ]);
 
       // Processar contas bancárias
       if (bancosResponse.data) {
         setContasBancarias(bancosResponse.data);
-        const contaPrincipal = bancosResponse.data.find(conta => conta.principal);
+        const contaPrincipal = bancosResponse.data.find(
+          (conta) => conta.principal,
+        );
         if (contaPrincipal) {
           setContaSelecionada(contaPrincipal.id);
         } else if (bancosResponse.data.length > 0) {
@@ -185,7 +197,6 @@ export default function ContaDeSaqueIugu() {
       if (saquesResponse.data) {
         setSaques(saquesResponse.data);
       }
-
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar dados");
@@ -207,17 +218,19 @@ export default function ContaDeSaqueIugu() {
 
   const getStatusColor = (status: string): BadgeVariant => {
     const statusMap: Record<string, BadgeVariant> = {
-      "pago": "green",
-      "aprovado": "blue",
-      "pendente": "gray",
-      "rejeitado": "red",
-      "processando": "blue",
-      "concluido": "green"
+      pago: "green",
+      aprovado: "blue",
+      pendente: "gray",
+      rejeitado: "red",
+      processando: "blue",
+      concluido: "green",
     };
     return statusMap[status.toLowerCase()] || "default";
   };
 
-  const validarValorSaque = (valor: number): { valido: boolean; mensagem?: string } => {
+  const validarValorSaque = (
+    valor: number,
+  ): { valido: boolean; mensagem?: string } => {
     if (!valor || valor <= 0) {
       return { valido: false, mensagem: "Valor deve ser maior que zero" };
     }
@@ -255,22 +268,20 @@ export default function ContaDeSaqueIugu() {
 
       setProcessingSaque(true);
 
-      const conta = contasBancarias.find(c => c.id === contaSelecionada);
+      const conta = contasBancarias.find((c) => c.id === contaSelecionada);
       if (!conta) {
         toast.error("Conta bancária não encontrada");
         return;
       }
 
       // Criar saque
-      const { error } = await supabase
-        .from("saques")
-        .insert({
-          afiliado_id: user?.id,
-          valor: valor,
-          metodo: "pix",
-          status: "processando",
-          observacao: `Saque para ${conta.banco} - Ag: ${conta.agencia} - CC: ${conta.conta}`
-        });
+      const { error } = await supabase.from("saques").insert({
+        afiliado_id: user?.id,
+        valor: valor,
+        metodo: "pix",
+        status: "processando",
+        observacao: `Saque para ${conta.banco} - Ag: ${conta.agencia} - CC: ${conta.conta}`,
+      });
 
       if (error) {
         console.error("Erro ao criar saque:", error);
@@ -280,9 +291,9 @@ export default function ContaDeSaqueIugu() {
       // Atualizar saldo pendente do afiliado
       const { error: updateError } = await supabase
         .from("afiliados")
-        .update({ 
+        .update({
           receita_pendente: (perfil.receita_pendente || 0) - valor,
-          atualizado_em: new Date().toISOString()
+          atualizado_em: new Date().toISOString(),
         })
         .eq("id", perfil.id);
 
@@ -290,12 +301,13 @@ export default function ContaDeSaqueIugu() {
         console.error("Erro ao atualizar saldo:", updateError);
       }
 
-      toast.success("Saque solicitado com sucesso! Processamento em até 3 dias úteis.");
+      toast.success(
+        "Saque solicitado com sucesso! Processamento em até 3 dias úteis.",
+      );
       setValorSaque("");
 
       // Recarregar dados
       await fetchData();
-
     } catch (error: any) {
       console.error("Erro ao solicitar saque:", error);
       toast.error(error.message || "Erro ao solicitar saque");
@@ -338,9 +350,11 @@ export default function ContaDeSaqueIugu() {
                 <div className="space-y-2">
                   <h3 className="font-semibold">Informações Pessoais</h3>
                   <p>
-                    <strong>Nome:</strong> {perfil?.nome_completo || "Não informado"}
+                    <strong>Nome:</strong>{" "}
+                    {perfil?.nome_completo || "Não informado"}
                     <br />
-                    <strong>CPF/CNPJ:</strong> {perfil?.cpf_cnpj || "Não informado"}
+                    <strong>CPF/CNPJ:</strong>{" "}
+                    {perfil?.cpf_cnpj || "Não informado"}
                   </p>
                 </div>
 
@@ -349,36 +363,44 @@ export default function ContaDeSaqueIugu() {
                   {enderecoPrincipal ? (
                     <p>
                       {enderecoPrincipal.logradouro}, {enderecoPrincipal.numero}
-                      {enderecoPrincipal.complemento && `, ${enderecoPrincipal.complemento}`}
+                      {enderecoPrincipal.complemento &&
+                        `, ${enderecoPrincipal.complemento}`}
                       <br />
-                      {enderecoPrincipal.bairro && `${enderecoPrincipal.bairro}, `}
+                      {enderecoPrincipal.bairro &&
+                        `${enderecoPrincipal.bairro}, `}
                       {enderecoPrincipal.cidade} - {enderecoPrincipal.estado}
                       <br />
                       CEP: {enderecoPrincipal.cep}
                     </p>
                   ) : (
-                    <p className="text-muted-foreground">Nenhum endereço cadastrado</p>
+                    <p className="text-muted-foreground">
+                      Nenhum endereço cadastrado
+                    </p>
                   )}
                 </div>
 
                 <div className="space-y-2">
                   <h3 className="font-semibold">Conta Bancária Principal</h3>
                   {contasBancarias.length > 0 ? (
-                    contasBancarias.filter(conta => conta.principal).map(conta => (
-                      <p key={conta.id}>
-                        <strong>Banco:</strong> {conta.banco}
-                        <br />
-                        <strong>Agência:</strong> {conta.agencia}
-                        {conta.digito_agencia && `-${conta.digito_agencia}`}
-                        <br />
-                        <strong>Conta:</strong> {conta.conta}
-                        {conta.digito_conta && `-${conta.digito_conta}`}
-                        <br />
-                        <strong>Pix:</strong> {conta.pix || "Não informado"}
-                      </p>
-                    ))
+                    contasBancarias
+                      .filter((conta) => conta.principal)
+                      .map((conta) => (
+                        <p key={conta.id}>
+                          <strong>Banco:</strong> {conta.banco}
+                          <br />
+                          <strong>Agência:</strong> {conta.agencia}
+                          {conta.digito_agencia && `-${conta.digito_agencia}`}
+                          <br />
+                          <strong>Conta:</strong> {conta.conta}
+                          {conta.digito_conta && `-${conta.digito_conta}`}
+                          <br />
+                          <strong>Pix:</strong> {conta.pix || "Não informado"}
+                        </p>
+                      ))
                   ) : (
-                    <p className="text-muted-foreground">Nenhuma conta bancária cadastrada</p>
+                    <p className="text-muted-foreground">
+                      Nenhuma conta bancária cadastrada
+                    </p>
                   )}
                 </div>
 
@@ -388,13 +410,23 @@ export default function ContaDeSaqueIugu() {
                       <span className="text-blue-600 font-bold">R$</span>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Saldo disponível para saque</p>
-                      <p className="text-lg font-semibold">{formatCurrency(saldoDisponivel)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Saldo disponível para saque
+                      </p>
+                      <p className="text-lg font-semibold">
+                        {formatCurrency(saldoDisponivel)}
+                      </p>
                     </div>
                   </div>
 
                   <Button
-                    onClick={() => (document.querySelector('[data-value="sacar"]') as HTMLElement)?.click()}
+                    onClick={() =>
+                      (
+                        document.querySelector(
+                          '[data-value="sacar"]',
+                        ) as HTMLElement
+                      )?.click()
+                    }
                     disabled={saldoDisponivel <= 0}
                   >
                     Solicitar Saque
@@ -409,7 +441,9 @@ export default function ContaDeSaqueIugu() {
               <CardContent className="grid md:grid-cols-2 gap-6 p-6">
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Disponível para saque</p>
+                    <p className="text-sm text-muted-foreground">
+                      Disponível para saque
+                    </p>
                     <p className="text-2xl font-bold text-green-600">
                       {formatCurrency(saldoDisponivel)}
                     </p>
@@ -429,8 +463,13 @@ export default function ContaDeSaqueIugu() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex flex-col">
-                      <label className="text-sm font-medium">Conta bancária para recebimento</label>
-                      <Select value={contaSelecionada} onValueChange={setContaSelecionada}>
+                      <label className="text-sm font-medium">
+                        Conta bancária para recebimento
+                      </label>
+                      <Select
+                        value={contaSelecionada}
+                        onValueChange={setContaSelecionada}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a conta" />
                         </SelectTrigger>
@@ -438,7 +477,8 @@ export default function ContaDeSaqueIugu() {
                           {contasBancarias.length > 0 ? (
                             contasBancarias.map((conta) => (
                               <SelectItem key={conta.id} value={conta.id}>
-                                {conta.banco} - Ag: {conta.agencia} - CC: {conta.conta}
+                                {conta.banco} - Ag: {conta.agencia} - CC:{" "}
+                                {conta.conta}
                                 {conta.principal && " (Principal)"}
                               </SelectItem>
                             ))
@@ -453,7 +493,9 @@ export default function ContaDeSaqueIugu() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Valor do saque (R$)</label>
+                    <label className="text-sm font-medium">
+                      Valor do saque (R$)
+                    </label>
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">R$</span>
                       <Input
@@ -472,7 +514,11 @@ export default function ContaDeSaqueIugu() {
                   <Button
                     className="w-full bg-green-600 hover:bg-green-700"
                     onClick={handleSaque}
-                    disabled={processingSaque || saldoDisponivel <= 0 || !contaSelecionada}
+                    disabled={
+                      processingSaque ||
+                      saldoDisponivel <= 0 ||
+                      !contaSelecionada
+                    }
                   >
                     {processingSaque ? "Processando..." : "Solicitar Saque"}
                   </Button>

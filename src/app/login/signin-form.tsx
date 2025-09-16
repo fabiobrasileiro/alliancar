@@ -171,7 +171,6 @@ export default function LoginForm() {
               Criar conta
             </Link>
           </p>
-          
         </CardFooter>
       </Card>
     </div>

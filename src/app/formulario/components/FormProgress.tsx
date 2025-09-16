@@ -1,9 +1,9 @@
 // src/components/FormProgress.tsx
-import { cn } from '@/lib/utils'
+import { cn } from "@/lib/utils";
 
 interface FormProgressProps {
-  currentStep: number
-  steps: Array<{ number: string; label: string }>
+  currentStep: number;
+  steps: Array<{ number: string; label: string }>;
 }
 
 export function FormProgress({ currentStep, steps }: FormProgressProps) {
@@ -14,7 +14,7 @@ export function FormProgress({ currentStep, steps }: FormProgressProps) {
           <div
             className={cn(
               "flex flex-col items-center justify-center",
-              index < steps.length - 1 && "mr-4"
+              index < steps.length - 1 && "mr-4",
             )}
           >
             <div
@@ -22,7 +22,7 @@ export function FormProgress({ currentStep, steps }: FormProgressProps) {
                 "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors",
                 currentStep >= index
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-muted border-muted-foreground text-muted-foreground"
+                  : "bg-muted border-muted-foreground text-muted-foreground",
               )}
             >
               {step.number}
@@ -30,7 +30,7 @@ export function FormProgress({ currentStep, steps }: FormProgressProps) {
             <span
               className={cn(
                 "text-sm mt-2 font-medium",
-                currentStep >= index ? "text-primary" : "text-muted-foreground"
+                currentStep >= index ? "text-primary" : "text-muted-foreground",
               )}
             >
               {step.label}
@@ -40,12 +40,12 @@ export function FormProgress({ currentStep, steps }: FormProgressProps) {
             <div
               className={cn(
                 "w-16 h-1 mx-4 transition-colors",
-                currentStep > index ? "bg-primary" : "bg-muted"
+                currentStep > index ? "bg-primary" : "bg-muted",
               )}
             />
           )}
         </div>
       ))}
     </div>
-  )
+  );
 }
