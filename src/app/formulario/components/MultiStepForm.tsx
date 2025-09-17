@@ -7,29 +7,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMultiStepForm } from "@/hooks/useMultiStepForm";
 import { FormProgress } from "./FormProgress";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { supabase } from "@/lib/supabase";
-import { Textarea } from "@headlessui/react";
+import { PersonalDataStep } from "./form-steps/PersonalDataStep";
 
-// Tipos locais para as tabelas em Português
+import { supabase } from "@/lib/supabase";
+import { Card, CardContent } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import { FormNavigation } from "@/components/FormNavigation";
+import { AddressStep } from "./form-steps/AddressStep";
+import { VehicleDataStep } from "./form-steps/VehicleDataStep";
+import { CheckoutStep } from "./form-steps/CheckoutStep";
+
 interface MarcaVeiculo {
   id: number;
   nome: string;
@@ -58,7 +45,6 @@ interface MultiStepFormProps {
   afiliadoId?: string;
 }
 
-// Esquema de validação Zod atualizado para Português
 const formSchema = z.object({
   afiliado_id: z.string().optional(),
   nome_cliente: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -86,23 +72,24 @@ const steps = [
   { number: "01", label: "Seus Dados" },
   { number: "02", label: "Dados do Veículo" },
   { number: "03", label: "Endereço" },
+  { number: "04", label: "Pagamento" }, // Nova etapa
 ];
 
 export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
-  const { currentStepIndex, isFirstStep, isLastStep, next, back } =
-    useMultiStepForm(3);
+  const { currentStepIndex, isFirstStep, isLastStep, next, back } = useMultiStepForm(4);
   const [marcasVeiculos, setMarcasVeiculos] = useState<MarcaVeiculo[]>([]);
   const [modelosVeiculos, setModelosVeiculos] = useState<ModeloVeiculo[]>([]);
   const [anos, setAnos] = useState<number[]>([]);
   const [estados, setEstados] = useState<Estado[]>([]);
   const [cidades, setCidades] = useState<Cidade[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [qrCode, setQrCode] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
-      afiliado_id: afiliadoId || "", // ← Adicione o afiliadoId aqui
-
+      afiliado_id: afiliadoId || "",
       consultor: "4lli4nc4r",
       campanha_hash: "4lli4nc4r club487",
       codigo_formulario: "DOarNyQe",
@@ -216,12 +203,53 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
     }
   };
 
-  const handleNext = async () => {
-    const fields = getStepFields(currentStepIndex);
-    const isValid = await form.trigger(fields as any);
+  const handleFinalSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const formData = form.getValues();
 
-    if (isValid) {
-      next();
+      // Se tiver afiliadoId na URL, usa ele
+      const finalData = {
+        ...formData,
+        afiliado_id: afiliadoId || formData.afiliado_id,
+      };
+
+      // 1. Salvar no Supabase
+      const { error } = await supabase.from("formularios").insert([finalData]);
+      if (error) throw error;
+
+      // 2. Criar pagamento
+      const paymentResponse = await fetch("/api/payment/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: 100.00, // Valor do serviço
+          customerEmail: finalData.email_cliente,
+          customerName: finalData.nome_cliente,
+          customerDocument: "000.000.000-00",
+          paymentMethod: "pix",
+          orderId: `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          formData: finalData
+        }),
+      });
+
+      const paymentResult = await paymentResponse.json();
+
+      if (paymentResult.success) {
+        setPaymentUrl(paymentResult.paymentUrl);
+        setQrCode(paymentResult.qrCode);
+        next(); // Vai para a etapa de checkout
+      } else {
+        throw new Error(paymentResult.error || "Erro ao criar pagamento");
+      }
+
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("Erro ao processar. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -239,8 +267,24 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
         ];
       case 2:
         return ["estado", "cidade"];
+      case 3: // Checkout não tem validação de campos
+        return [];
       default:
         return [];
+    }
+  };
+
+  const handleNext = async () => {
+    // if (currentStepIndex === 2) { // Se está na última etapa antes do checkout
+    //   await handleFinalSubmit();
+    //   return;
+    // }
+
+    const fields = getStepFields(currentStepIndex);
+    const isValid = await form.trigger(fields as any);
+
+    if (isValid) {
+      next();
     }
   };
 
@@ -264,343 +308,76 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
               {currentStepIndex === 0 && "Seus Dados"}
               {currentStepIndex === 1 && "Dados do Veículo"}
               {currentStepIndex === 2 && "Endereço"}
+              {currentStepIndex === 3 && "Pagamento"}
             </h2>
 
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit(onSubmit)}
+                onSubmit={form.handleSubmit(handleFinalSubmit)}
                 className="space-y-6"
               >
-                {/* ETAPA 1 - Dados Pessoais */}
+                {/* Renderizar o passo atual */}
                 {currentStepIndex === 0 && (
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="nome_cliente"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Seu nome completo" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="telefone_cliente"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Whatsapp</FormLabel>
-                          <FormControl>
-                            <Input placeholder="(11) 99999-9999" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="email_cliente"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>E-mail</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="email"
-                              placeholder="seu@email.com"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <PersonalDataStep form={form} />
                 )}
 
-                {/* ETAPA 2 - Dados do Veículo */}
                 {currentStepIndex === 1 && (
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="placa_veiculo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Placa</FormLabel>
-                          <FormControl>
-                            <Input placeholder="ABC1234" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="tipo_veiculo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tipo do veículo</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o tipo" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="1">
-                                Carro ou utilitário pequeno
-                              </SelectItem>
-                              <SelectItem value="2">Moto</SelectItem>
-                              <SelectItem value="3">
-                                Caminhão ou micro-ônibus
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="marca_veiculo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Marca do veículo</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione a marca" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {marcasVeiculos.map((marca) => (
-                                <SelectItem
-                                  key={marca.id}
-                                  value={marca.id.toString()}
-                                >
-                                  {marca.nome}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="ano_veiculo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ano do modelo</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o ano" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {anos.map((ano) => (
-                                <SelectItem key={ano} value={ano.toString()}>
-                                  {ano}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="modelo_veiculo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Modelo</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o modelo" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {modelosVeiculos.map((modelo) => (
-                                <SelectItem
-                                  key={modelo.id}
-                                  value={modelo.id.toString()}
-                                >
-                                  {modelo.nome}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <VehicleDataStep
+                    form={form}
+                    marcasVeiculos={marcasVeiculos}
+                    modelosVeiculos={modelosVeiculos}
+                    anos={anos}
+                  />
                 )}
 
-                {/* ETAPA 3 - Endereço */}
                 {currentStepIndex === 2 && (
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="estado"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Estado</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o estado" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {estados.map((estado) => (
-                                <SelectItem
-                                  key={estado.id}
-                                  value={estado.id.toString()}
-                                >
-                                  {estado.nome}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="cidade"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cidade</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione a cidade" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {cidades.map((cidade) => (
-                                <SelectItem
-                                  key={cidade.id}
-                                  value={cidade.id.toString()}
-                                >
-                                  {cidade.nome}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="taxi_aplicativo"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Taxi/App (Uber, 99, etc)</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="observacoes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Observações</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Observações adicionais"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <AddressStep
+                    form={form}
+                    estados={estados}
+                    cidades={cidades}
+                  />
                 )}
 
-                {/* Botões de navegação */}
-                <div className="flex justify-between pt-6">
-                  {!isFirstStep && (
-                    <Button type="button" variant="outline" onClick={back}>
-                      Voltar
-                    </Button>
-                  )}
+                {currentStepIndex === 3 && (
+                  <CheckoutStep
+                    paymentUrl={paymentUrl}
+                    qrCode={qrCode}
+                    isSubmitting={isSubmitting}
+                    formData={form.getValues()} // Passar os dados do formulário
+                  />
+                )}
 
-                  {isFirstStep && <div />}
-
-                  {!isLastStep ? (
-                    <Button type="button" onClick={handleNext}>
-                      Próximo
-                    </Button>
-                  ) : (
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? "Enviando..." : "Enviar"}
-                    </Button>
-                  )}
-                </div>
+                {/* Botões de navegação - esconder na etapa de checkout */}
+                {currentStepIndex !== 3 && (
+                  <FormNavigation
+                    isFirstStep={isFirstStep}
+                    isLastStep={isLastStep}
+                    isSubmitting={isSubmitting}
+                    onBack={back}
+                    onNext={handleNext}
+                  />
+                )}
               </form>
             </Form>
 
-            <p className="text-xs text-muted-foreground mt-6">
-              Ao preencher o formulário, concordo em receber comunicações e
-              estou de acordo com os{" "}
-              <a
-                href="https://site.powercrm.com.br/termos-e-condicoes/"
-                target="_blank"
-                className="text-primary underline"
-              >
-                termos de uso
-              </a>
-              .
-            </p>
+            {currentStepIndex !== 3 && (
+              <p className="text-xs text-muted-foreground mt-6">
+                Ao preencher o formulário, concordo em receber comunicações e
+                estou de acordo com os{" "}
+                <a
+                  href="https://site.powercrm.com.br/termos-e-condicoes/"
+                  target="_blank"
+                  className="text-primary underline"
+                >
+                  termos de uso
+                </a>
+                .
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
     </div>
+
   );
 }
