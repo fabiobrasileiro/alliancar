@@ -83,7 +83,6 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
   const [estados, setEstados] = useState<Estado[]>([]);
   const [cidades, setCidades] = useState<Cidade[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
@@ -109,6 +108,33 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
       observacoes: "",
     },
   });
+
+  const processPayment = async (paymentData: any) => {
+    console.log("💳 Processando pagamento:", paymentData);
+
+    try {
+      const response = await fetch("/api/payment/create-card", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ci": "testesandbox_1687443996536",
+          "cs": "5b7d6ed3407bc8c7efd45ac9d4c277004145afb96752e1252c2082d3211fe901177e09493c0d4f57b650d2b2fc1b062d"
+        },
+        body: JSON.stringify(paymentData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error("❌ Erro no processamento do pagamento:", error);
+      throw error;
+    }
+  };
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -204,6 +230,8 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
   };
 
   const handleFinalSubmit = async () => {
+    console.log("💾 Salvando dados no Supabase...");
+
     setIsSubmitting(true);
     try {
       const formData = form.getValues();
@@ -212,86 +240,34 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
         afiliado_id: afiliadoId || formData.afiliado_id,
       };
 
-      // 1. Salvar no Supabase
+      // Apenas salvar no Supabase
       const { error } = await supabase.from("formularios").insert([finalData]);
       if (error) throw error;
 
-      // 2. Criar pagamento - FORMATO EXATO que a API aceita
-      const requestData = {
-        requestNumber: crypto.randomUUID(),
-        card: {
-          number: "2430169513948900", // SEM espaços
-          expirationMonth: "01",
-          expirationYear: "2050",
-          cvv: "000",
-          installment: 1,
-          amount: 1 // Valor em reais (R$ 1,00)
-        },
-        client: {
-          name: "Edward Alves Rabelo Neto", // Nome fixo para teste
-          document: "02924554101", // SEM pontuação
-          phoneNumber: "62999599619", // SEM pontuação
-          email: "edwardneto@suitpay.app", // Email fixo para teste
-          address: {
-            codIbge: "5208707",
-            street: "Rua Paraíba",
-            number: "01",
-            complement: "",
-            zipCode: "74663520", // SEM hífen
-            neighborhood: "Goiânia 2",
-            city: "Goiânia",
-            state: "GO"
-          }
-        },
-        products: [
-          {
-            productName: "Aula Teste",
-            idCheckout: "3978",
-            quantity: 1,
-            value: 1 // Valor em reais (R$ 1,00)
-          }
-        ],
-        callbackUrl: "https://webhook.site/" // URL exata do exemplo
-      };
-
-      console.log("📤 Dados enviados para API:", JSON.stringify(requestData, null, 2));
-
-      const paymentResponse = await fetch("/api/payment/create-card", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData)
-      });
-
-      console.log("📥 Status da resposta:", paymentResponse.status);
-
-      if (!paymentResponse.ok) {
-        const errorText = await paymentResponse.text();
-        console.error("❌ Erro HTTP:", paymentResponse.status, errorText);
-        throw new Error(`Erro: ${paymentResponse.status} - ${errorText}`);
-      }
-
-      const paymentResult = await paymentResponse.json();
-      console.log("📦 Resultado do pagamento:", paymentResult);
-
-      if (paymentResult.success) {
-        console.log("✅ Pagamento criado com sucesso");
-        setPaymentUrl(paymentResult.paymentUrl || null);
-        setQrCode(paymentResult.qrCode || null);
-        console.log("🔄 Chamando next() para ir para etapa 4");
-        next();
-      } else {
-        console.error("❌ Erro no pagamento:", paymentResult.error);
-        throw new Error(paymentResult.error || "Erro ao criar pagamento");
-      }
+      console.log("✅ Dados salvos. Indo para checkout...");
+      next(); // Vai para a etapa 4 (checkout)
 
     } catch (error) {
-      console.error("💥 Erro completo no handleFinalSubmit:", error);
-      alert("Erro ao processar pagamento. Verifique o console para detalhes.");
+      console.error("Erro ao salvar dados:", error);
+      alert("Erro ao salvar dados. Tente novamente.");
     } finally {
-      console.log("🏁 Finalizando handleFinalSubmit");
       setIsSubmitting(false);
+    }
+  };
+
+  // MODIFICAR: handleNext
+  const handleNext = async () => {
+    // Se está na etapa 3 (endereço), salva dados e vai para checkout
+    if (currentStepIndex === 2) {
+      await handleFinalSubmit();
+      return;
+    }
+
+    const fields = getStepFields(currentStepIndex);
+    const isValid = await form.trigger(fields as any);
+
+    if (isValid) {
+      next();
     }
   };
 
@@ -313,30 +289,6 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
         return [];
       default:
         return [];
-    }
-  };
-
-  const handleNext = async () => {
-    console.log("🔄 handleNext chamado, step atual:", currentStepIndex);
-
-    // Se está na etapa 3 (endereço), vai para o checkout
-    if (currentStepIndex === 2) {
-      console.log("🚀 Indo para handleFinalSubmit...");
-      await handleFinalSubmit();
-      return;
-    }
-
-    const fields = getStepFields(currentStepIndex);
-    console.log("✅ Validando campos:", fields);
-
-    const isValid = await form.trigger(fields as any);
-    console.log("📋 Validação result:", isValid);
-
-    if (isValid) {
-      console.log("✅ Campos válidos, indo para próximo step");
-      next();
-    } else {
-      console.log("❌ Campos inválidos");
     }
   };
 
@@ -387,10 +339,11 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
                 )}
                 {currentStepIndex === 3 && (
                   <CheckoutStep
-                    paymentUrl={paymentUrl}
-                    qrCode={qrCode}
                     isSubmitting={isSubmitting}
                     formData={form.getValues()}
+                    onProcessPayment={processPayment} // 👈 PASSA A FUNÇÃO DE PAGAMENTO
+                    paymentUrl={""} // Adicione a URL de pagamento aqui
+                    qrCode={""} // Adicione o código QR aqui
                   />
                 )}
 

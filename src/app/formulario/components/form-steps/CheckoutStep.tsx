@@ -13,8 +13,13 @@ interface CheckoutStepProps {
   isSubmitting: boolean;
   formData: any;
 }
+interface CheckoutStepProps {
+  isSubmitting: boolean;
+  formData: any;
+  onProcessPayment: (paymentData: any) => Promise<any>; // 👈 Nova prop obrigatória
+}
 
-export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: CheckoutStepProps) {
+export function CheckoutStep({ isSubmitting, formData, onProcessPayment }: CheckoutStepProps) {
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "card">("pix");
   const [cardData, setCardData] = useState({
     number: "2430 1695 1394 8900",
@@ -25,7 +30,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
     cardholderName: "Edward Alves Rabelo Neto",
     document: "029.245.541-01"
   });
-  
+
   const [addressData, setAddressData] = useState({
     street: "Rua Paraíba",
     number: "01",
@@ -40,77 +45,59 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
   const [isProcessing, setIsProcessing] = useState(false); // Novo estado para loading
   const [resultMessage, setResultMessage] = useState<string | null>(null); // Mensagem de resultado
 
-  const handlePaymentRedirect = () => {
-    if (paymentUrl) {
-      window.open(paymentUrl, '_blank');
-    }
-  };
 
   const handleCardSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); 
-        
-    setIsProcessing(true);
-    
-    setResultMessage(null);
-    
-    // Dados HARDCODE para teste
-    const requestData = {
-      requestNumber: crypto.randomUUID(),
-      card: {
-        number: "2430 1695 1394 8900",
-        expirationMonth: "01",
-        expirationYear: "2050",
-        cvv: "000",
-        installment: 1,
-        amount: 1
-      },
-      client: {
-        name: "Edward Alves Rabelo Neto",
-        document: "029.245.541-01",
-        phoneNumber: "62999599619",
-        email: "edwardneto@suitpay.app",
-        address: {
-          codIbge: "5208707",
-          street: "Rua Paraíba",
-          number: "01",
-          complement: "",
-          zipCode: "74663520",
-          neighborhood: "Goiânia 2",
-          city: "Goiânia",
-          state: "GO"
-        }
-      },
-      products: [
-        {
-          productName: "Aula Teste",
-          idCheckout: "3978",
-          quantity: 1,
-          value: 1
-        }
-      ],
-      callbackUrl: `${window.location.origin}/dashboard`
-    };
+    e.preventDefault();
 
-    console.log("📤 Dados enviados para a API:", JSON.stringify(requestData, null, 2));
+    setIsProcessing(true);
+    setResultMessage(null);
 
     try {
-      const testHeaders = {
-        "Content-Type": "application/json",
-        "ci": "testesandbox_1687443996536",
-        "cs":"5b7d6ed3407bc8c7efd45ac9d4c277004145afb96752e1252c2082d3211fe901177e09493c0d4f57b650d2b2fc1b062d"
+      // Dados HARDCODE para teste (igual ao Postman)
+      const requestData = {
+        requestNumber: crypto.randomUUID(),
+        card: {
+          number: cardData.number.replace(/\s/g, ""),
+          expirationMonth: cardData.expirationMonth,
+          expirationYear: cardData.expirationYear,
+          cvv: cardData.cvv,
+          installment: parseInt(cardData.installment),
+          amount: 1
+        },
+        client: {
+          name: cardData.cardholderName,
+          document: cardData.document.replace(/\D/g, ""),
+          phoneNumber: formData.telefone_cliente?.replace(/\D/g, "") || "62999599619",
+          email: formData.email_cliente || "teste@email.com",
+          address: {
+            codIbge: "5208707",
+            street: addressData.street,
+            number: addressData.number,
+            complement: addressData.complement,
+            zipCode: addressData.zipCode.replace(/\D/g, ""),
+            neighborhood: addressData.neighborhood,
+            city: addressData.city,
+            state: addressData.state
+          }
+        },
+        products: [
+          {
+            productName: "Aula Teste",
+            idCheckout: "3978",
+            quantity: 1,
+            value: 1
+          }
+        ],
+        callbackUrl: "http://localhost:3000/dashboard"
       };
 
-      console.log("🔑 Headers:", testHeaders);
+      console.log("📤 Dados enviados para pagamento:", JSON.stringify(requestData, null, 2));
 
-      const response = await fetch("/api/payment/create-card", {
-        method: "POST",
-        headers: testHeaders,
-        body: JSON.stringify(requestData)
-      });
+      // 👇 AGORA USA A FUNÇÃO DO PAI
+      const result = await onProcessPayment(requestData);
 
-      const result = await response.json();
-      console.log("✅ Resposta da API:", result);
-      
+      console.log("✅ Resposta do pagamento:", result);
+
       if (result.success) {
         setResultMessage("✅ Pagamento processado com sucesso! Verifique o console para detalhes.");
       } else {
@@ -143,9 +130,9 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
               <strong>🔧 MODO TESTE ATIVADO</strong>
               <p className="text-sm">Dados hardcode do Postman sendo utilizados</p>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="ml-auto"
               onClick={() => setIsTesting(false)}
             >
@@ -157,18 +144,17 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
 
       {/* Mensagem de Resultado */}
       {resultMessage && (
-        <div className={`p-4 rounded-lg ${
-          resultMessage.includes('✅') 
-            ? 'bg-green-100 border border-green-400 text-green-700' 
-            : 'bg-red-100 border border-red-400 text-red-700'
-        }`}>
+        <div className={`p-4 rounded-lg ${resultMessage.includes('✅')
+          ? 'bg-green-100 border border-green-400 text-green-700'
+          : 'bg-red-100 border border-red-400 text-red-700'
+          }`}>
           {resultMessage}
         </div>
       )}
 
       <div className="text-center">
         <h3 className="text-2xl font-bold mb-4">Finalizar Pagamento</h3>
-        
+
         <div className="flex justify-center gap-4 mb-6">
           <Button
             type="button"
@@ -196,7 +182,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
             </p>
           </div>
 
-          {qrCode && (
+          {/* {qrCode && (
             <div className="flex justify-center">
               <div className="bg-white p-4 rounded-lg border">
                 <img 
@@ -225,28 +211,28 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                 Você será redirecionado para finalizar o pagamento
               </p>
             </div>
-          )}
+          )} */}
         </>
       ) : (
         <Card>
           <CardContent className="p-6">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <p className="text-sm text-blue-700">
-                <strong>💡 Dados de Teste Carregados:</strong> Todos os campos estão preenchidos 
+                <strong>💡 Dados de Teste Carregados:</strong> Todos os campos estão preenchidos
                 com dados do Postman para facilitar o teste.
               </p>
             </div>
 
-            <form onSubmit={handleCardSubmit} className="space-y-4">
+            <form  className="space-y-4">
               <h4 className="font-semibold text-lg mb-4">Dados do Cartão (Teste)</h4>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="cardNumber">Número do Cartão</Label>
                   <Input
                     id="cardNumber"
                     value={cardData.number}
-                    onChange={(e) => setCardData({...cardData, number: e.target.value})}
+                    onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -256,7 +242,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="cvv"
                     value={cardData.cvv}
-                    onChange={(e) => setCardData({...cardData, cvv: e.target.value})}
+                    onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -268,7 +254,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="expMonth"
                     value={cardData.expirationMonth}
-                    onChange={(e) => setCardData({...cardData, expirationMonth: e.target.value})}
+                    onChange={(e) => setCardData({ ...cardData, expirationMonth: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -278,7 +264,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="expYear"
                     value={cardData.expirationYear}
-                    onChange={(e) => setCardData({...cardData, expirationYear: e.target.value})}
+                    onChange={(e) => setCardData({ ...cardData, expirationYear: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -288,7 +274,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="installment"
                     value={cardData.installment}
-                    onChange={(e) => setCardData({...cardData, installment: e.target.value})}
+                    onChange={(e) => setCardData({ ...cardData, installment: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -299,7 +285,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                 <Input
                   id="cardholderName"
                   value={cardData.cardholderName}
-                  onChange={(e) => setCardData({...cardData, cardholderName: e.target.value})}
+                  onChange={(e) => setCardData({ ...cardData, cardholderName: e.target.value })}
                   disabled={isTesting || isProcessing}
                 />
               </div>
@@ -309,7 +295,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                 <Input
                   id="document"
                   value={cardData.document}
-                  onChange={(e) => setCardData({...cardData, document: e.target.value})}
+                  onChange={(e) => setCardData({ ...cardData, document: e.target.value })}
                   disabled={isTesting || isProcessing}
                 />
               </div>
@@ -322,7 +308,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="zipCode"
                     value={addressData.zipCode}
-                    onChange={(e) => setAddressData({...addressData, zipCode: e.target.value})}
+                    onChange={(e) => setAddressData({ ...addressData, zipCode: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -332,7 +318,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="street"
                     value={addressData.street}
-                    onChange={(e) => setAddressData({...addressData, street: e.target.value})}
+                    onChange={(e) => setAddressData({ ...addressData, street: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -344,7 +330,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="number"
                     value={addressData.number}
-                    onChange={(e) => setAddressData({...addressData, number: e.target.value})}
+                    onChange={(e) => setAddressData({ ...addressData, number: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -354,7 +340,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="complement"
                     value={addressData.complement}
-                    onChange={(e) => setAddressData({...addressData, complement: e.target.value})}
+                    onChange={(e) => setAddressData({ ...addressData, complement: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -364,7 +350,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="neighborhood"
                     value={addressData.neighborhood}
-                    onChange={(e) => setAddressData({...addressData, neighborhood: e.target.value})}
+                    onChange={(e) => setAddressData({ ...addressData, neighborhood: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -376,7 +362,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="city"
                     value={addressData.city}
-                    onChange={(e) => setAddressData({...addressData, city: e.target.value})}
+                    onChange={(e) => setAddressData({ ...addressData, city: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -386,7 +372,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                   <Input
                     id="state"
                     value={addressData.state}
-                    onChange={(e) => setAddressData({...addressData, state: e.target.value})}
+                    onChange={(e) => setAddressData({ ...addressData, state: e.target.value })}
                     disabled={isTesting || isProcessing}
                   />
                 </div>
@@ -424,9 +410,10 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
                 </pre>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full mt-6" 
+              <Button
+                type="button" // 👈 MUDE DE "submit" PARA "button"
+                onClick={handleCardSubmit}
+                className="w-full mt-6"
                 size="lg"
                 disabled={isProcessing}
               >
