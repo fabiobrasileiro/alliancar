@@ -207,8 +207,6 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
     setIsSubmitting(true);
     try {
       const formData = form.getValues();
-
-      // Se tiver afiliadoId na URL, usa ele
       const finalData = {
         ...formData,
         afiliado_id: afiliadoId || formData.afiliado_id,
@@ -218,37 +216,81 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
       const { error } = await supabase.from("formularios").insert([finalData]);
       if (error) throw error;
 
-      // 2. Criar pagamento
-      const paymentResponse = await fetch("/api/payment/create", {
+      // 2. Criar pagamento - FORMATO EXATO que a API aceita
+      const requestData = {
+        requestNumber: crypto.randomUUID(),
+        card: {
+          number: "2430169513948900", // SEM espaços
+          expirationMonth: "01",
+          expirationYear: "2050",
+          cvv: "000",
+          installment: 1,
+          amount: 1 // Valor em reais (R$ 1,00)
+        },
+        client: {
+          name: "Edward Alves Rabelo Neto", // Nome fixo para teste
+          document: "02924554101", // SEM pontuação
+          phoneNumber: "62999599619", // SEM pontuação
+          email: "edwardneto@suitpay.app", // Email fixo para teste
+          address: {
+            codIbge: "5208707",
+            street: "Rua Paraíba",
+            number: "01",
+            complement: "",
+            zipCode: "74663520", // SEM hífen
+            neighborhood: "Goiânia 2",
+            city: "Goiânia",
+            state: "GO"
+          }
+        },
+        products: [
+          {
+            productName: "Aula Teste",
+            idCheckout: "3978",
+            quantity: 1,
+            value: 1 // Valor em reais (R$ 1,00)
+          }
+        ],
+        callbackUrl: "https://webhook.site/" // URL exata do exemplo
+      };
+
+      console.log("📤 Dados enviados para API:", JSON.stringify(requestData, null, 2));
+
+      const paymentResponse = await fetch("/api/payment/create-card", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          amount: 100.00, // Valor do serviço
-          customerEmail: finalData.email_cliente,
-          customerName: finalData.nome_cliente,
-          customerDocument: "000.000.000-00",
-          paymentMethod: "pix",
-          orderId: `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          formData: finalData
-        }),
+        body: JSON.stringify(requestData)
       });
 
+      console.log("📥 Status da resposta:", paymentResponse.status);
+
+      if (!paymentResponse.ok) {
+        const errorText = await paymentResponse.text();
+        console.error("❌ Erro HTTP:", paymentResponse.status, errorText);
+        throw new Error(`Erro: ${paymentResponse.status} - ${errorText}`);
+      }
+
       const paymentResult = await paymentResponse.json();
+      console.log("📦 Resultado do pagamento:", paymentResult);
 
       if (paymentResult.success) {
-        setPaymentUrl(paymentResult.paymentUrl);
-        setQrCode(paymentResult.qrCode);
-        next(); // Vai para a etapa de checkout
+        console.log("✅ Pagamento criado com sucesso");
+        setPaymentUrl(paymentResult.paymentUrl || null);
+        setQrCode(paymentResult.qrCode || null);
+        console.log("🔄 Chamando next() para ir para etapa 4");
+        next();
       } else {
+        console.error("❌ Erro no pagamento:", paymentResult.error);
         throw new Error(paymentResult.error || "Erro ao criar pagamento");
       }
 
     } catch (error) {
-      console.error("Erro:", error);
-      alert("Erro ao processar. Tente novamente.");
+      console.error("💥 Erro completo no handleFinalSubmit:", error);
+      alert("Erro ao processar pagamento. Verifique o console para detalhes.");
     } finally {
+      console.log("🏁 Finalizando handleFinalSubmit");
       setIsSubmitting(false);
     }
   };
@@ -275,16 +317,26 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
   };
 
   const handleNext = async () => {
-    // if (currentStepIndex === 2) { // Se está na última etapa antes do checkout
-    //   await handleFinalSubmit();
-    //   return;
-    // }
+    console.log("🔄 handleNext chamado, step atual:", currentStepIndex);
+
+    // Se está na etapa 3 (endereço), vai para o checkout
+    if (currentStepIndex === 2) {
+      console.log("🚀 Indo para handleFinalSubmit...");
+      await handleFinalSubmit();
+      return;
+    }
 
     const fields = getStepFields(currentStepIndex);
+    console.log("✅ Validando campos:", fields);
+
     const isValid = await form.trigger(fields as any);
+    console.log("📋 Validação result:", isValid);
 
     if (isValid) {
+      console.log("✅ Campos válidos, indo para próximo step");
       next();
+    } else {
+      console.log("❌ Campos inválidos");
     }
   };
 
@@ -317,10 +369,7 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
                 className="space-y-6"
               >
                 {/* Renderizar o passo atual */}
-                {currentStepIndex === 0 && (
-                  <PersonalDataStep form={form} />
-                )}
-
+                {currentStepIndex === 0 && <PersonalDataStep form={form} />}
                 {currentStepIndex === 1 && (
                   <VehicleDataStep
                     form={form}
@@ -329,7 +378,6 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
                     anos={anos}
                   />
                 )}
-
                 {currentStepIndex === 2 && (
                   <AddressStep
                     form={form}
@@ -337,13 +385,12 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
                     cidades={cidades}
                   />
                 )}
-
                 {currentStepIndex === 3 && (
                   <CheckoutStep
                     paymentUrl={paymentUrl}
                     qrCode={qrCode}
                     isSubmitting={isSubmitting}
-                    formData={form.getValues()} // Passar os dados do formulário
+                    formData={form.getValues()}
                   />
                 )}
 

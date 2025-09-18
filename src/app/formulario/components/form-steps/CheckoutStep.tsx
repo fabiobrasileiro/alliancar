@@ -57,7 +57,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
     const requestData = {
       requestNumber: crypto.randomUUID(),
       card: {
-        number: "2430169513948900",
+        number: "2430 1695 1394 8900",
         expirationMonth: "01",
         expirationYear: "2050",
         cvv: "000",
@@ -66,7 +66,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
       },
       client: {
         name: "Edward Alves Rabelo Neto",
-        document: "02924554101",
+        document: "029.245.541-01",
         phoneNumber: "62999599619",
         email: "edwardneto@suitpay.app",
         address: {
@@ -88,7 +88,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
           value: 1
         }
       ],
-      callbackUrl: "http://localhost:3000/dashboard"
+      callbackUrl: `${window.location.origin}/dashboard`
     };
 
     console.log("📤 Dados enviados para a API:", JSON.stringify(requestData, null, 2));
@@ -97,7 +97,7 @@ export function CheckoutStep({ paymentUrl, qrCode, isSubmitting, formData }: Che
       const testHeaders = {
         "Content-Type": "application/json",
         "ci": "testesandbox_1687443996536",
-        "cs": "5b7d6ed3407bc8c7efd45ac9d4c277004145afb96752e1252c2082d3211fe901177e09493c0d4f57b650d2b2fc1b062d"
+        "cs":"5b7d6ed3407bc8c7efd45ac9d4c277004145afb96752e1252c2082d3211fe901177e09493c0d4f57b650d2b2fc1b062d"
       };
 
       console.log("🔑 Headers:", testHeaders);
