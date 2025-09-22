@@ -5,6 +5,8 @@ import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/context/UserContext";
 
+const supabase = createClient();
+
 interface Hotlink {
   id: string;
   nome: string;
@@ -17,7 +19,6 @@ interface Hotlink {
 export default function Powerlinks() {
   const [powerlinks, setPowerlinks] = useState<Hotlink[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
   const { user } = useUser();
 
   useEffect(() => {

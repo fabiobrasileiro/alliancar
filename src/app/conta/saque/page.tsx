@@ -84,7 +84,6 @@ interface SaquesData {
 }
 
 export default function ContaDeSaqueIugu() {
-  const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [perfil, setPerfil] = useState<PerfilData | null>(null);
   const [enderecoPrincipal, setEnderecoPrincipal] =
@@ -111,13 +110,14 @@ export default function ContaDeSaqueIugu() {
       const {
         data: { user: authUser },
         error: userError,
-      } = await supabase.auth.getUser();
+      } = await createClient().auth.getUser();
       if (userError || !authUser) {
         toast.error("Usuário não autenticado");
         return;
       }
 
       // Buscar perfil do afiliado
+      const supabase = createClient();
       const { data: perfilData, error: perfilError } = await supabase
         .from("afiliados")
         .select("id, nome_completo, cpf_cnpj, auth_id, receita_pendente")
@@ -275,7 +275,7 @@ export default function ContaDeSaqueIugu() {
       }
 
       // Criar saque
-      const { error } = await supabase.from("saques").insert({
+      const { error } = await createClient().from("saques").insert({
         afiliado_id: user?.id,
         valor: valor,
         metodo: "pix",
@@ -289,7 +289,7 @@ export default function ContaDeSaqueIugu() {
       }
 
       // Atualizar saldo pendente do afiliado
-      const { error: updateError } = await supabase
+      const { error: updateError } = await createClient()
         .from("afiliados")
         .update({
           receita_pendente: (perfil.receita_pendente || 0) - valor,

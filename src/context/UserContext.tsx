@@ -8,6 +8,7 @@ import {
 } from "react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client"; // Use o client já configurado
+import { supabase } from "@/lib/supabase";
 
 interface UserPerfil {
   id: string;
@@ -35,17 +36,17 @@ const UserContext = createContext<UserContextType>({
   user: null,
   perfil: null,
   loading: true,
-  refetchPerfil: async () => {},
+  refetchPerfil: async () => { },
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [perfil, setPerfil] = useState<UserPerfil | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient(); // Use o client já configurado
 
   const fetchPerfil = async (userId: string) => {
     try {
+      const supabase = createClient();
       const { data: perfilData, error: perfilError } = await supabase
         .from("afiliados")
         .select("*")
@@ -73,6 +74,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
+    const supabase = createClient();
 
     const initializeAuth = async () => {
       try {

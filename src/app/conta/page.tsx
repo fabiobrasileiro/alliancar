@@ -46,7 +46,6 @@ export default function MinhasVendas() {
   const [filtroDataFim, setFiltroDataFim] = useState<string>("");
   const [filtroStatus, setFiltroStatus] = useState<string>("");
 
-  const supabase = createClient();
 
   // Calcular totais
   const totalVendas = vendas.length;
@@ -67,6 +66,7 @@ export default function MinhasVendas() {
       setError(null);
 
       // Obter o usuário logado
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();

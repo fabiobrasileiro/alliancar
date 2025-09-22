@@ -7,7 +7,6 @@ import { usePathname, useRouter } from "next/navigation";
 const INACTIVITY_MS = 90 * 60 * 1000; // 1h30
 
 export default function IdleLogout() {
-  const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
   const timerIdRef = useRef<number | null>(null);
@@ -19,6 +18,7 @@ export default function IdleLogout() {
 
     timerIdRef.current = window.setTimeout(async () => {
       try {
+        const supabase = createClient();
         await supabase.auth.signOut();
       } finally {
         const redirect = encodeURIComponent(pathname || "/");

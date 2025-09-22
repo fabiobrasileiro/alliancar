@@ -18,7 +18,6 @@ import { DadosBancariosTab } from "./components/DadosBancariosTab";
 import { DadosAcessoTab } from "./components/DadosAcessoTab";
 
 const Afiliados = () => {
-  const supabase = createClient();
 
   const [activeTab, setActiveTab] = useState("dados_pessoais");
   const [loading, setLoading] = useState(true);
@@ -57,6 +56,7 @@ const Afiliados = () => {
   const fetchPerfil = async () => {
     try {
       setLoading(true);
+      const supabase = createClient();
       const {
         data: { user: authUser },
         error: userError,
@@ -138,6 +138,7 @@ const Afiliados = () => {
 
     try {
       setSaving(true);
+      const supabase = createClient();
 
       const {
         data: { user },
@@ -222,6 +223,7 @@ const Afiliados = () => {
 
     try {
       setSaving(true);
+      const supabase = createClient();
 
       const { error } = await supabase.auth.updateUser({
         password: formData.password,
@@ -255,6 +257,8 @@ const Afiliados = () => {
         toast.error("Por favor, selecione um arquivo de imagem");
         return;
       }
+
+      const supabase = createClient();
 
       // Buscar usuário autenticado para obter o ID
       const {
@@ -308,6 +312,8 @@ const Afiliados = () => {
     if (!perfilId || !formData.foto_perfil_url) return;
 
     try {
+      const supabase = createClient();
+
       // Buscar usuário autenticado
       const {
         data: { user },
@@ -352,6 +358,8 @@ const Afiliados = () => {
   // No seu componente principal (Afiliados.tsx)
   const handleAddBanco = async (bancoData: NovoBanco) => {
     try {
+      const supabase = createClient();
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -381,6 +389,8 @@ const Afiliados = () => {
 
   const handleEditBanco = async (id: string, bancoData: NovoBanco) => {
     try {
+      const supabase = createClient();
+
       // Se for principal, remover principal de outras contas
       if (bancoData.principal) {
         const {
@@ -410,6 +420,8 @@ const Afiliados = () => {
 
   const handleDeleteBanco = async (id: string) => {
     try {
+      const supabase = createClient();
+
       const { error } = await supabase
         .from("contas_bancarias")
         .delete()
@@ -427,6 +439,8 @@ const Afiliados = () => {
 
   const handleSetPrincipal = async (id: string) => {
     try {
+      const supabase = createClient();
+
       const {
         data: { user },
       } = await supabase.auth.getUser();

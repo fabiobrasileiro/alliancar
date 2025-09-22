@@ -28,7 +28,6 @@ import { Pagination } from "./components/Pagination";
 import { useUser } from "@/context/UserContext";
 
 export default function ContatosPage() {
-  const supabase = createClient();
 
   // Estados para filtros
   const [nome, setNome] = useState("");
@@ -73,7 +72,7 @@ export default function ContatosPage() {
       if (!user?.id) return;
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await createClient()
           .from("afiliados")
           .select("id")
           .eq("auth_id", user.id)
@@ -93,10 +92,11 @@ export default function ContatosPage() {
     };
 
     fetchAfiliadoId();
-  }, [user, supabase]);
+  }, [user]);
 
   // Construir query de filtro
   const buildQuery = () => {
+    const supabase = createClient();
     let query = supabase.from("contatos").select("*", { count: "exact" });
 
     if (nome) query = query.ilike("nome", `%${nome}%`);
@@ -188,6 +188,7 @@ export default function ContatosPage() {
         afiliado_id: newContact.afiliado_id || afiliadoId,
       };
 
+      const supabase = createClient();
       const { error } = await supabase.from("contatos").insert([contactToSave]);
 
       if (error) {
@@ -215,7 +216,7 @@ export default function ContatosPage() {
     if (!editingContact) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await createClient()
         .from("contatos")
         .update(editingContact)
         .eq("id", editingContact.id);
@@ -235,6 +236,7 @@ export default function ContatosPage() {
   // Handler para deletar contato
   const handleDelete = async (id: string) => {
     try {
+      const supabase = createClient();
       const { error } = await supabase.from("contatos").delete().eq("id", id);
       if (error) throw error;
 
@@ -271,7 +273,7 @@ export default function ContatosPage() {
     if (selectedContacts.length === 0) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await createClient()
         .from("contatos")
         .delete()
         .in("id", selectedContacts);

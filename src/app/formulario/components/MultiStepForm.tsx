@@ -7,9 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMultiStepForm } from "@/hooks/useMultiStepForm";
 import { FormProgress } from "./FormProgress";
+import { createClient } from "@/utils/supabase/client";
 import { PersonalDataStep } from "./form-steps/PersonalDataStep";
 
-import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { FormNavigation } from "@/components/FormNavigation";
@@ -161,6 +161,7 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
 
   const carregarDadosIniciais = async () => {
     try {
+      const supabase = createClient();
       const [marcasResponse, estadosResponse] = await Promise.all([
         supabase.from("marcas_veiculos").select("*").order("nome"),
         supabase.from("estados").select("*").order("nome"),
@@ -175,7 +176,7 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
 
   const carregarModelosVeiculos = async (marcaId: string, ano: string) => {
     try {
-      const { data } = await supabase
+      const { data } = await createClient()
         .from("modelos_veiculos")
         .select("*")
         .eq("marca_id", marcaId)
@@ -189,7 +190,7 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
 
   const carregarCidades = async (estadoId: string) => {
     try {
-      const { data } = await supabase
+      const { data } = await createClient()
         .from("cidades")
         .select("*")
         .eq("estado_id", estadoId)
@@ -216,6 +217,7 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
         afiliado_id: afiliadoId || data.afiliado_id,
       };
 
+      const supabase = createClient();
       const { error } = await supabase.from("formularios").insert([formData]);
 
       if (error) throw error;
@@ -241,6 +243,7 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
       };
 
       // Apenas salvar no Supabase
+      const supabase = createClient();
       const { error } = await supabase.from("formularios").insert([finalData]);
       if (error) throw error;
 

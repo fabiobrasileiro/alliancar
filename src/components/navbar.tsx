@@ -42,7 +42,6 @@ export function formatDateBR(isoString: string): string {
 }
 
 export default function Navbar() {
-  const supabase = createClient();
   const { user, perfil } = useUser();
   const [loading, setLoading] = useState(true);
   const [perfilData, setPerfilData] = useState<any>(null);
@@ -54,6 +53,7 @@ export default function Navbar() {
   const fetchPerfil = async () => {
     try {
       setLoading(true);
+      const supabase = createClient();
       const {
         data: { user: authUser },
         error: userError,
@@ -144,33 +144,33 @@ export default function Navbar() {
               <div className="flex space-x-4">
                 {perfil?.tipo === "administrador"
                   ? navigation.map((item) => (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={classNames(
-                          item.current
-                            ? "bg-jelly-bean-950/50 text-white"
-                            : "text-gray-300 hover:bg-white/5 hover:text-white",
-                          "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                        )}
-                      >
-                        {item.name}
-                      </Link>
-                    ))
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={classNames(
+                        item.current
+                          ? "bg-jelly-bean-950/50 text-white"
+                          : "text-gray-300 hover:bg-white/5 hover:text-white",
+                        "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      )}
+                    >
+                      {item.name}
+                    </Link>
+                  ))
                   : navigationAfiliado.map((item) => (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={classNames(
-                          item.current
-                            ? "bg-jelly-bean-950/50 text-white"
-                            : "text-gray-300 hover:bg-white/5 hover:text-white",
-                          "rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                        )}
-                      >
-                        {item.name}
-                      </Link>
-                    ))}
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={classNames(
+                        item.current
+                          ? "bg-jelly-bean-950/50 text-white"
+                          : "text-gray-300 hover:bg-white/5 hover:text-white",
+                        "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      )}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
               </div>
             </div>
           </div>
