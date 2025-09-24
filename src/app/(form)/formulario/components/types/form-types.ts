@@ -74,7 +74,6 @@ export interface MultiStepFormProps {
 
 // Esquema de validação Zod atualizado para Português
 export const formSchema = z.object({
-  afiliado_id: z.string().optional(),
   nome_cliente: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   telefone_cliente: z.string().min(10, "Telefone inválido"),
   email_cliente: z.string().email("Email inválido"),
@@ -87,11 +86,9 @@ export const formSchema = z.object({
   cidade: z.string().min(1, "Selecione a cidade"),
   taxi_aplicativo: z.boolean().default(false),
   observacoes: z.string().optional(),
-  consultor: z.string().default("4lli4nc4r"),
-  campanha_hash: z.string().default("4lli4nc4r club487"),
-  codigo_formulario: z.string().default("DOarNyQe"),
   pipeline_coluna: z.string().default("1"),
   fonte_lead: z.string().default("14588"),
+  codigo_formulario: z.string(),
 });
 
 export type FormValues = z.infer<typeof formSchema>;

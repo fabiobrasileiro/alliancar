@@ -42,11 +42,10 @@ interface Cidade {
 }
 
 interface MultiStepFormProps {
-  afiliadoId?: string;
+  codigoFormulario?: string;
 }
 
 const formSchema = z.object({
-  afiliado_id: z.string().optional(),
   nome_cliente: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   telefone_cliente: z.string().min(10, "Telefone inválido"),
   email_cliente: z.string().email("Email inválido"),
@@ -59,12 +58,12 @@ const formSchema = z.object({
   cidade: z.string().min(1, "Selecione a cidade"),
   taxi_aplicativo: z.boolean().default(false),
   observacoes: z.string().optional(),
-  consultor: z.string().default("4lli4nc4r"),
-  campanha_hash: z.string().default("4lli4nc4r club487"),
-  codigo_formulario: z.string().default("DOarNyQe"),
   pipeline_coluna: z.string().default("1"),
   fonte_lead: z.string().default("14588"),
+  codigo_formulario: z.string(),
+  
 });
+
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -75,7 +74,8 @@ const steps = [
   { number: "04", label: "Pagamento" }, // Nova etapa
 ];
 
-export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
+export function MultiStepForm({ codigoFormulario }: MultiStepFormProps) {
+  console.log(codigoFormulario)
   const { currentStepIndex, isFirstStep, isLastStep, next, back } = useMultiStepForm(4);
   const [marcasVeiculos, setMarcasVeiculos] = useState<MarcaVeiculo[]>([]);
   const [modelosVeiculos, setModelosVeiculos] = useState<ModeloVeiculo[]>([]);
@@ -88,12 +88,9 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
-      afiliado_id: afiliadoId || "",
-      consultor: "4lli4nc4r",
-      campanha_hash: "4lli4nc4r club487",
-      codigo_formulario: "DOarNyQe",
-      pipeline_coluna: "1",
-      fonte_lead: "14588",
+      codigo_formulario: codigoFormulario || "",
+      pipeline_coluna: "",
+      fonte_lead: "",
       taxi_aplicativo: false,
       nome_cliente: "",
       telefone_cliente: "",
@@ -210,10 +207,10 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
-      // Se tiver afiliadoId na URL, usa ele
+      // Se tiver codigo_formulario na URL, usa ele
       const formData = {
         ...data,
-        afiliado_id: afiliadoId || data.afiliado_id,
+        codigo_formulario: codigoFormulario || data.codigo_formulario,
       };
 
       const { error } = await supabase.from("formularios").insert([formData]);
@@ -237,11 +234,12 @@ export function MultiStepForm({ afiliadoId }: MultiStepFormProps) {
       const formData = form.getValues();
       const finalData = {
         ...formData,
-        afiliado_id: afiliadoId || formData.afiliado_id,
+        codigo_formulario: codigoFormulario || formData.codigo_formulario,
       };
 
       // Apenas salvar no Supabase
       const { error } = await supabase.from("formularios").insert([finalData]);
+
       if (error) throw error;
 
       console.log("✅ Dados salvos. Indo para checkout...");
