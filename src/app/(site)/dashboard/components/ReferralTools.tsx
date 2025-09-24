@@ -42,7 +42,7 @@ export default function ReferralTools({
               <p className="mt-2 text-sm text-gray-600">QR Code</p>
             </div>
 
-            <div className="flex-1">
+            {/* <div className="flex-1">
               <p className="text-sm font-medium mb-2">Compartilhar</p>
               <div className="flex space-x-2">
                 <Button
@@ -67,10 +67,10 @@ export default function ReferralTools({
                   Facebook
                 </Button>
               </div>
-            </div>
+            </div> */}
           </div>
 
-          <div>
+          {/* <div>
             <p className="text-sm font-medium mb-2">Materiais para download</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <Button variant="outline" className="justify-start">
@@ -83,7 +83,7 @@ export default function ReferralTools({
                 <DownloadIcon className="h-4 w-4 mr-2" /> Textos Prontos
               </Button>
             </div>
-          </div>
+          </div> */}
         </div>
       </CardContent>
     </Card>

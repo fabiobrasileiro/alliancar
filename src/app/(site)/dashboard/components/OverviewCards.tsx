@@ -1,14 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface OverviewCardsProps {
-  saldoDisponivel: string;
+  valorAdesao: string;
   saldoPendente: string;
   vendasMes: number;
   ranking: number;
 }
 
 export default function OverviewCards({
-  saldoDisponivel,
+  valorAdesao,
   saldoPendente,
   vendasMes,
   ranking,
@@ -16,7 +16,7 @@ export default function OverviewCards({
   const cards = [
     {
       title: "Comissão Adesão",
-      value: saldoDisponivel,
+      value: valorAdesao,
       icon: "💰",
       color: "text-green-500",
     },
@@ -34,7 +34,7 @@ export default function OverviewCards({
     },
     {
       title: "Ranking Atual",
-      value: `Posição ${ranking}`,
+      value: `${ranking}° lugar`,
       icon: "🏆",
       color: "text-yellow-500",
     },

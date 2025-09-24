@@ -5,14 +5,16 @@ interface GoalsProgressProps {
   metaMensal: number;
   progresso: number;
   vendasNecessarias: number;
+  progressoPorcentagem: number;
 }
 
 export default function GoalsProgress({
   metaMensal,
   progresso,
   vendasNecessarias,
+  progressoPorcentagem
+
 }: GoalsProgressProps) {
-  const progressPercentage = Math.round((progresso / metaMensal) * 100);
 
   return (
     <Card className="mb-8">
@@ -26,9 +28,10 @@ export default function GoalsProgress({
               <span className="text-sm font-medium">
                 Meta do mês: R$ {metaMensal.toLocaleString("pt-BR")}
               </span>
-              <span className="text-sm font-medium">{progressPercentage}%</span>
+              <span className="text-sm font-medium">{progressoPorcentagem}%</span>
             </div>
-            <Progress value={progressPercentage} className="h-2" />
+            <Progress value={progressoPorcentagem} className="h-2" />
+
             <p className="text-sm text-gray-600 mt-2">
               Já alcançado: R$ {progresso.toLocaleString("pt-BR")}
             </p>
