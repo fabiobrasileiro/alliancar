@@ -16,6 +16,7 @@ interface Metas {
 }
 
 export default function AffiliateDashboard() {
+  const supabase = createClient();
   const { user, perfil } = useUser();
   const [loading, setLoading] = useState(true);
   const [affiliateData, setAffiliateData] = useState<AffiliateData>({
@@ -40,7 +41,7 @@ export default function AffiliateDashboard() {
     try {
       setLoading(true);
       // Buscar dados principais
-      const { data: dashboard } = await createClient()
+      const { data: dashboard } = await supabase
         .from("afiliados")
         .select("*")
         .eq("auth_id", user?.id)
@@ -49,13 +50,13 @@ export default function AffiliateDashboard() {
       if (!dashboard) return;
 
       // Buscar comissões (performance)
-      const { data: comissoes } = await createClient()
+      const { data: comissoes } = await supabase
         .from("comissoes")
         .select("*, clientes(nome)")
         .limit(10);
 
       // Buscar ranking
-      const { data: ranking } = await createClient()
+      const { data: ranking } = await supabase
         .from("ranking_afiliados")
         .select("*, afiliados(nome_completo)")
         .order("posicao", { ascending: true })

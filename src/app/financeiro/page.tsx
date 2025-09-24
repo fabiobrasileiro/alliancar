@@ -36,20 +36,21 @@ interface Pagamento {
 }
 
 export default function FinanceiroPage() {
+  const supabase = createClient();
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState("todos");
 
   useEffect(() => {
     fetchPagamentos();
-  }, []);
+  }, [supabase]);
 
   //procurar usuarios
   const fetchPagamentos = async () => {
     try {
       setLoading(true);
 
-      let { data: pagamentos, error } = await createClient()
+      let { data: pagamentos, error } = await supabase
         .from("pagamentos")
         .select("*")
         .order("data", { ascending: false });

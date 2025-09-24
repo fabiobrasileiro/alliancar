@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -150,10 +149,10 @@ span {
 
 @layer base {
   * {
-    @apply border-gray-200 outline-gray-300/50;
+    @apply border-border outline-ring/50;
   }
 
   body {
-    @apply bg-white text-gray-900;
+    @apply bg-background text-foreground;
   }
 }

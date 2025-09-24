@@ -41,6 +41,7 @@ const AtividadesPage: React.FC = () => {
     Baixa: false,
   });
   const [loading, setLoading] = useState<boolean>(true);
+  const supabase = createClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [atividadeEditando, setAtividadeEditando] = useState<Atividade | null>(
@@ -66,7 +67,6 @@ const AtividadesPage: React.FC = () => {
       if (!user?.id) return;
 
       try {
-        const supabase = createClient();
         const { data, error } = await supabase
           .from("afiliados")
           .select("id")
@@ -87,7 +87,7 @@ const AtividadesPage: React.FC = () => {
     };
 
     fetchAfiliadoId();
-  }, [user]);
+  }, [user, supabase]);
 
   // Buscar atividades do Supabase
   useEffect(() => {
@@ -95,11 +95,10 @@ const AtividadesPage: React.FC = () => {
       fetchAtividades();
       fetchUsuarios();
     }
-  }, [afiliadoId]);
+  }, [afiliadoId, supabase]);
 
   const fetchUsuarios = async () => {
     try {
-      const supabase = createClient();
       const { data, error } = await supabase
         .from("afiliados")
         .select("id, nome_completo")
@@ -122,7 +121,6 @@ const AtividadesPage: React.FC = () => {
     try {
       setLoading(true);
 
-      const supabase = createClient();
       let { data, error } = await supabase.from("atividades").select("*");
 
       if (error) {
@@ -273,7 +271,6 @@ const AtividadesPage: React.FC = () => {
   // Concluir atividade
   const handleConcluir = async (id: number) => {
     try {
-      const supabase = createClient();
       const { error } = await supabase
         .from("atividades")
         .update({
@@ -297,7 +294,6 @@ const AtividadesPage: React.FC = () => {
   // Reabrir atividade (marcar como pendente)
   const handleReabrir = async (id: number) => {
     try {
-      const supabase = createClient();
       const { error } = await supabase
         .from("atividades")
         .update({
@@ -329,7 +325,6 @@ const AtividadesPage: React.FC = () => {
 
       if (modalMode === "create") {
         // Criar nova atividade
-        const supabase = createClient();
         const { error } = await supabase.from("atividades").insert([
           {
             titulo: novaAtividade.titulo,
@@ -351,7 +346,6 @@ const AtividadesPage: React.FC = () => {
         // Editar atividade existente
         if (!atividadeEditando) return;
 
-        const supabase = createClient();
         const { error } = await supabase
           .from("atividades")
           .update({
@@ -396,7 +390,6 @@ const AtividadesPage: React.FC = () => {
     }
 
     try {
-      const supabase = createClient();
       const { error } = await supabase.from("atividades").delete().eq("id", id);
 
       if (error) {
@@ -417,7 +410,6 @@ const AtividadesPage: React.FC = () => {
       if (!user?.id) return;
 
       try {
-        const supabase = createClient();
         const { data, error } = await supabase
           .from("afiliados")
           .select("id")
@@ -438,7 +430,7 @@ const AtividadesPage: React.FC = () => {
     };
 
     fetchAfiliadoId();
-  }, [user]);
+  }, [user, supabase]);
 
   // Buscar atividades do Supabase
   useEffect(() => {
@@ -446,7 +438,7 @@ const AtividadesPage: React.FC = () => {
       fetchAtividades();
       fetchUsuarios();
     }
-  }, [afiliadoId]);
+  }, [afiliadoId, supabase]);
 
   return (
     <>
