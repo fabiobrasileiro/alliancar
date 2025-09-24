@@ -1,8 +1,8 @@
 // hooks/useNegociacoes.ts
 import { useState, useEffect } from "react";
 import { negociacoesService } from "@/lib/supabase";
-import { Negociacao, StatusNegociacao } from "@/app/vendas/components/types";
 import { useUser } from "@/context/UserContext";
+import { Negociacao, StatusNegociacao } from "@/app/(site)/vendas/components/types";
 
 export function useNegociacoes() {
   const [negociacoes, setNegociacoes] = useState<Negociacao[]>([]);
