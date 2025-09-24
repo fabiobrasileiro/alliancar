@@ -90,7 +90,7 @@ export interface SupabaseComissao {
 }
 
 export interface AffiliateData {
-  saldoDisponivel: string;
+  valorAdesao: string;
   saldoPendente: string;
   vendasMes: number;
   ranking: number;
@@ -99,6 +99,7 @@ export interface AffiliateData {
   vendasNecessarias: number;
   performance: any[];
   linkAfiliado: string;
+  progressoPorcentagem: number;
   qrCode: string;
   rankingTop10: any[];
 }

@@ -20,11 +20,12 @@ export default function AffiliateDashboard() {
   const { user, perfil } = useUser();
   const [loading, setLoading] = useState(true);
   const [affiliateData, setAffiliateData] = useState<AffiliateData>({
-    saldoDisponivel: "R$ 0,00",
+    valorAdesao: "R$ 0,00",
     saldoPendente: "R$ 0,00",
     vendasMes: 0,
     ranking: 0,
     metaMensal: 1500,
+    progressoPorcentagem: 0,
     progresso: 0,
     vendasNecessarias: 0,
     performance: [],
@@ -41,6 +42,14 @@ export default function AffiliateDashboard() {
     try {
       setLoading(true);
       // Buscar dados principais
+
+      // const { data: ranking } = await supabase
+      //   .from('afiliados')
+      //   .select('nome_completo, numero_placas')
+      //   .order('numero_placas', { ascending: false });
+
+
+
       const { data: dashboard } = await supabase
         .from("afiliados")
         .select("*")
@@ -49,46 +58,59 @@ export default function AffiliateDashboard() {
 
       if (!dashboard) return;
 
+      const { data: perfomance } = await supabase
+        .from("formularios")
+        .select("*")
+        .eq("codigo_formulario", dashboard.form_link)
+
       // Buscar comissões (performance)
       const { data: comissoes } = await supabase
         .from("comissoes")
         .select("*, clientes(nome)")
         .limit(10);
 
-      // Buscar ranking
-      const { data: ranking } = await supabase
-        .from("ranking_afiliados")
-        .select("*, afiliados(nome_completo)")
+      const { data: ranking, error: rankingError } = await supabase
+        .from("ranking_afiliados")  // agora é a view
+        .select("*")
         .order("posicao", { ascending: true })
         .limit(10);
 
+      console.log('ranking:', ranking)
+
+      if (rankingError) {
+        console.error('Erro ao buscar ranking:', rankingError);
+      }
+
       // Formatar dados
       const performanceData =
-        comissoes?.map((item) => ({
+        perfomance?.map((item) => ({
           id: item.id,
-          data: new Date(item.criado_em).toLocaleDateString("pt-BR"),
-          cliente: item.clientes?.nome || "Cliente",
-          valor: item.valor_contrato.toLocaleString("pt-BR", {
+          data: new Date(item.data_criacao).toLocaleDateString("pt-BR"),
+          cliente: item.nome_cliente || "Cliente",
+          valor: item.valor_adesao.toLocaleString("pt-BR", {
             style: "currency",
             currency: "BRL",
           }),
-          comissao: item.valor_comissao.toLocaleString("pt-BR", {
+          comissao: (item.valor_adesao * 0.03).toLocaleString("pt-BR", {
             style: "currency",
             currency: "BRL",
           }),
           status: item.status,
         })) || [];
 
+
       const rankingData =
-        ranking?.map((item, index) => ({
-          posicao: index + 1,
-          nome: item.afiliados?.nome_completo || "Afiliado",
-          vendas: item.total_vendas,
-          total_comissao: item.total_comissao,
+        ranking?.map((item: any) => ({
+          posicao: item.posicao,
+          nome: item.nome_completo || "Afiliado",
+          vendas: item.numero_placas,
         })) || [];
+      // ranking é o array da view
+      const userRanking = ranking?.find((item: any) => item.id === dashboard.id)?.posicao || 0;
+
 
       setAffiliateData({
-        saldoDisponivel: dashboard.receita_total.toLocaleString("pt-BR", {
+        valorAdesao: dashboard.valor_adesao.toLocaleString("pt-BR", {
           style: "currency",
           currency: "BRL",
         }),
@@ -97,15 +119,20 @@ export default function AffiliateDashboard() {
           currency: "BRL",
         }),
         vendasMes: dashboard.numero_placas || 0,
-        ranking: 0, // Você pode calcular isso baseado no ranking
-        metaMensal: 1500, // Valor fixo ou buscar de metas_afiliados
-        progresso: (dashboard.receita_total / 5000) * 100,
-        vendasNecessarias: Math.ceil((5000 - dashboard.receita_total) / 100),
+        ranking: userRanking,
+        metaMensal: dashboard.meta.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }),
+        progresso: dashboard.valor_adesao,
+        progressoPorcentagem: (dashboard.valor_adesao / dashboard.meta) * 100,
+        vendasNecessarias: (dashboard.meta - dashboard.valor_adesao) / 200,
         performance: performanceData,
-        linkAfiliado: `https://seusite.com/afiliado/${dashboard.id}`,
-        qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://seusite.com/afiliado/${dashboard.id}`,
+        linkAfiliado: `https://alliancar.vercel.app/formulario/${dashboard.form_link}`,
+        qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://alliancar.vercel.app/formulario/${dashboard.form_link}`,
         rankingTop10: rankingData,
       });
+
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
     } finally {
@@ -117,14 +144,6 @@ export default function AffiliateDashboard() {
     navigator.clipboard.writeText(affiliateData.linkAfiliado);
     alert("Link copiado!");
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -138,7 +157,7 @@ export default function AffiliateDashboard() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <OverviewCards
-          saldoDisponivel={affiliateData.saldoDisponivel}
+          valorAdesao={affiliateData.valorAdesao}
           saldoPendente={affiliateData.saldoPendente}
           vendasMes={affiliateData.vendasMes}
           ranking={affiliateData.ranking}
@@ -148,6 +167,7 @@ export default function AffiliateDashboard() {
           metaMensal={affiliateData.metaMensal}
           progresso={affiliateData.progresso}
           vendasNecessarias={affiliateData.vendasNecessarias}
+          progressoPorcentagem={affiliateData.progressoPorcentagem}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
