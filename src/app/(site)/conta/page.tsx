@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -25,106 +24,74 @@ import { useUser } from "@/context/UserContext";
 
 interface Venda {
   id: string;
-  data: string;
-  afiliado_id: string;
-  afiliado: {
-    nome_completo: string;
-  };
-  placa: string;
-  comissao: number;
-  status: string;
-  valor: number;
   data_criacao: string;
-  data_atualizacao: string;
+  placa_veiculo: string;
+  valor_adesao: number;
+  tipo: string;
+  status: string;
 }
 
 export default function MinhasVendas() {
   const [vendas, setVendas] = useState<Venda[]>([]);
+  const [comissaoPercentual, setComissaoPercentual] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filtroDataInicio, setFiltroDataInicio] = useState<string>("");
-  const [filtroDataFim, setFiltroDataFim] = useState<string>("");
-  const [filtroStatus, setFiltroStatus] = useState<string>("");
-
+  const [filtroDataInicio, setFiltroDataInicio] = useState("");
+  const [filtroDataFim, setFiltroDataFim] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("");
   const supabase = createClient();
-
-  // Calcular totais
-  const totalVendas = vendas.length;
-  const totalValor = vendas.reduce((sum, venda) => sum + (venda.valor || 0), 0);
-  const totalComissao = vendas.reduce(
-    (sum, venda) => sum + (venda.comissao || 0),
-    0,
-  );
   const { user } = useUser();
 
   useEffect(() => {
-    fetchVendas();
-  }, [filtroDataInicio, filtroDataFim, filtroStatus]);
+    if (user) {
+      fetchAfiliado(); // busca % comissão
+      fetchVendas();
+    }
+  }, [user, filtroDataInicio, filtroDataFim, filtroStatus]);
+
+  const fetchAfiliado = async () => {
+    const { data, error } = await supabase
+      .from("afiliados")
+      .select("porcentagem_comissao,form_link")
+      .eq("auth_id", user?.id)
+      .single();
+    if (!error && data) {
+      setComissaoPercentual(Number(data.porcentagem_comissao));
+    }
+  };
 
   const fetchVendas = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Obter o usuário logado
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        setError("Usuário não autenticado");
-        setLoading(false);
-        return;
-      }
-
-      // Buscar o afiliado baseado no auth_id do usuário
-      const { data: afiliado, error: errorAfiliado } = await supabase
+      // pega o form_link do afiliado logado
+      const { data: afiliado } = await supabase
         .from("afiliados")
-        .select("id")
-        .eq("auth_id", user.id)
+        .select("form_link,porcentagem_comissao")
+        .eq("auth_id", user?.id)
         .single();
 
-      if (errorAfiliado || !afiliado) {
-        setError("Afiliado não encontrado");
-        setLoading(false);
-        return;
-      }
-
       let query = supabase
-        .from("pagamentos")
-        .select(`*`)
-        .eq("afiliado_id", user?.id);
+        .from("formularios")
+        .select("id,data_criacao,placa_veiculo,valor_adesao,status, tipo")
+        .eq("codigo_formulario", afiliado?.form_link);
 
-      // Aplicar filtros de data
-      if (filtroDataInicio) {
-        query = query.gte("data", filtroDataInicio);
-      }
-      if (filtroDataFim) {
-        query = query.lte("data", filtroDataFim);
-      }
-      if (filtroStatus && filtroStatus !== "todos") {
+      if (filtroDataInicio) query = query.gte("data_criacao", filtroDataInicio);
+      if (filtroDataFim) query = query.lte("data_criacao", filtroDataFim );
+      if (filtroStatus && filtroStatus !== "todos")
         query = query.eq("status", filtroStatus);
-      }
 
-      const { data: pagamentos, error } = await query;
+      const { data, error } = await query;
 
       if (error) {
-        console.error("Erro ao buscar pagamentos:", error);
+        console.error("Erro ao buscar formulários:", error);
         setError(error.message);
         return;
       }
 
-      // Transformar os dados para o formato esperado
-      const vendasFormatadas = pagamentos
-        ? pagamentos.map((pagamento: any) => ({
-            ...pagamento,
-            afiliado: {
-              nome_completo: pagamento.afiliados?.nome_completo || "N/A",
-            },
-          }))
-        : [];
-
-      setVendas(vendasFormatadas);
+      setComissaoPercentual(Number(afiliado?.porcentagem_comissao || 0));
+      setVendas((data as Venda[]) || []);
     } catch (err) {
       console.error("Erro inesperado:", err);
       setError("Erro ao carregar vendas");
@@ -132,54 +99,31 @@ export default function MinhasVendas() {
       setLoading(false);
     }
   };
+  console.log(vendas)
 
-  const formatarData = (dataString: string) => {
+  const formatarData = (d: string) => {
     try {
-      return new Date(dataString).toLocaleDateString("pt-BR");
+      return new Date(d).toLocaleDateString("pt-BR");
     } catch {
       return "Data inválida";
     }
   };
-
-  const formatarMoeda = (valor: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+  const formatarMoeda = (v: number) =>
+    new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(valor || 0);
-  };
+    }).format(v || 0);
 
-  const formatarStatus = (status: string) => {
-    const statusMap: { [key: string]: string } = {
-      pendente: "Pendente",
-      pago: "Pago",
-      cancelado: "Cancelado",
-      processando: "Processando",
-      boleto_gerado: "Boleto Gerado",
-      aguardando_liberacao: "Aguardando Liberação",
-      a_receber: "A receber",
-    };
+  const totalValor = vendas.reduce((sum, v) => sum + (v.valor_adesao || 0), 0);
+  const totalComissao = totalValor * comissaoPercentual;
 
-    return statusMap[status.toLowerCase()] || status;
-  };
-
-  if (loading) {
-    return (
-      <SidebarLayout>
-        <div className="p-6">
-          <h2 className="text-2xl font-semibold mb-6">Minhas Vendas</h2>
-          <div className="text-center">Carregando vendas...</div>
-        </div>
-      </SidebarLayout>
-    );
-  }
 
   return (
     <SidebarLayout>
       <div className="p-6">
-        {/* Título */}
         <h2 className="text-2xl font-semibold mb-6">Minhas Vendas</h2>
 
-        {/* Filtros */}
+        {/* filtros */}
         <Card className="p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
@@ -199,39 +143,28 @@ export default function MinhasVendas() {
               />
             </div>
             <div>
-              <span className="block mb-1 text-sm">Filtrar por status:</span>
+              <span className="block mb-1 text-sm">Status:</span>
               <Select value={filtroStatus} onValueChange={setFiltroStatus}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os status" />
+                  <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="boleto_gerado">Boleto Gerado</SelectItem>
-                  <SelectItem value="cancelado">Cancelado</SelectItem>
-                  <SelectItem value="aguardando_liberacao">
-                    Aguardando Liberação
-                  </SelectItem>
-                  <SelectItem value="a_receber">A receber</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
                   <SelectItem value="pago">Pago</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex items-end">
               <Button onClick={fetchVendas} className="w-full">
-                Aplicar Filtros
+                Aplicar
               </Button>
             </div>
           </div>
         </Card>
 
-        {/* Resumo */}
-        <div className="mb-6">
-          <p className="text-gray-700">
-            &gt; Total <strong>{totalVendas}</strong> Vendas
-          </p>
-        </div>
-
-        {/* Cards de totais */}
+        {/* totais */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="p-4 text-center">
             <div className="text-sm text-gray-600">Valor Total</div>
@@ -239,77 +172,60 @@ export default function MinhasVendas() {
               {formatarMoeda(totalValor)}
             </div>
           </Card>
-
-          <Card className="p-4 text-center">
+          {/* <Card className="p-4 text-center">
             <div className="text-sm text-gray-600">Comissão Total</div>
             <div className="text-xl font-bold text-green-600">
               {formatarMoeda(totalComissao)}
             </div>
-          </Card>
-
+          </Card> */}
           <Card className="p-4 text-center">
-            <div className="text-sm text-gray-600">Porcentagem da Comissão</div>
+            <div className="text-sm text-gray-600">Porcentagem</div>
             <div className="text-xl font-bold text-purple-600">
               {totalValor > 0
-                ? `${((totalComissao / totalValor) * 100).toFixed(1)}%`
+                ? `${((comissaoPercentual) * 100).toFixed(0)}%`
                 : "0%"}
             </div>
           </Card>
         </div>
 
-        {/* Tabela */}
+        {/* tabela */}
         <Card>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
-                  <TableHead>Associado</TableHead>
                   <TableHead>Placa</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Comissão</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Criação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {vendas.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={5}
                       className="text-center text-gray-500 py-4"
                     >
                       Nenhuma venda encontrada
                     </TableCell>
                   </TableRow>
                 ) : (
-                  vendas.map((venda) => (
-                    <TableRow key={venda.id}>
-                      <TableCell>{formatarData(venda.data)}</TableCell>
+                  vendas.map((v) => (
+                    <TableRow key={v.id}>
+                      <TableCell>{formatarData(v.data_criacao)}</TableCell>
+                      <TableCell>{v.placa_veiculo || "N/A"}</TableCell>
+                      <TableCell>{formatarMoeda(v.valor_adesao)}</TableCell>
                       <TableCell>
-                        {venda.afiliado?.nome_completo || "N/A"}
+                        {v.tipo === "adesao"
+                          ? formatarMoeda(v.valor_adesao) 
+                          : formatarMoeda(v.valor_adesao * comissaoPercentual)} 
                       </TableCell>
-                      <TableCell>{venda.placa || "N/A"}</TableCell>
-                      <TableCell>{formatarMoeda(venda.valor)}</TableCell>
-                      <TableCell>{formatarMoeda(venda.comissao)}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            venda.status === "pago"
-                              ? "bg-green-100 text-green-800"
-                              : venda.status === "cancelado"
-                                ? "bg-red-100 text-red-800"
-                                : venda.status === "aguardando_liberacao"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : venda.status === "a_receber"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {formatarStatus(venda.status)}
-                        </span>
-                      </TableCell>
-                      <TableCell>{formatarData(venda.data_criacao)}</TableCell>
+
+                      <TableCell>{v.tipo}</TableCell>
+                      <TableCell>{v.status}</TableCell>
                     </TableRow>
                   ))
                 )}
