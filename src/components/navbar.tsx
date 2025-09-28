@@ -16,7 +16,7 @@ import Image from "next/image";
 import Alliancar from "../../public/alliancar.avif";
 import { useUser } from "@/context/UserContext";
 import { Button } from "./ui/button";
-import { CopyIcon } from "lucide-react";
+import { CopyIcon, LogOut, User } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
@@ -96,7 +96,7 @@ export default function Navbar() {
     { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Atividades", href: "/atividades", current: false },
-    { name: "Minha Conta", href: "/conta", current: false },
+    // { name: "Minha Conta", href: "/conta", current: false },
     { name: "Relatórios", href: "/relatorios", current: false },
   ];
   const navigationAfiliado = [
@@ -104,7 +104,7 @@ export default function Navbar() {
     { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Atividades", href: "/atividades", current: false },
-    { name: "Minha Conta", href: "/conta", current: false },
+    // { name: "Minha Conta", href: "/conta", current: false },
   ];
 
   return (
@@ -214,12 +214,24 @@ export default function Navbar() {
                     </p>
                   </div>
                 </div>
+                 <MenuItem>
+                 
+                  <Link
+                    href="/conta"
+                    className=" px-4 py-2 text-sm text-jelly-bean-600 data-focus:bg-white/5 data-focus:outline-hidden flex items-center gap-1"
+                  >
+                    <User size={14}/>
+                    Minha conta
+                  </Link>
+                </MenuItem>
 
                 <MenuItem>
+                
                   <Link
                     href="/logout"
-                    className="block px-4 py-2 text-sm text-jelly-bean-600 data-focus:bg-white/5 data-focus:outline-hidden"
+                    className="px-4 py-2 text-sm text-jelly-bean-600 data-focus:bg-white/5 data-focus:outline-hidden flex items-center gap-1"
                   >
+                    <LogOut size={14}/>
                     Sair
                   </Link>
                 </MenuItem>
