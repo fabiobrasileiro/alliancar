@@ -102,7 +102,8 @@ export default function Navbar() {
     { name: "Dashboard", href: "/dashboard", current: false },
     { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
-    { name: "Atividades", href: "/atividades", current: false },
+    { name: "Financeiro", href: "/atividades", current: false },
+    { name: "Atividades", href: "/conta", current: false },
     // { name: "Minha Conta", href: "/conta", current: false },
     { name: "Relatórios", href: "/relatorios", current: false },
   ];
@@ -111,6 +112,7 @@ export default function Navbar() {
     { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Atividades", href: "/atividades", current: false },
+    { name: "Financeiro", href: "/conta", current: false },
     // { name: "Minha Conta", href: "/conta", current: false },
   ];
 
