@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-type ButtonVariant = "default" | "outline" | "secondary" | "ghost" | "link";
+type ButtonVariant = "default" | "outline" | "secondary" | "ghost" | "link" | "second";
 type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 export interface ButtonProps
@@ -12,7 +12,9 @@ export interface ButtonProps
 
 const variantClasses: Record<ButtonVariant, string> = {
   default:
-    "bg-jelly-bean-500 text-white hover:bg-jelly-bean-300 focus-visible:jelly-bean-600",
+    "bg-jelly-bean-500 text-white hover:bg-jelly-bean-300 focus-visible:jelly-bean-600 cursor-pointer",
+  second:
+    "bg-jelly-bean-700 text-white hover:bg-jelly-bean-300 focus-visible:jelly-bean-600 cursor-pointer",
   outline:
     "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 focus-visible:ring-slate-300",
   secondary:
