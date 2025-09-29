@@ -62,3 +62,12 @@ export interface NewNegotiationForm {
   observacoes?: string;
   
 }
+
+export interface AvaliacaoVenda {
+  id: string;
+  negociacao_id: string;
+  nota: number; // Nota de 1 a 5
+  comentario?: string;
+  criado_em: string;
+  atualizado_em: string;
+}
