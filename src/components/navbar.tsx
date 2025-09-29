@@ -104,8 +104,10 @@ export default function Navbar() {
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Financeiro", href: "/atividades", current: false },
     { name: "Atividades", href: "/conta", current: false },
-    // { name: "Minha Conta", href: "/conta", current: false },
     { name: "Relatórios", href: "/relatorios", current: false },
+    { name: "Política e privacidade", href: "/politica", current: false },
+    // { name: "Minha Conta", href: "/conta", current: false },
+    
   ];
   const navigationAfiliado = [
     { name: "Dashboard", href: "/dashboard", current: false },
@@ -113,6 +115,7 @@ export default function Navbar() {
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Atividades", href: "/atividades", current: false },
     { name: "Financeiro", href: "/conta", current: false },
+    { name: "Política e privacidade", href: "/politica", current: false },
     // { name: "Minha Conta", href: "/conta", current: false },
   ];
 
