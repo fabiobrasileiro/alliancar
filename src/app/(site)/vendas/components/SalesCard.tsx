@@ -1,3 +1,4 @@
+// components/SalesCard.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,12 +18,20 @@ interface SalesCardProps {
 }
 
 export default function SalesCard({ card, onDragStart }: SalesCardProps) {
+  const handleDragStart = (ev: React.DragEvent) => {
+    ev.dataTransfer.setData("negociacaoId", card.id);
+    ev.dataTransfer.effectAllowed = "move";
+    
+    if (onDragStart) {
+      onDragStart(ev, card.id);
+    }
+  };
+
   return (
     <Card
-      key={card.id}
-      className="mb-3 hover:shadow-md transition-shadow cursor-pointer"
+      className="mb-3 hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
       draggable
-      onDragStart={(ev) => onDragStart?.(ev, card.id)}
+      onDragStart={handleDragStart}
     >
       <CardContent className="p-4">
         {/* Header com indicadores de temperatura */}
@@ -45,19 +54,19 @@ export default function SalesCard({ card, onDragStart }: SalesCardProps) {
           </div>
           <div className="flex items-center space-x-2">
             {card.hasTracker && (
-              <Badge variant="gray" className="text-xs">
+              <Badge variant="default" className="text-xs">
                 <Wifi className="w-3 h-3 mr-1" />
                 Rastreador
               </Badge>
             )}
             {card.isAccepted && (
-              <Badge variant="green" className="text-xs">
+              <Badge variant="default" className="text-xs bg-green-100 text-green-800">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 Aceita
               </Badge>
             )}
             {card.isExpired && (
-              <Badge variant="red" className="text-xs">
+              <Badge variant="default" className="text-xs">
                 <Clock className="w-3 h-3 mr-1" />
                 Expirada
               </Badge>
@@ -75,6 +84,7 @@ export default function SalesCard({ card, onDragStart }: SalesCardProps) {
           </div>
           <p className="text-sm text-gray-700 font-medium">{card.vehicle}</p>
           <div className="text-sm font-bold text-green-600">{card.price}</div>
+          <div className="text-xs text-gray-500">Placa: {card.placa}</div>
         </div>
 
         {/* Footer */}

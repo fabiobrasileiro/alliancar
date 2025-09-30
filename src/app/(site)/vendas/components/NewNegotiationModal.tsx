@@ -1,7 +1,8 @@
+// app/negociacoes/components/NewNegotiationModal.tsx
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -23,10 +24,7 @@ interface NewNegotiationModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   formData: NewNegotiationForm;
-  onFormChange: (
-    field: keyof NewNegotiationForm,
-    value: string | boolean | number,
-  ) => void;
+  onFormChange: (field: keyof NewNegotiationForm, value: string | boolean | number) => void;
   onSubmit: (formData: NewNegotiationForm) => Promise<void>;
   loading?: boolean;
 }
@@ -39,74 +37,75 @@ export default function NewNegotiationModal({
   onSubmit,
   loading = false,
 }: NewNegotiationModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação básica
+    if (!formData.placa || !formData.marca || !formData.modelo || !formData.ano_modelo || !formData.nomeContato) {
+      alert("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       await onSubmit(formData);
-      onOpenChange(false);
     } catch (error) {
-      console.error("Erro ao criar negociação:", error);
+      // O erro já é tratado no componente pai
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  console.log(formData);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Nova Negociação
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto p-8">
-        <DialogHeader className="pb-6">
-          <DialogTitle className="flex items-center justify-between text-2xl font-bold">
-            <span>➕ Nova Negociação</span>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="flex items-center justify-between text-xl font-bold">
+            <span>Nova Negociação</span>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onOpenChange(false)}
-              className="h-10 w-10 hover:bg-gray-100"
+              className="h-8 w-8"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </Button>
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Dados do Veículo */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold border-b-2 border-blue-200 pb-3 text-blue-800">
-              🚗 Dados do Veículo
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+              Dados do Veículo
             </h3>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label
-                  htmlFor="placa"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="placa" className="text-sm font-medium">
                   Placa *
                 </Label>
                 <Input
                   id="placa"
                   type="text"
                   value={formData.placa}
-                  onChange={(e) =>
-                    onFormChange("placa", e.target.value.toUpperCase())
-                  }
+                  onChange={(e) => onFormChange("placa", e.target.value.toUpperCase())}
                   placeholder="ABC1D23"
-                  className="h-12 text-base font-mono"
+                  className="h-10"
                   maxLength={7}
-                  pattern="[A-Z]{3}[0-9][A-Z0-9][0-9]{2}"
                   required
                 />
               </div>
 
               <div>
-                <Label
-                  htmlFor="marca"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="marca" className="text-sm font-medium">
                   Marca *
                 </Label>
                 <Input
@@ -114,17 +113,14 @@ export default function NewNegotiationModal({
                   type="text"
                   value={formData.marca}
                   onChange={(e) => onFormChange("marca", e.target.value)}
-                  placeholder="Ex: Volkswagen, Fiat, Chevrolet"
-                  className="h-12 text-base"
+                  placeholder="Volkswagen, Fiat, Chevrolet"
+                  className="h-10"
                   required
                 />
               </div>
 
               <div>
-                <Label
-                  htmlFor="modelo"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="modelo" className="text-sm font-medium">
                   Modelo *
                 </Label>
                 <Input
@@ -132,17 +128,14 @@ export default function NewNegotiationModal({
                   type="text"
                   value={formData.modelo}
                   onChange={(e) => onFormChange("modelo", e.target.value)}
-                  placeholder="Ex: Gol, Palio, Onix"
-                  className="h-12 text-base"
+                  placeholder="Gol, Palio, Onix"
+                  className="h-10"
                   required
                 />
               </div>
 
               <div>
-                <Label
-                  htmlFor="ano_modelo"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="ano_modelo" className="text-sm font-medium">
                   Ano Modelo *
                 </Label>
                 <Input
@@ -151,18 +144,14 @@ export default function NewNegotiationModal({
                   value={formData.ano_modelo}
                   onChange={(e) => onFormChange("ano_modelo", e.target.value)}
                   placeholder="2024"
-                  className="h-12 text-base"
+                  className="h-10"
                   maxLength={4}
-                  pattern="[0-9]{4}"
                   required
                 />
               </div>
 
               <div>
-                <Label
-                  htmlFor="valor_negociado"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="valor_negociado" className="text-sm font-medium">
                   Valor Negociado (R$)
                 </Label>
                 <Input
@@ -170,29 +159,22 @@ export default function NewNegotiationModal({
                   type="number"
                   step="0.01"
                   value={formData.valor_negociado || ""}
-                  onChange={(e) =>
-                    onFormChange(
-                      "valor_negociado",
-                      parseFloat(e.target.value) || 0,
-                    )
-                  }
+                  onChange={(e) => onFormChange("valor_negociado", parseFloat(e.target.value) || 0)}
                   placeholder="0,00"
-                  className="h-12 text-base"
+                  className="h-10"
                 />
               </div>
             </div>
           </div>
 
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold border-b-2 border-green-200 pb-3 text-green-800">
-              👤 Dados do Cliente
+          {/* Dados do Cliente */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+              Dados do Cliente
             </h3>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label
-                  htmlFor="nomeContato"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="nomeContato" className="text-sm font-medium">
                   Nome para contato *
                 </Label>
                 <Input
@@ -201,15 +183,13 @@ export default function NewNegotiationModal({
                   value={formData.nomeContato}
                   onChange={(e) => onFormChange("nomeContato", e.target.value)}
                   placeholder="Nome completo"
-                  className="h-12 text-base"
+                  className="h-10"
+                  required
                 />
               </div>
 
               <div>
-                <Label
-                  htmlFor="email"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="email" className="text-sm font-medium">
                   E-mail
                 </Label>
                 <Input
@@ -218,15 +198,12 @@ export default function NewNegotiationModal({
                   value={formData.email}
                   onChange={(e) => onFormChange("email", e.target.value)}
                   placeholder="email@exemplo.com"
-                  className="h-12 text-base"
+                  className="h-10"
                 />
               </div>
 
               <div>
-                <Label
-                  htmlFor="celular"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="celular" className="text-sm font-medium">
                   Celular
                 </Label>
                 <Input
@@ -235,22 +212,19 @@ export default function NewNegotiationModal({
                   value={formData.celular}
                   onChange={(e) => onFormChange("celular", e.target.value)}
                   placeholder="(11) 99999-9999"
-                  className="h-12 text-base"
+                  className="h-10"
                 />
               </div>
 
               <div>
-                <Label
-                  htmlFor="estado"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="estado" className="text-sm font-medium">
                   Estado
                 </Label>
                 <Select
                   value={formData.estado}
                   onValueChange={(value) => onFormChange("estado", value)}
                 >
-                  <SelectTrigger className="h-12 text-base">
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -264,10 +238,7 @@ export default function NewNegotiationModal({
               </div>
 
               <div>
-                <Label
-                  htmlFor="cidade"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="cidade" className="text-sm font-medium">
                   Cidade
                 </Label>
                 <Input
@@ -276,28 +247,24 @@ export default function NewNegotiationModal({
                   value={formData.cidade}
                   onChange={(e) => onFormChange("cidade", e.target.value)}
                   placeholder="Nome da cidade"
-                  className="h-12 text-base"
+                  className="h-10"
                 />
               </div>
 
               <div>
-                <Label
-                  htmlFor="origemLead"
-                  className="text-base font-medium mb-3 block"
-                >
+                <Label htmlFor="origemLead" className="text-sm font-medium">
                   Origem do lead
                 </Label>
                 <Select
                   value={formData.origemLead}
                   onValueChange={(value) => onFormChange("origemLead", value)}
                 >
-                  <SelectTrigger className="h-12 text-base">
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">Selecione</SelectItem>
                     <SelectItem value="Facebook">Facebook</SelectItem>
-                    <SelectItem value="14585">Google</SelectItem>
+                    <SelectItem value="Google">Google</SelectItem>
                     <SelectItem value="Indicação">Indicação</SelectItem>
                     <SelectItem value="Instagram">Instagram</SelectItem>
                     <SelectItem value="Presencial">Presencial</SelectItem>
@@ -307,13 +274,24 @@ export default function NewNegotiationModal({
               </div>
             </div>
           </div>
-          <Button
-            type="submit"
-            disabled={loading}
-            className="h-12 px-8 text-base font-medium bg-green-600 hover:bg-green-700 shadow-lg"
-          >
-            {loading ? "Criando..." : "✅ Criar Negociação"}
-          </Button>
+
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || loading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSubmitting ? "Criando..." : "Criar Negociação"}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

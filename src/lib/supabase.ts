@@ -1,5 +1,5 @@
 
-import { AvaliacaoVenda, Negociacao, StatusNegociacao } from "@/app/(site)/vendas/components/types";
+import {  Negociacao, StatusNegociacao, AvaliacaoVenda } from "@/app/(site)/vendas/components/types";
 import { useUser } from "@/context/UserContext";
 import { createClient } from "@supabase/supabase-js";
 

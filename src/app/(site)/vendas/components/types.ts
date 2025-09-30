@@ -1,4 +1,4 @@
-// types.ts
+// app/negociacoes/components/types.ts
 export type StatusNegociacao =
   | "Cotação recebida"
   | "Em negociação"
@@ -21,25 +21,9 @@ export interface Negociacao {
   observacoes?: string;
   criado_em: string;
   atualizado_em: string;
-  // Campos para join com contatos
   contato_nome?: string;
   contato_email?: string;
   contato_celular?: string;
-}
-
-export interface AvaliacaoVenda {
-  id: string;
-  negociacao_id: string;
-  afiliado_id: string;
-  valor_venda: number;
-  porcentagem_comissao: number;
-  valor_comissao: number;
-  status: StatusPagamento;
-  observacoes_avaliador?: string;
-  aprovado: boolean;
-  data_aprovacao?: string;
-  criado_em: string;
-  atualizado_em: string;
 }
 
 export interface SaleCard {
@@ -50,10 +34,10 @@ export interface SaleCard {
   price: string;
   status: StatusNegociacao;
   tags: string[];
-  hasTracker: boolean;
-  isAccepted: boolean;
-  isExpired: boolean;
-  daysInStage: number;
+  hasTracker: boolean; // Não opcional, sempre tem valor
+  isAccepted: boolean; // Não opcional, sempre tem valor
+  isExpired: boolean; // Não opcional, sempre tem valor
+  daysInStage: number; // Não opcional, sempre tem valor
   user: string;
   placa: string;
   marca: string;
@@ -64,6 +48,7 @@ export interface SaleCard {
 
 export interface NewNegotiationForm {
   placa: string;
+  afiliado_id?: string; 
   ano_modelo: string;
   modelo: string;
   marca: string;
@@ -75,15 +60,14 @@ export interface NewNegotiationForm {
   origemLead: string;
   valor_negociado?: number;
   observacoes?: string;
+  
 }
 
-export interface FilterData {
-  tipoData: string;
-  dataInicial: string;
-  dataFinal: string;
-  status: StatusNegociacao[];
-  marcas: string[];
-  modelos: string[];
-  valorMin: number;
-  valorMax: number;
+export interface AvaliacaoVenda {
+  id: string;
+  negociacao_id: string;
+  nota: number; // Nota de 1 a 5
+  comentario?: string;
+  criado_em: string;
+  atualizado_em: string;
 }

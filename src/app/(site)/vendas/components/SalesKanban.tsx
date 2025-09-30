@@ -45,7 +45,7 @@ export default function SalesKanban({
     isExpired: false,
     daysInStage: Math.floor(
       (Date.now() - new Date(negociacao.criado_em).getTime()) /
-        (1000 * 60 * 60 * 24),
+      (1000 * 60 * 60 * 24),
     ),
     user: "Usuário",
     placa: negociacao.placa,
@@ -93,14 +93,38 @@ export default function SalesKanban({
     ];
   };
 
+  // Função para lidar com drag over na coluna
+  const handleDragOver = (ev: React.DragEvent) => {
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "move";
+  };
+
+  // Função para lidar com drop na coluna
+  const handleDrop = (ev: React.DragEvent, newStatus: StatusNegociacao) => {
+    ev.preventDefault();
+    const negociacaoId = ev.dataTransfer.getData("negociacaoId");
+
+    console.log('Drop event:', {
+      negociacaoId,
+      newStatus,
+      hasOnDrop: !!onDrop
+    });
+
+    if (negociacaoId && onDrop) {
+      onDrop(ev, newStatus);
+    } else {
+      console.log('Drop falhou - negociacaoId:', negociacaoId, 'onDrop:', onDrop);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
       {getColumns().map((column) => (
         <div
           key={column.id}
-          className={`${column.color} rounded-lg p-4 min-h-[600px]`}
-          onDragOver={onDragOver}
-          onDrop={(ev) => onDrop?.(ev, column.id)}
+          className={`${column.color} rounded-lg p-4 min-h-[600px] border-2 border-dashed border-transparent hover:border-gray-300 transition-colors`}
+          onDragOver={handleDragOver}
+          onDrop={(ev) => handleDrop(ev, column.id)}
         >
           {/* Header da coluna */}
           <div className="flex items-center justify-between mb-4">
@@ -120,7 +144,13 @@ export default function SalesKanban({
           {/* Cards da coluna */}
           <div className="space-y-3">
             {loading ? (
-              <div className="text-sm text-gray-600">Carregando...</div>
+              <div className="text-sm text-gray-600 text-center py-8">
+                Carregando...
+              </div>
+            ) : getCardsForColumn(column.id).length === 0 ? (
+              <div className="text-sm text-gray-500 text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                Arraste negociações para aqui
+              </div>
             ) : (
               getCardsForColumn(column.id).map((negociacao) => (
                 <SalesCard
