@@ -27,10 +27,10 @@ export default function GoalsProgress({
             <Progress value={progressoPorcentagem} className="h-2" />
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-blue-800 font-medium">
+          <div className="bg-royal-300 p-4 rounded-lg">
+            <p className="text-white font-medium">
               Faltam apenas {vendasNecessarias} vendas para bater sua meta
-              mensal 🎯
+              mensal
             </p>
           </div>
         </div>
