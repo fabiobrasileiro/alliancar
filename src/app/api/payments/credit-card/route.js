@@ -7,7 +7,6 @@ export async function POST(request) {
     
     console.log('📦 Dados recebidos para pagamento:', body);
 
-    // ✅ FLUXO CORRETO: Primeiro tokenizar o cartão
     const tokenizeData = {
       creditCard: {
         holderName: body.creditCard.holderName,

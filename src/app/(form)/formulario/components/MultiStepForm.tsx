@@ -110,12 +110,10 @@ export function MultiStepForm({ codigoFormulario }: MultiStepFormProps) {
     console.log("💳 Processando pagamento:", paymentData);
 
     try {
-      const response = await fetch("/api/payment/create-card", {
-        method: "POST",
+      const response = await fetch("/api/payments/credit-card", {
+         method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "ci": "testesandbox_1687443996536",
-          "cs": "5b7d6ed3407bc8c7efd45ac9d4c277004145afb96752e1252c2082d3211fe901177e09493c0d4f57b650d2b2fc1b062d"
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(paymentData)
       });
@@ -318,7 +316,7 @@ export function MultiStepForm({ codigoFormulario }: MultiStepFormProps) {
                 onSubmit={form.handleSubmit(handleFinalSubmit)}
                 className="space-y-6"
               >
-                {/* Renderizar o passo atual */}
+                {/* Renderizar o passo atual
                 {currentStepIndex === 0 && <PersonalDataStep form={form} />}
                 {currentStepIndex === 1 && (
                   <VehicleDataStep
@@ -334,18 +332,16 @@ export function MultiStepForm({ codigoFormulario }: MultiStepFormProps) {
                     estados={estados}
                     cidades={cidades}
                   />
-                )}
-                {currentStepIndex === 3 && (
+                )} */}
+                {currentStepIndex === 0 && (
                   <CheckoutStep
                     isSubmitting={isSubmitting}
                     formData={form.getValues()}
                     onProcessPayment={processPayment} // 👈 PASSA A FUNÇÃO DE PAGAMENTO
-                    paymentUrl={""} // Adicione a URL de pagamento aqui
-                    qrCode={""} // Adicione o código QR aqui
                   />
                 )}
 
-                {/* Botões de navegação - esconder na etapa de checkout */}
+                {/* Botões de navegação - esconder na etapa de checkout
                 {currentStepIndex !== 3 && (
                   <FormNavigation
                     isFirstStep={isFirstStep}
@@ -354,7 +350,7 @@ export function MultiStepForm({ codigoFormulario }: MultiStepFormProps) {
                     onBack={back}
                     onNext={handleNext}
                   />
-                )}
+                )} */}
               </form>
             </Form>
 
