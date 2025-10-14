@@ -70,7 +70,7 @@ export default function CheckoutTestPage() {
                 setResultMessage("✅ Checkout criado com sucesso! Redirecionando...");
 
                 // Redireciona para o checkout do Asaas
-                window.location.href = result.payment_url;
+                window.location.href = result.paymentUrl;
 
 
             } else {
