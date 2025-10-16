@@ -2,52 +2,53 @@
 class SimpleCheckout {
     constructor() {
         this.asaasApiKey = process.env.ASAAS_API_KEY;
-        this.asaasURL = 'https://sandbox.asaas.com/api/v3/checkout';
+        this.asaasURL = 'https://api-sandbox.asaas.com/v3/checkouts';
+        this.asaasCheckoutUrl = 'https://asaas.com/checkoutSession/show?id='
     }
 
-    async criarCheckout(dadosFormulario) {
+    async criarCheckout() {
         try {
-            // 🎯 Preparar dados DINÂMICOS do formulário
             const dadosAsaas = {
-                name: `Seguro Veicular - ${dadosFormulario.placa || 'Veículo'}`,
-                description: `Proteção para ${dadosFormulario.marca || ''} ${dadosFormulario.modelo || ''}`,
-                billingTypes: ['CREDIT_CARD'], 
-                chargeTypes: ['RECURRENT'],
-
-                // 🔄 URLs de callback dinâmicas
-                callback: {
-                    successUrl: 'https://example.com/asaas/checkout/success',
-                    cancelUrl: 'https://example.com/asaas/checkout/cancel',
-                    expiredUrl: 'https://example.com/asaas/checkout/expired'
+                "billingTypes": [
+                    "CREDIT_CARD",
+                    // "PIX",
+                ],
+                "chargeTypes": [
+                    "RECURRENT"
+                ],
+                "minutesToExpire": 100,
+                "callback": {
+                    "cancelUrl": "https://google.com/cancel",
+                    "expiredUrl": "https://google.com/expired",
+                    "successUrl": "https://google.com/success"
                 },
-
-                // 🛒 Itens dinâmicos do formulário
-                items: [
+                "items": [
                     {
-                        name: `Seguro - ${dadosFormulario.placa || 'Veículo'}`,
-                        description: `Proteção veicular - ${dadosFormulario.marca} ${dadosFormulario.modelo}`,
-                        value: 200.00,
-                        quantity: 1
+                        "description": "Camiseta Branca",
+                        // "imageBase64": "{{image1}}",
+                        "name": "teste2",
+                        "quantity": 2,
+                        "value": 100.00
                     }
                 ],
-
-                // 👤 Dados do cliente DINÂMICOS
-                customerData: {
-                    name: dadosFormulario.nome || 'Cliente',
-                    email: dadosFormulario.email || 'cliente@email.com',
-                    cpfCnpj: (dadosFormulario.cpfCnpj || '').replace(/\D/g, ''),
-                    phone: (dadosFormulario.telefone || '').replace(/\D/g, ''),
-                    address: dadosFormulario.endereco || 'Endereço não informado',
-                    addressNumber: dadosFormulario.numero || 'S/N',
-                    complement: dadosFormulario.complemento || '',
-                    province: dadosFormulario.estado || 'Estado não informado',
-                    postalCode: (dadosFormulario.cep || '').replace(/\D/g, ''),
-                    city: dadosFormulario.cidade || 'Cidade não informada'
+                "customerData": {
+                    "address": "Avenida Rolf Wiest",
+                    "addressNumber": "277",
+                    "city": 13660,
+                    "complement": "complemento",
+                    "cpfCnpj": "92593962046",
+                    "email": "testenovopagado@asaas.com",
+                    "name": "Teste Novo Pagador",
+                    "phone": "49999009999",
+                    "postalCode": "89223005",
+                    "province": "Bom Retiro"
                 },
+                "subscription": {
+                    "cycle": 'MONTHLY',
+                    "endDate": '2025-31-01',
+                    "nextDueDate": '2025-31-01'
+                }
 
-                // ⏰ Configurações
-                externalReference: dadosFormulario.externalReference,
-                minutesToExpire: 60 // 1 hora para expirar
             };
 
             console.log('📤 Enviando para Asaas:', dadosAsaas);
@@ -55,25 +56,34 @@ class SimpleCheckout {
             const response = await fetch(this.asaasURL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    accept: 'application/json',
+                    'content-type': 'application/json',
                     'access_token': this.asaasApiKey
+
                 },
                 body: JSON.stringify(dadosAsaas)
             });
+            console.log('📨 Status da resposta:', response);
+            console.log('📨 Headers:', Object.fromEntries(response.headers.entries()));
 
             const resultado = await response.json();
+
+            console.log('======= RESPOSTA COMPLETA DO ASASS =======');
+            console.log('Status:', response.status);
+            console.log('Resposta JSON:', JSON.stringify(resultado, null, 2));
+            console.log('==========================================');
+
 
             if (!response.ok) {
                 console.error('❌ Erro Asaas:', resultado);
                 throw new Error(resultado.errors?.[0]?.description || 'Erro no processamento do pagamento');
             }
 
+            console.log('🔍 Campos disponíveis na resposta:', Object.keys(resultado));
+
             return {
                 success: true,
-                checkoutUrl: resultado.link,
-                id: resultado.id,
-                externalReference: resultado.externalReference,
-                status: resultado.status
+                resultado: resultado
             };
 
         } catch (error) {
