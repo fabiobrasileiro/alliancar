@@ -41,15 +41,7 @@ export default function AffiliateDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      // Buscar dados principais
-
-      // const { data: ranking } = await supabase
-      //   .from('afiliados')
-      //   .select('nome_completo, numero_placas')
-      //   .order('numero_placas', { ascending: false });
-
-
-
+    
       const { data: dashboard } = await supabase
         .from("afiliados")
         .select("*")
