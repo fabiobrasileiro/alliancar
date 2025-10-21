@@ -19,7 +19,6 @@ import { DadosAcessoTab } from "./components/DadosAcessoTab";
 
 const Afiliados = () => {
   const supabase = createClient();
-
   const [activeTab, setActiveTab] = useState("dados_pessoais");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,11 +43,8 @@ const Afiliados = () => {
     passwordConfirmation: "",
     foto_perfil_url: "",
   });
-  const { user } = useUser();
-
   const [enderecos, setEnderecos] = useState<Endereco[]>([]);
   const [bancos, setBancos] = useState<Banco[]>([]);
-  const [bucket, setBucket] = useState<Bucket[]>([]);
 
   useEffect(() => {
     fetchPerfil();

@@ -9,6 +9,7 @@ class SimpleCheckout {
     async criarCheckout() {
         try {
             const dadosAsaas = {
+                "externalReference": "83a47952-1bfb-4f62-96c9-884e50efbc26",
                 "billingTypes": [
                     "CREDIT_CARD",
                     // "PIX",
@@ -27,8 +28,8 @@ class SimpleCheckout {
                         "description": "Camiseta Branca",
                         // "imageBase64": "{{image1}}",
                         "name": "teste2",
-                        "quantity": 2,
-                        "value": 100.00
+                        "quantity": 1,
+                        "value": 200.00
                     }
                 ],
                 "customerData": {
@@ -41,7 +42,7 @@ class SimpleCheckout {
                     "name": "Teste Novo Pagador",
                     "phone": "49999009999",
                     "postalCode": "89223005",
-                    "province": "Bom Retiro"
+                    "province": "test",
                 },
                 "subscription": {
                     "cycle": 'MONTHLY',

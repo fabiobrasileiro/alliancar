@@ -103,3 +103,4 @@ export interface AffiliateData {
   qrCode: string;
   rankingTop10: any[];
 }
+
