@@ -129,12 +129,12 @@ class AsaasService {
             console.log('🚀 INICIANDO FLUXO COMPLETO ASAAS');
             
             const externalReference = "83a47952-1bfb-4f62-96c9-884e50efbc26";
-            const valor = 200.00;
+            const valor = 150.00;
 
             // 1. CRIAR CUSTOMER
             const customerData = {
-                name: "Teste Novo Pagador",
-                email: "testenovopagado@asaas.com",
+                name: "Teste ",
+                email: "teste@asaas.com",
                 phone: "49999009999",
                 mobilePhone: "49999009999",
                 cpfCnpj: "92593962046",

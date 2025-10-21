@@ -5,8 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 
 // Inicializar Supabase
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
 // Funções handlers inline (ou importe de um arquivo separado)
