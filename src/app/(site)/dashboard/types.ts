@@ -1,25 +1,9 @@
 // types/dashboard.ts
-export interface AfiliadoDashboard {
-  afiliado_id: string;
+export interface AfiliadoData {
   afiliado_nome: string;
-  afiliado_email: string;
-  customer_id: string;
-  customer_nome: string;
-  customer_email: string;
-  customer_telefone: string;
-  subscription_id: string;
-  subscription_tipo: string;
-  subscription_valor: number;
-  subscription_status: string;
-  subscription_proximo_vencimento: string;
-  ultimo_payment_status: string;
-  ultimo_payment_valor: number;
-  total_pagos: number;
-  total_pendentes: number;
-  total_vencidos: number;
-  valor_total_recebido: number;
-  status_consolidado: string;
-  dias_ate_vencimento: number;
+  subscription_value: number;
+  payment_value: number;
+  customers_count: number;
 }
 
 export interface PerformanceAfiliado {
