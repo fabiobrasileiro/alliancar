@@ -40,39 +40,26 @@ export default function CheckoutTestPage() {
     const handleAsaasSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // 🛡️ Validação básica
-        if (!formData.nome || !formData.email || !formData.telefone || !formData.placa) {
-            setResultMessage("❌ Preencha todos os campos obrigatórios");
-            return;
-        }
-
-        setIsProcessing(true);
-        setResultMessage(null);
-        setCheckoutData(null);
-
-        console.log("📤 Enviando dados para Asaas:", formData);
-
         try {
-            const response = await fetch("/api/checkout-simples", { // ← Rota do seu arquivo API
+            const response = await fetch("/api/checkout", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-
-                },
-                body: JSON.stringify(formData)
             });
 
             const result = await response.json();
-            console.log("✅ Resposta do Asaas:", result);
-
+            console.log("======= RESPOSTA DA NOSSA API =======");
+            console.log("✅ Resposta completa:", result);
+            console.log("✅ Success:", result.success);
+            console.log("✅ Resultado:", result.resultado.link);
+            if (result.resultado) {
+                console.log("✅ Campos no resultado:", Object.keys(result.resultado));
+            }
+            console.log("======================================");
+            
             if (result.success) {
                 setCheckoutData(result);
                 setResultMessage("✅ Checkout criado com sucesso! Redirecionando...");
 
-                // Redireciona para o checkout do Asaas
-                window.location.href = result.paymentUrl;
-
-
+                window.location.href = result.resultado.link;
             } else {
                 setResultMessage(`❌ Erro: ${result.error || "Falha ao criar checkout"}`);
             }

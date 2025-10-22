@@ -29,7 +29,7 @@ export default function GoalsProgress({
 
           <div className="bg-royal-300 p-4 rounded-lg">
             <p className="text-white font-medium">
-              Faltam apenas R$ {vendasNecessarias},00 para bater sua meta
+              Faltam apenas {vendasNecessarias} vendas para bater sua meta
               mensal
             </p>
           </div>

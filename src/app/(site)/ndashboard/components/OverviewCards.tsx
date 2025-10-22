@@ -1,8 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 
 interface OverviewCardsProps {
-  valorAdesao: number;
-  saldoPendente: number;
+  valorAdesao: string;
+  saldoPendente: string;
   vendasMes: number;
   ranking: number;
 }

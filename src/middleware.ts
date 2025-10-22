@@ -18,6 +18,7 @@ export async function middleware(request: NextRequest) {
     "/_next",
     "/api",
     "/public",
+    "/checkout-test",
   ];
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 

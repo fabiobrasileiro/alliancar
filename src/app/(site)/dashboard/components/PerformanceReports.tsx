@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,502 +11,532 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Performance } from "./types";
-import { useState, useMemo } from "react";
-import { ChevronUp, ChevronDown, Filter, X, Download, FileText, Sheet } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Download, RefreshCw, Filter, Calendar } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { useUser } from "@/context/UserContext";
 
-interface PerformanceReportsProps {
-  performance: Performance[];
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
 }
 
-type SortField = keyof Performance | '';
-type SortDirection = 'asc' | 'desc';
-type ExportFormat = 'csv' | 'json' | 'xlsx';
+interface Cobranca {
+  id: string;
+  customer: string;
+  value: number;
+  due_date: string;
+  status: string;
+  billing_type: string;
+  description: string | null;
+  external_reference: string | null;
+  payment_date: string | null;
+  confirmed_date: string | null;
+  invoice_url: string | null;
+  invoice_number: string | null;
+  created_at: string;
+  customers: Customer | null;
+}
 
-export default function PerformanceReports({
-  performance,
-}: PerformanceReportsProps) {
-  // Estados dos filtros
-  const [statusFilter, setStatusFilter] = useState<string>("todos");
-  const [clienteFilter, setClienteFilter] = useState<string>("");
-  const [valorMinFilter, setValorMinFilter] = useState<string>("");
-  const [valorMaxFilter, setValorMaxFilter] = useState<string>("");
-  const [dataInicioFilter, setDataInicioFilter] = useState<string>("");
-  const [dataFimFilter, setDataFimFilter] = useState<string>("");
-  const [sortField, setSortField] = useState<SortField>('');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [showFilters, setShowFilters] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+interface Filtros {
+  status: string;
+  tipo: string;
+  dataInicio: string;
+  dataFim: string;
+}
 
-  // Filtra e ordena os dados
-  const filteredPerformance = useMemo(() => {
-    let filtered = performance.filter((item) => {
-      // Filtro por status
-      const statusMatch = statusFilter === "todos" || item.status === statusFilter;
-      
-      // Filtro por cliente
-      const clienteMatch = !clienteFilter || 
-        item.cliente.toLowerCase().includes(clienteFilter.toLowerCase());
-      
-      // Filtro por valor
-      const valor = parseFloat(item.valor.replace('R$', '').replace('.', '').replace(',', '.'));
-      const valorMin = valorMinFilter ? parseFloat(valorMinFilter) : -Infinity;
-      const valorMax = valorMaxFilter ? parseFloat(valorMaxFilter) : Infinity;
-      const valorMatch = valor >= valorMin && valor <= valorMax;
-      
-      // Filtro por data
-      const itemDate = new Date(item.data.split('/').reverse().join('-'));
-      const dataInicio = dataInicioFilter ? new Date(dataInicioFilter) : null;
-      const dataFim = dataFimFilter ? new Date(dataFimFilter) : null;
-      
-      let dataMatch = true;
-      if (dataInicio) dataMatch = dataMatch && itemDate >= dataInicio;
-      if (dataFim) dataMatch = dataMatch && itemDate <= dataFim;
-      
-      return statusMatch && clienteMatch && valorMatch && dataMatch;
-    });
+export default function PerformanceReports() {
+  const supabase = createClient();
+  const { perfil } = useUser();
+  const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
+  const [cobrancasFiltradas, setCobrancasFiltradas] = useState<Cobranca[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [mostrarFiltros, setMostrarFiltros] = useState(false);
+  const [filtros, setFiltros] = useState<Filtros>({
+    status: 'TODOS',
+    tipo: 'TODOS',
+    dataInicio: '',
+    dataFim: ''
+  });
 
-    // Ordenação
-    if (sortField) {
-      filtered.sort((a, b) => {
-        let aValue: any = a[sortField];
-        let bValue: any = b[sortField];
-
-        // Converte valores para comparação
-        if (sortField === 'valor') {
-          aValue = parseFloat(aValue.replace('R$', '').replace('.', '').replace(',', '.'));
-          bValue = parseFloat(bValue.replace('R$', '').replace('.', '').replace(',', '.'));
-        } else if (sortField === 'data') {
-          aValue = new Date(aValue.split('/').reverse().join('-'));
-          bValue = new Date(bValue.split('/').reverse().join('-'));
-        }
-
-        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-
-    return filtered;
-  }, [
-    performance, 
-    statusFilter, 
-    clienteFilter, 
-    valorMinFilter, 
-    valorMaxFilter, 
-    dataInicioFilter, 
-    dataFimFilter,
-    sortField,
-    sortDirection
-  ]);
-
-  // Função para exportar dados
-  const exportData = async (format: ExportFormat) => {
-    setIsExporting(true);
+  // Busca as cobranças diretamente das tabelas
+  const fetchCobrancas = useCallback(async () => {
+    if (!perfil?.id) return;
     
     try {
-      const dataToExport = filteredPerformance.map(item => ({
-        Data: item.data,
-        Cliente: item.cliente,
-        Valor: item.valor,
-        Comissão: item.comissao,
-        Status: item.status,
-        ID: item.id
-      }));
+      setLoading(true);
+      setError("");
 
-      let blob: Blob;
-      let filename: string;
-      const timestamp = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('payments')
+        .select(`
+          id,
+          customer,
+          value,
+          due_date,
+          status,
+          billing_type,
+          description,
+          external_reference,
+          payment_date,
+          confirmed_date,
+          invoice_url,
+          invoice_number,
+          created_at,
+          customers (
+            id,
+            name,
+            email
+          )
+        `)
+        .eq('afiliado_id', perfil.id)
+        .eq('deleted', false)
+        .order('due_date', { ascending: false })
+        .limit(500);
 
-      switch (format) {
-        case 'csv':
-          const headers = ['Data', 'Cliente', 'Valor', 'Comissão', 'Status', 'ID'];
-          const csvContent = [
-            headers.join(','),
-            ...dataToExport.map(row => 
-              headers.map(header => {
-                const value = row[header as keyof typeof row];
-                // Escapa vírgulas e aspas para CSV
-                return `"${String(value).replace(/"/g, '""')}"`;
-              }).join(',')
-            )
-          ].join('\n');
-          
-          blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-          filename = `relatorio-performance-${timestamp}.csv`;
-          break;
-
-        case 'json':
-          const jsonContent = JSON.stringify(dataToExport, null, 2);
-          blob = new Blob([jsonContent], { type: 'application/json' });
-          filename = `relatorio-performance-${timestamp}.json`;
-          break;
-
-        case 'xlsx':
-          // Para XLSX, usamos uma solução simples com HTML table
-          // Em produção, você pode usar uma lib como sheetjs
-          const htmlTable = `
-            <html xmlns:o="urn:schemas-microsoft-com:office:office" 
-                  xmlns:x="urn:schemas-microsoft-com:office:excel" 
-                  xmlns="http://www.w3.org/TR/REC-html40">
-            <head>
-              <meta charset="UTF-8">
-              <title>Relatório Performance</title>
-              <!--[if gte mso 9]>
-              <xml>
-                <x:ExcelWorkbook>
-                  <x:ExcelWorksheets>
-                    <x:ExcelWorksheet>
-                      <x:Name>Relatório</x:Name>
-                      <x:WorksheetOptions>
-                        <x:DisplayGridlines/>
-                      </x:WorksheetOptions>
-                    </x:ExcelWorksheet>
-                  </x:ExcelWorksheets>
-                </x:ExcelWorkbook>
-              </xml>
-              <![endif]-->
-            </head>
-            <body>
-              <table border="1">
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Cliente</th>
-                    <th>Valor</th>
-                    <th>Comissão</th>
-                    <th>Status</th>
-                    <th>ID</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${dataToExport.map(row => `
-                    <tr>
-                      <td>${row.Data}</td>
-                      <td>${row.Cliente}</td>
-                      <td>${row.Valor}</td>
-                      <td>${row.Comissão}</td>
-                      <td>${row.Status}</td>
-                      <td>${row.ID}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            </body>
-            </html>
-          `;
-          
-          blob = new Blob([htmlTable], { 
-            type: 'application/vnd.ms-excel' 
-          });
-          filename = `relatorio-performance-${timestamp}.xls`;
-          break;
+      if (error) {
+        throw error;
       }
 
-      // Cria download link
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      console.log(`Exportado com sucesso: ${filename}`);
-
-    } catch (error) {
-      console.error('Erro ao exportar:', error);
-      alert('Erro ao exportar os dados. Tente novamente.');
+      const rawData = data || [];
+      const cobrancasData: Cobranca[] = rawData.map((item: any) => ({
+        id: item.id,
+        customer: item.customer,
+        value: item.value,
+        due_date: item.due_date,
+        status: item.status,
+        billing_type: item.billing_type,
+        description: item.description,
+        external_reference: item.external_reference,
+        payment_date: item.payment_date,
+        confirmed_date: item.confirmed_date,
+        invoice_url: item.invoice_url,
+        invoice_number: item.invoice_number,
+        created_at: item.created_at,
+        customers: Array.isArray(item.customers)
+          ? (item.customers[0] ?? null)
+          : (item.customers ?? null),
+      }));
+      setCobrancas(cobrancasData);
+      setCobrancasFiltradas(cobrancasData);
+    } catch (err: any) {
+      console.error('Erro ao buscar cobranças:', err);
+      setError(err.message || "Erro ao carregar cobranças");
     } finally {
-      setIsExporting(false);
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [perfil?.id, supabase]);
+
+  useEffect(() => {
+    fetchCobrancas();
+  }, [fetchCobrancas]);
+
+  // Aplicar filtros
+  useEffect(() => {
+    let resultado = cobrancas;
+
+    if (filtros.status !== 'TODOS') {
+      resultado = resultado.filter(cobranca => cobranca.status === filtros.status);
+    }
+
+    if (filtros.tipo !== 'TODOS') {
+      resultado = resultado.filter(cobranca => cobranca.billing_type === filtros.tipo);
+    }
+
+    if (filtros.dataInicio) {
+      resultado = resultado.filter(cobranca => 
+        new Date(cobranca.due_date) >= new Date(filtros.dataInicio)
+      );
+    }
+
+    if (filtros.dataFim) {
+      resultado = resultado.filter(cobranca => 
+        new Date(cobranca.due_date) <= new Date(filtros.dataFim)
+      );
+    }
+
+    setCobrancasFiltradas(resultado);
+  }, [cobrancas, filtros]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchCobrancas();
+  };
+
+  const limparFiltros = () => {
+    setFiltros({
+      status: 'TODOS',
+      tipo: 'TODOS',
+      dataInicio: '',
+      dataFim: ''
+    });
+  };
+
+  // Função para exportar dados
+  const exportToCSV = () => {
+    const headers = ["Cliente", "Email", "Valor", "Data Vencimento", "Status", "Tipo", "Descrição", "Referência", "Data Pagamento", "Número Fatura"];
+    const csvContent = [
+      headers.join(","),
+      ...cobrancasFiltradas.map(item => [
+        `"${item.customers?.name || 'N/A'}"`,
+        `"${item.customers?.email || 'N/A'}"`,
+        item.value.toFixed(2),
+        new Date(item.due_date).toISOString().split('T')[0],
+        item.status,
+        item.billing_type,
+        `"${item.description || ''}"`,
+        `"${item.external_reference || ''}"`,
+        item.payment_date ? new Date(item.payment_date).toISOString().split('T')[0] : '',
+        `"${item.invoice_number || ''}"`
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `cobrancas-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Formata valor em Real
+  const formatarValor = (valor: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(valor);
+  };
+
+  // Formata data
+  const formatarData = (data: string) => {
+    return new Date(data).toLocaleDateString('pt-BR');
+  };
+
+  // Formata data e hora
+  const formatarDataHora = (data: string) => {
+    return new Date(data).toLocaleString('pt-BR');
+  };
+
+  // Cor do badge baseada no status
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'CONFIRMED':
+        return "bg-green-100 text-green-800 border-green-200";
+      case 'PENDING':
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case 'RECEIVED':
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case 'OVERDUE':
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  // Dropdown de exportação
-  const ExportDropdown = () => (
-    <div className="relative group">
-      <Button 
-        variant="outline" 
-        size="sm"
-        disabled={isExporting}
-        className="flex items-center gap-2"
-      >
-        <Download className="w-4 h-4" />
-        {isExporting ? 'Exportando...' : 'Exportar'}
-      </Button>
-      
-      <div className="absolute right-0 top-full mt-1 w-48 bg-white border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-        <button
-          onClick={() => exportData('csv')}
-          disabled={isExporting}
-          className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-        >
-          <FileText className="w-4 h-4" />
-          Exportar CSV
-        </button>
-        <button
-          onClick={() => exportData('json')}
-          disabled={isExporting}
-          className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-        >
-          <FileText className="w-4 h-4" />
-          Exportar JSON
-        </button>
-        <button
-          onClick={() => exportData('xlsx')}
-          disabled={isExporting}
-          className="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-        >
-          <Sheet className="w-4 h-4" />
-          Exportar Excel
-        </button>
-      </div>
-    </div>
-  );
-
-  // Manipulação da ordenação
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
+  // Texto do status em português
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'CONFIRMED': return 'Confirmado';
+      case 'PENDING': return 'Pendente';
+      case 'RECEIVED': return 'Recebido';
+      case 'OVERDUE': return 'Atrasado';
+      default: return status;
     }
   };
 
-  // Limpar todos os filtros
-  const clearFilters = () => {
-    setStatusFilter("todos");
-    setClienteFilter("");
-    setValorMinFilter("");
-    setValorMaxFilter("");
-    setDataInicioFilter("");
-    setDataFimFilter("");
-    setSortField('');
-    setSortDirection('asc');
+  // Tipo de cobrança em português
+  const getTipoText = (tipo: string) => {
+    switch (tipo) {
+      case 'BOLETO': return 'Boleto';
+      case 'CREDIT_CARD': return 'Cartão';
+      case 'PIX': return 'PIX';
+      default: return tipo;
+    }
   };
 
-  // Verifica se há filtros ativos
-  const hasActiveFilters = 
-    statusFilter !== "todos" ||
-    clienteFilter !== "" ||
-    valorMinFilter !== "" ||
-    valorMaxFilter !== "" ||
-    dataInicioFilter !== "" ||
-    dataFimFilter !== "";
-
-  // Renderiza ícone de ordenação
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
+  // Verificar se cobrança está atrasada
+  const isAtrasada = (dueDate: string, status: string) => {
+    return status === 'PENDING' && new Date(dueDate) < new Date();
   };
+
+  // Estatísticas
+  const totalValor = cobrancasFiltradas.reduce((sum, item) => sum + item.value, 0);
+  const cobrancasConfirmadas = cobrancasFiltradas.filter(item => item.status === 'CONFIRMED').length;
+  const cobrancasPendentes = cobrancasFiltradas.filter(item => item.status === 'PENDING').length;
+  const cobrancasAtrasadas = cobrancasFiltradas.filter(item => isAtrasada(item.due_date, item.status)).length;
+
 
   return (
     <Card className="mb-8">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Relatórios de Performance</CardTitle>
-        <div className="flex gap-2">
-          <ExportDropdown />
+        <div>
+          <CardTitle>Relatórios de Cobranças</CardTitle>
+          <p className="text-sm text-gray-500 mt-1">
+            Acompanhe todas as suas cobranças e pagamentos
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => setShowFilters(!showFilters)}
+            onClick={() => setMostrarFiltros(!mostrarFiltros)}
             className="flex items-center gap-2"
           >
             <Filter className="w-4 h-4" />
             Filtros
-            {hasActiveFilters && (
-              <Badge variant="default" className="ml-1 bg-blue-500 text-white">
-                !
-              </Badge>
-            )}
           </Button>
-          {/* <Button variant="outline">Ver Relatório Completo</Button> */}
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={exportToCSV}
+            className="flex items-center gap-2"
+            disabled={cobrancasFiltradas.length === 0}
+          >
+            <Download className="w-4 h-4" />
+            Exportar CSV
+          </Button>
         </div>
       </CardHeader>
       
       <CardContent>
-        {/* Seção de Filtros Expandível */}
-        {showFilters && (
-          <div className="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg border">
-            <div className="flex justify-between items-center w-full mb-2">
-              <h3 className="font-semibold">Filtros</h3>
-              <div className="flex gap-2">
-                {hasActiveFilters && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={clearFilters}
-                    className="flex items-center gap-1"
-                  >
-                    <X className="w-4 h-4" />
-                    Limpar
-                  </Button>
-                )}
+        {/* Filtros */}
+        {mostrarFiltros && (
+          <div className="bg-gray-50 p-4 rounded-lg mb-6 border">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select 
+                  value={filtros.status}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, status: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="TODOS">Todos os status</option>
+                  <option value="PENDING">Pendente</option>
+                  <option value="CONFIRMED">Confirmado</option>
+                  <option value="RECEIVED">Recebido</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo
+                </label>
+                <select 
+                  value={filtros.tipo}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, tipo: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                >
+                  <option value="TODOS">Todos os tipos</option>
+                  <option value="BOLETO">Boleto</option>
+                  <option value="CREDIT_CARD">Cartão</option>
+                  <option value="PIX">PIX</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data Início
+                </label>
+                <input
+                  type="date"
+                  value={filtros.dataInicio}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, dataInicio: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data Fim
+                </label>
+                <input
+                  type="date"
+                  value={filtros.dataFim}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, dataFim: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                />
               </div>
             </div>
-
-            {/* Filtro por Status */}
-            <div className="flex flex-col gap-2 min-w-[150px]">
-              <label className="text-sm font-medium">Status</label>
-              <select 
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="p-2 border rounded-md text-sm"
+            
+            <div className="flex justify-end mt-3">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={limparFiltros}
               >
-                <option value="todos">Todos</option>
-                <option value="pago">Pago</option>
-                <option value="pendente">Pendente</option>
-                <option value="processando">Processando</option>
-              </select>
-            </div>
-
-            {/* Filtro por Cliente */}
-            <div className="flex flex-col gap-2 min-w-[200px]">
-              <label className="text-sm font-medium">Cliente</label>
-              <input 
-                type="text"
-                placeholder="Buscar cliente..."
-                value={clienteFilter}
-                onChange={(e) => setClienteFilter(e.target.value)}
-                className="p-2 border rounded-md text-sm"
-              />
-            </div>
-
-            {/* Filtro por Valor */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Valor (R$)</label>
-              <div className="flex gap-2">
-                <input 
-                  type="number"
-                  placeholder="Mín"
-                  value={valorMinFilter}
-                  onChange={(e) => setValorMinFilter(e.target.value)}
-                  className="p-2 border rounded-md text-sm w-20"
-                />
-                <span className="self-center">-</span>
-                <input 
-                  type="number"
-                  placeholder="Máx"
-                  value={valorMaxFilter}
-                  onChange={(e) => setValorMaxFilter(e.target.value)}
-                  className="p-2 border rounded-md text-sm w-20"
-                />
-              </div>
-            </div>
-
-            {/* Filtro por Período */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Período</label>
-              <div className="flex gap-2">
-                <input 
-                  type="date"
-                  value={dataInicioFilter}
-                  onChange={(e) => setDataInicioFilter(e.target.value)}
-                  className="p-2 border rounded-md text-sm"
-                />
-                <span className="self-center">até</span>
-                <input 
-                  type="date"
-                  value={dataFimFilter}
-                  onChange={(e) => setDataFimFilter(e.target.value)}
-                  className="p-2 border rounded-md text-sm"
-                />
-              </div>
+                Limpar Filtros
+              </Button>
             </div>
           </div>
         )}
 
-        {/* Contador de resultados */}
-        <div className="flex justify-between items-center mb-4 px-8">
-          <div className="text-sm text-gray-600">
-            Mostrando {filteredPerformance.length} de {performance.length} resultados
-            {hasActiveFilters && " (filtrado)"}
+        {/* Resumo */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-blue-50 p-4 rounded-lg border">
+            <div className="text-blue-600 text-sm font-medium">Total</div>
+            <div className="text-2xl font-bold text-blue-800">{cobrancasFiltradas.length}</div>
+            <div className="text-xs text-blue-600">cobranças</div>
           </div>
-          
-          {filteredPerformance.length > 0 && (
-            <div className="text-xs text-gray-500">
-              Dados prontos para exportação
+          <div className="bg-green-50 p-4 rounded-lg border">
+            <div className="text-green-600 text-sm font-medium">Valor Total</div>
+            <div className="text-2xl font-bold text-green-800">
+              {formatarValor(totalValor)}
             </div>
-          )}
+          </div>
+          <div className="bg-purple-50 p-4 rounded-lg border">
+            <div className="text-purple-600 text-sm font-medium">Confirmadas</div>
+            <div className="text-2xl font-bold text-purple-800">
+              {cobrancasConfirmadas}
+            </div>
+          </div>
+          <div className="bg-orange-50 p-4 rounded-lg border">
+            <div className="text-orange-600 text-sm font-medium">Pendentes</div>
+            <div className="text-2xl font-bold text-orange-800">
+              {cobrancasPendentes}
+            </div>
+            {cobrancasAtrasadas > 0 && (
+              <div className="text-xs text-red-600 mt-1">
+                {cobrancasAtrasadas} atrasadas
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Tabela com ordenação */}
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead 
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort('data')}
-              >
-                <div className="flex items-center gap-1">
-                  Data
-                  {renderSortIcon('data')}
-                </div>
-              </TableHead>
-              <TableHead 
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort('cliente')}
-              >
-                <div className="flex items-center gap-1">
-                  Cliente
-                  {renderSortIcon('cliente')}
-                </div>
-              </TableHead>
-              <TableHead 
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort('valor')}
-              >
-                <div className="flex items-center gap-1">
-                  Valor
-                  {renderSortIcon('valor')}
-                </div>
-              </TableHead>
-              <TableHead 
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort('comissao')}
-              >
-                <div className="flex items-center gap-1">
-                  Comissão
-                  {renderSortIcon('comissao')}
-                </div>
-              </TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredPerformance.length > 0 ? (
-              filteredPerformance.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.data}</TableCell>
-                  <TableCell>{item.cliente}</TableCell>
-                  <TableCell>{item.valor}</TableCell>
-                  <TableCell>{item.comissao}</TableCell>
-                  <TableCell>
-                    <Badge
-                      className={
-                        item.status === "pago"
-                          ? "bg-green-100 text-green-800"
-                          : item.status === "pendente"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-blue-100 text-blue-800"
-                      }
-                    >
-                      {item.status}
-                    </Badge>
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center mb-4">
+            <div className="text-red-800 font-medium">Erro ao carregar cobranças</div>
+            <div className="text-red-600 text-sm mt-1">{error}</div>
+            <Button 
+              onClick={handleRefresh} 
+              className="mt-3"
+              variant="outline"
+              size="sm"
+            >
+              Tentar Novamente
+            </Button>
+          </div>
+        )}
+
+        {/* Tabela */}
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Valor</TableHead>
+                <TableHead>Vencimento</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Pagamento</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cobrancasFiltradas.length > 0 ? (
+                cobrancasFiltradas.map((cobranca) => {
+                  const atrasada = isAtrasada(cobranca.due_date, cobranca.status);
+                  
+                  return (
+                    <TableRow key={cobranca.id} className="hover:bg-gray-50/50">
+                      <TableCell className="font-medium">
+                        <div className="font-semibold">{cobranca.customers?.name || 'Cliente não encontrado'}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {cobranca.customers?.email || 'Email não disponível'}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          ID: {cobranca.customer}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        {formatarValor(cobranca.value)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-gray-400" />
+                          <span className={atrasada ? "text-red-600 font-medium" : ""}>
+                            {formatarData(cobranca.due_date)}
+                          </span>
+                        </div>
+                        {atrasada && (
+                          <div className="text-xs text-red-500 mt-1">Atrasada</div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="default" className={getStatusColor(cobranca.status)}>
+                          {getStatusText(cobranca.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-600">
+                          {getTipoText(cobranca.billing_type)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="max-w-[200px]">
+                        <span className="text-sm text-gray-600 truncate block" title={cobranca.description || ''}>
+                          {cobranca.description || '-'}
+                        </span>
+                        {cobranca.external_reference && (
+                          <div className="text-xs text-gray-400 mt-1">
+                            Ref: {cobranca.external_reference}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {cobranca.payment_date ? (
+                          <div className="text-sm">
+                            <div>{formatarData(cobranca.payment_date)}</div>
+                            {cobranca.invoice_number && (
+                              <div className="text-xs text-gray-500">
+                                #{cobranca.invoice_number}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-12 text-gray-500">
+                    {cobrancas.length === 0 ? 'Nenhuma cobrança encontrada' : 'Nenhuma cobrança corresponde aos filtros'}
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                  Nenhum resultado encontrado com os filtros atuais
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="mt-4 text-sm text-gray-600 flex justify-between items-center">
+          <span>
+            Mostrando {cobrancasFiltradas.length} de {cobrancas.length} cobranças
+            {filtros.status !== 'TODOS' || filtros.tipo !== 'TODOS' || filtros.dataInicio || filtros.dataFim ? ' (filtradas)' : ''}
+          </span>
+          {cobrancasFiltradas.length > 0 && (
+            <span>Atualizado: {new Date().toLocaleTimeString('pt-BR')}</span>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

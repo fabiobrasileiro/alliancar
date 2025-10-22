@@ -22,6 +22,7 @@ interface UserPerfil {
   tipo: string;
   criado_em: string;
   atualizado_em: string;
+  meta: number;
 }
 
 interface UserContextType {
