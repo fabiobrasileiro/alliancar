@@ -41,7 +41,7 @@ export default function CheckoutTestPage() {
         e.preventDefault();
 
         try {
-            const response = await fetch("/api/checkout", {
+            const response = await fetch("/api/assinatura", {
                 method: "POST",
             });
 
@@ -58,6 +58,8 @@ export default function CheckoutTestPage() {
             if (result.success) {
                 setCheckoutData(result);
                 setResultMessage("✅ Checkout criado com sucesso! Redirecionando...");
+
+                const paymentLink = ``
 
                 window.location.href = result.resultado.link;
             } else {
