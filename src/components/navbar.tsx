@@ -100,7 +100,7 @@ export default function Navbar() {
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", current: false },
-    { name: "Vendas", href: "/vendas", current: false },
+    // { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Financeiro", href: "/conta", current: false },
     { name: "Atividades", href: "/atividades", current: false },
@@ -111,7 +111,7 @@ export default function Navbar() {
   ];
   const navigationAfiliado = [
     { name: "Dashboard", href: "/dashboard", current: false },
-    { name: "Vendas", href: "/vendas", current: false },
+    // { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Atividades", href: "/atividades", current: false },
     { name: "Financeiro", href: "/conta", current: false },
