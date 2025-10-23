@@ -38,10 +38,12 @@ interface FormState {
   description: string;
   creditCard: CreditCard;
   creditCardHolderInfo: CreditCardHolderInfo;
+  externalReference: string | undefined;
 }
 
 export default function CheckoutPage() {
-  const { afiliadoId } = useParams();
+  const { afiliadoId } = useParams<{afiliadoId?: string}>();
+  console.log(afiliadoId)
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 
@@ -56,7 +58,8 @@ export default function CheckoutPage() {
     complement: "",
     province: "",
     postalCode: "",
-    value: "150",
+    value: "200",
+    externalReference: afiliadoId,
     description: "Assinatura Plano Pró",
     creditCard: {
       holderName: "",
@@ -109,7 +112,7 @@ export default function CheckoutPage() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, afiliadoId }),
+        body: JSON.stringify({ ...form }),
       });
 
       const data = await res.json();
