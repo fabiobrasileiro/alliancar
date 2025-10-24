@@ -61,7 +61,7 @@ function Progress({
               >
                 {percentage}%
               </TooltipTrigger>
-              <TooltipContent>
+              <TooltipContent className="bg-amber-400">
                 <p>{tooltipValues[index]}</p>
               </TooltipContent>
             </Tooltip>

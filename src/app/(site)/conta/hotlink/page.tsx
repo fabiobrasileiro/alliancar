@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/context/UserContext";
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, ExternalLink, Download } from "lucide-react";
 
 interface Hotlink {
   id: string;
@@ -14,26 +14,30 @@ interface Hotlink {
 }
 
 interface Afiliado {
-  form_link: string;
+  id: string;
 }
 
 export default function Powerlinks() {
   const [afiliado, setAfiliado] = useState<Afiliado | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copying, setCopying] = useState<string | null>(null);
   const supabase = createClient();
-  const { user } = useUser();
+  const { user, perfil } = useUser();
 
   useEffect(() => {
     if (user?.id) {
       fetchAfiliadoData();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
   const fetchAfiliadoData = async () => {
     try {
+      setLoading(true);
       const { data: afiliadoData, error } = await supabase
         .from("afiliados")
-        .select("form_link")
+        .select("*")
         .eq("auth_id", user?.id)
         .single();
 
@@ -45,17 +49,35 @@ export default function Powerlinks() {
       setAfiliado(afiliadoData);
     } catch (error) {
       console.error("Erro ao buscar dados do afiliado:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert("Link copiado com sucesso!");
+  const copyToClipboard = async (text: string, linkId: string) => {
+    setCopying(linkId);
+    try {
+      await navigator.clipboard.writeText(text);
+      // Using toast instead of alert for better UX
+      alert("Link copiado com sucesso!");
+    } catch (error) {
+      alert("Erro ao copiar link");
+    } finally {
+      setTimeout(() => setCopying(null), 1000);
+    }
   };
 
-  // Gerar QR Code URL usando um serviço online
   const generateQRCode = (url: string) => {
     return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+  };
+
+  const downloadQRCode = (url: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filename}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Links combinados - padrão + personalizados
@@ -64,15 +86,18 @@ export default function Powerlinks() {
       id: "default",
       nome: "Formulário LP",
       url: `https://alliancar.vercel.app/formulario/formulariolp`,
-      qrcode_url: afiliado?.form_link ? generateQRCode(`https://alliancar.vercel.app/formulario/formulariolp`) : undefined
+      qrcode_url: generateQRCode(`https://alliancar.vercel.app/formulario/formulariolp`)
     },
     {
       id: "afiliado",
       nome: "Formulário Principal",
-      url: `https://alliancar.vercel.app/formulario/${afiliado?.form_link || ''}`,
-      qrcode_url: afiliado?.form_link ? generateQRCode(`https://alliancar.vercel.app/formulario/${afiliado.form_link}`) : undefined
+      url: `https://alliancar.vercel.app/formulario/${afiliado?.id || ''}`,
+      qrcode_url: afiliado?.id ? generateQRCode(`https://alliancar.vercel.app/formulario/${afiliado.id}`) : undefined
     },
   ];
+
+
+
 
   return (
     <SidebarLayout>
@@ -100,7 +125,7 @@ export default function Powerlinks() {
               >
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* QR Code para todos os links */}
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex flex-col items-center gap-2">
                     <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center border">
                       {link.qrcode_url ? (
                         <img
@@ -114,6 +139,17 @@ export default function Powerlinks() {
                         </span>
                       )}
                     </div>
+                    {link.qrcode_url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadQRCode(link.qrcode_url!, link.nome)}
+                        className="flex items-center gap-1"
+                      >
+                        <Download className="w-3 h-3" />
+                        Baixar QR
+                      </Button>
+                    )}
                   </div>
 
                   {/* Informações do link */}
@@ -134,12 +170,13 @@ export default function Powerlinks() {
                     {/* Botões de ação */}
                     <div className="flex flex-wrap gap-2">
                       <Button
-                        onClick={() => copyToClipboard(link.url)}
+                        onClick={() => copyToClipboard(link.url, link.id)}
+                        disabled={copying === link.id}
                         className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
                         size="sm"
                       >
                         <Copy className="w-4 h-4" />
-                        Copiar Link
+                        {copying === link.id ? "Copiado!" : "Copiar Link"}
                       </Button>
 
                       <a
@@ -169,9 +206,10 @@ export default function Powerlinks() {
           <ul className="text-blue-700 text-sm space-y-1">
             <li>• Compartilhe os links com seus clientes por WhatsApp, e-mail ou redes sociais</li>
             <li>• Use o QR Code para materiais impressos ou apresentações</li>
+            <li>• Baixe o QR Code para usar em materiais offline</li>
           </ul>
         </div>
       </div>
     </SidebarLayout>
   );
-} 
+}

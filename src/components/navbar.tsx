@@ -47,7 +47,7 @@ export default function Navbar() {
   const { user, perfil } = useUser();
   const [loading, setLoading] = useState(true);
   const [perfilData, setPerfilData] = useState<any>(null);
-  const [afiliadoLink, setAfiliadoLink] = useState<any>(null);
+  const [ afiliadoLink, setAfiliadoLink] = useState<any>(null);
 
   useEffect(() => {
     fetchPerfil();
@@ -79,7 +79,7 @@ export default function Navbar() {
 
       if (perfilResponse) {
         setPerfilData(perfilResponse);
-        setAfiliadoLink(perfilResponse.form_link)
+        setAfiliadoLink(perfilResponse.id)
         console.log("perfilResponse:", perfilResponse)
 
       }
@@ -90,17 +90,16 @@ export default function Navbar() {
       setLoading(false);
     }
   };
-  console.log("afiliadoLInk:", afiliadoLink)
 
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(`https://alliancar.vercel.app/formulario/` + text);
+    navigator.clipboard.writeText(`http://localhost:3000/formulario/` + text);
     toast.success("Link copiado para a área de transferência!");
   };
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", current: false },
-    { name: "Vendas", href: "/vendas", current: false },
+    // { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Financeiro", href: "/conta", current: false },
     { name: "Atividades", href: "/atividades", current: false },
@@ -111,11 +110,12 @@ export default function Navbar() {
   ];
   const navigationAfiliado = [
     { name: "Dashboard", href: "/dashboard", current: false },
-    { name: "Vendas", href: "/vendas", current: false },
+    // { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Atividades", href: "/atividades", current: false },
     { name: "Financeiro", href: "/conta", current: false },
     { name: "Política e privacidade", href: "/politica", current: false },
+    { name: "Clientes", href: "/customers", current: false },
     // { name: "Minha Conta", href: "/conta", current: false },
   ];
 
@@ -156,7 +156,7 @@ export default function Navbar() {
               </div>
               <div className="hidden sm:ml-6 lg:block">
                 <div className="flex space-x-4">
-                  {perfil?.tipo === "administrador"
+                  {perfil?.tipo_usuario === "administrador"
                     ? navigation.map((item) => (
                       <Link
                         key={item.name}

@@ -11,15 +11,15 @@ import {
 
 const sidebarLayout = ({ children }: { children: ReactNode }) => {
   const menuItems = [
-    {
-      id: "minhas-vendas",
-      label: "Minhas Vendas",
-      icon: <ShoppingCart className="h-4 w-4" />,
-      href: "/conta",
-    },
+    // {
+    //   id: "minhas-vendas",
+    //   label: "Minhas Vendas",
+    //   icon: <ShoppingCart className="h-4 w-4" />,
+    //   href: "/conta",
+    // },
     {
       id: "conta-de-saque",
-      label: "Conta de Saque Iugu",
+      label: "Conta de Saque",
       icon: <CreditCard className="h-4 w-4" />,
       href: "/conta/saque",
     },
