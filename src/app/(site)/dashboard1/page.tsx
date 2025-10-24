@@ -11,6 +11,7 @@ interface DashboardData {
   afiliado_id: string;
   total_clientes: number;
   total_assinaturas: number;
+  comissao_assinaturas: number;
   total_pagamentos: number;
 }
 
@@ -54,6 +55,7 @@ const Dashboard = () => {
 
         if (perfilResponse) {
           setPerfilData(perfilResponse);
+          console.log(perfilResponse)
         }
       } catch (error) {
         console.error('Erro:', error);
@@ -134,7 +136,7 @@ const Dashboard = () => {
 
   // 🔹 Soma total de todos afiliados (ou único afiliado)
   const totalClientes = dashboardData.reduce((acc, cur) => acc + (cur.total_clientes || 0), 0);
-  const totalAssinaturas = dashboardData.reduce((acc, cur) => acc + (cur.total_assinaturas || 0), 0);
+  const totalAssinaturas = dashboardData.reduce((acc, cur) => acc + (cur.comissao_assinaturas || 0), 0);
   const totalPagamentos = dashboardData.reduce((acc, cur) => acc + (cur.total_pagamentos || 0), 0);
 
   const cards = [
@@ -176,9 +178,9 @@ const Dashboard = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
-            {perfilData?.super_admin ? 'Dashboard Geral' : 'Dashboard do Afiliado'}
+            {perfilData?.super_admin ? 'Dashboard Geral' : `Bem vindo ${perfilData?.nome_completo ?? perfil?.nome_completo ?? 'Afiliado'}`}
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p>
             {perfilData?.super_admin
               ? 'Visão geral do desempenho de todos os afiliados'
               : 'Visão geral do seu desempenho financeiro'}

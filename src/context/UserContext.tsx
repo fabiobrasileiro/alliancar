@@ -10,6 +10,7 @@ interface UserPerfil {
   nome_completo: string;
   email: string;
   tipo_usuario: string;
+  
 }
 
 interface UserContextType {

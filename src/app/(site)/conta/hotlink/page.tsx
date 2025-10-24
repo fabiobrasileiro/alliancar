@@ -91,20 +91,13 @@ export default function Powerlinks() {
     {
       id: "afiliado",
       nome: "Formulário Principal",
-      url: `https://alliancar.vercel.app/formulario/${afiliado?.id|| ''}`,
-      qrcode_url: afiliado?.id? generateQRCode(`https://alliancar.vercel.app/formulario/${afiliado.id}`) : undefined
+      url: `https://alliancar.vercel.app/formulario/${afiliado?.id || ''}`,
+      qrcode_url: afiliado?.id ? generateQRCode(`https://alliancar.vercel.app/formulario/${afiliado.id}`) : undefined
     },
   ];
 
-  if (loading) {
-    return (
-      <SidebarLayout>
-        <div className="p-4 flex justify-center items-center h-64">
-          <p className="text-gray-500">Carregando...</p>
-        </div>
-      </SidebarLayout>
-    );
-  }
+
+
 
   return (
     <SidebarLayout>
