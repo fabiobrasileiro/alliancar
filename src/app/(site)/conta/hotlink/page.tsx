@@ -5,6 +5,7 @@ import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { Copy, ExternalLink, Download } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface Hotlink {
   id: string;
@@ -96,7 +97,18 @@ export default function Powerlinks() {
     },
   ];
 
-
+   if (loading) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-a1 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando...</p>
+          </div>
+        </Card>
+      </div>
+      );
+    }
 
 
   return (
@@ -104,8 +116,8 @@ export default function Powerlinks() {
       <div className="p-4 space-y-8">
         {/* Título */}
         <div>
-          <h3 className="text-2xl font-semibold mb-2">Powerlinks</h3>
-          <p className="text-gray-600">
+          <h3 className="text-2xl font-semibold mb-2 text-white">Hot links</h3>
+          <p className="text-gray-200">
             Estes são os seus powerlinks, envie para seus clientes para receber
             diretamente os pedidos de cotação.
           </p>
@@ -114,7 +126,7 @@ export default function Powerlinks() {
         {/* Lista de Powerlinks */}
         <div className="space-y-4">
           {allLinks.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
+            <p className="text-background0 text-center py-8">
               Nenhum powerlink encontrado.
             </p>
           ) : (
@@ -163,7 +175,7 @@ export default function Powerlinks() {
                       )}
                     </div>
 
-                    <p className="text-gray-600 text-sm break-all mb-4 p-2 bg-gray-50 rounded border">
+                    <p className="text-gray-900 text-sm break-all mb-4 p-2 bg-bwhite rounded border">
                       {link.url}
                     </p>
 
@@ -172,7 +184,7 @@ export default function Powerlinks() {
                       <Button
                         onClick={() => copyToClipboard(link.url, link.id)}
                         disabled={copying === link.id}
-                        className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                        className="bg-a1  text-white flex items-center gap-2"
                         size="sm"
                       >
                         <Copy className="w-4 h-4" />
@@ -185,7 +197,7 @@ export default function Powerlinks() {
                         rel="noopener noreferrer"
                       >
                         <Button
-                          className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                          className="bg-a2 text-white flex items-center gap-2"
                           size="sm"
                         >
                           <ExternalLink className="w-4 h-4" />

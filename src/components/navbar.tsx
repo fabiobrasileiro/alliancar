@@ -47,7 +47,7 @@ export default function Navbar() {
   const { user, perfil } = useUser();
   const [loading, setLoading] = useState(true);
   const [perfilData, setPerfilData] = useState<any>(null);
-  const [ afiliadoLink, setAfiliadoLink] = useState<any>(null);
+  const [afiliadoLink, setAfiliadoLink] = useState<any>(null);
 
   useEffect(() => {
     fetchPerfil();
@@ -105,8 +105,10 @@ export default function Navbar() {
     { name: "Atividades", href: "/atividades", current: false },
     { name: "Relatórios", href: "/relatorios", current: false },
     { name: "Política e privacidade", href: "/politica", current: false },
+    { name: "Fernando", href: "/customers", current: false },
+
     // { name: "Minha Conta", href: "/conta", current: false },
-    
+
   ];
   const navigationAfiliado = [
     { name: "Dashboard", href: "/dashboard", current: false },
@@ -115,7 +117,6 @@ export default function Navbar() {
     { name: "Atividades", href: "/atividades", current: false },
     { name: "Financeiro", href: "/conta", current: false },
     { name: "Política e privacidade", href: "/politica", current: false },
-    { name: "Clientes", href: "/customers", current: false },
     // { name: "Minha Conta", href: "/conta", current: false },
   ];
 
@@ -124,7 +125,7 @@ export default function Navbar() {
 
       <Disclosure
         as="nav"
-        className="relative bg-jelly-bean-900 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-white/10"
+        className="relative bg-jelly-bean-50 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-white/10"
       >
         <div className="px-2 sm:px-6 lg:px-8">
           <div className="relative flex h-16 items-center justify-between">
@@ -163,8 +164,8 @@ export default function Navbar() {
                         href={item.href}
                         className={classNames(
                           item.current
-                            ? "bg-jelly-bean-950/50 text-white"
-                            : "text-gray-300 hover:bg-white/5 hover:text-white",
+                            ? "text-jelly-bean-950"
+                            : "text-jelly-bean-950 hover:bg-white/5 hover:text-white",
                           "rounded-md px-3 py-2 text-sm font-medium transition-colors",
                         )}
                       >
@@ -178,7 +179,7 @@ export default function Navbar() {
                         className={classNames(
                           item.current
                             ? "bg-jelly-bean-950/50 text-white"
-                            : "text-gray-300 hover:bg-white/5 hover:text-white",
+                            : "text-jelly-bean-950 hover:text-jelly-bean-800",
                           "rounded-md px-3 py-2 text-sm font-medium transition-colors",
                         )}
                       >
@@ -192,14 +193,14 @@ export default function Navbar() {
               <div className="flex items-center">
                 <Button
                   variant="second"
-                  className="mr-4 hidden md:flex "
+                  className="mr-4 hidden md:flex bg-a1"
                   onClick={() => copyToClipboard(afiliadoLink)}
                 >
                   <CopyIcon className="mr-2 h-4 w-4" />Meu Link
                 </Button>
                 <Button
                   variant="default"
-                  className="mr-4 hidden md:flex"
+                  className="mr-4 hidden md:flex bg-a2"
                   onClick={() => copyToClipboard("formulariolp")}
                 >
                   <CopyIcon className="mr-2 h-4 w-4" /> LP Link
@@ -211,7 +212,7 @@ export default function Navbar() {
                 <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                   <span className="absolute -inset-1.5" />
                   <span className="sr-only">Open user menu</span>
-                  <h6 className="size-8 rounded-full bg-jelly-bean-600 outline -outline-offset-1 outline-white/10 text-white flex justify-center items-center font-bold text-sm">
+                  <h6 className="size-8 rounded-full bg-[#1eb2fc] outline -outline-offset-1 outline-white/10 text-white flex justify-center items-center font-bold text-sm">
                     {perfilData?.nome_completo?.toUpperCase().slice(0, 2) ||
                       perfil?.nome_completo?.toUpperCase().slice(0, 2) ||
                       "US"}
@@ -220,7 +221,7 @@ export default function Navbar() {
 
                 <MenuItems
                   transition
-                  className="absolute right-0 z-10 mt-2 w-64 origin-top-right rounded-md bg-gray-50 py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+                  className="absolute right-0 z-10 mt-2 w-64 origin-top-right rounded-md bg-background py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
                 >
                   <div className="flex items-center gap-3 px-4 py-2 border-b border-white/10">
                     <div>

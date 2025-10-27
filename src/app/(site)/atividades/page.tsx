@@ -445,12 +445,12 @@ const AtividadesPage: React.FC = () => {
       <div className="px-5 py-3">
         {/* Header */}
         <header className="flex flex-col flex-wrap">
-          <h2 className="font-bold leading-tight m-0 text-slate-700 text-2xl">
+          <h2 className="font-bold leading-tight m-0 text-white text-2xl">
             Atividades
           </h2>
           <header className="flex items-center justify-between flex-wrap">
             <nav className="flex items-center flex-wrap gap-2 max-[450px]:pr-8">
-              <span className="text-slate-950 text-sm flex gap-2 items-center">
+              <span className="text-gray-200 text-sm flex gap-2 items-center">
                 <Link className="hover:opacity-70" href="/">
                   Home
                 </Link>
@@ -469,7 +469,7 @@ const AtividadesPage: React.FC = () => {
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </span>
-              <span className="text-sm text-jelly-bean-700">
+              <span className="text-sm text-a1">
                 <Link className="hover:opacity-70" href="/crm/activity">
                   Atividades
                 </Link>
@@ -489,7 +489,7 @@ const AtividadesPage: React.FC = () => {
                   });
                   setIsModalOpen(true);
                 }}
-                className="text-sm px-5 h-9 bg-jelly-bean-900 hover:bg-jelly-bean-700"
+                className="text-sm px-5 h-9 bg-a1 "
               >
                 + Nova Atividade
               </Button>

@@ -488,8 +488,8 @@ export default function PerfilAfiliado() {
 
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Meu Perfil</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-white">Meu Perfil</h1>
+          <p className="text-gray-200 mt-2">
             Gerencie suas informações pessoais e configurações da conta
           </p>
         </div>
@@ -573,7 +573,7 @@ export default function PerfilAfiliado() {
                     value={formData.email}
                     onChange={handleInputChange}
                     disabled
-                    className="flex h-10 w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-500 cursor-not-allowed"
+                    className="flex h-10 w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-background0 cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -581,7 +581,7 @@ export default function PerfilAfiliado() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none h-10 py-2 px-4 bg-blue-600 text-white hover:bg-blue-700 mt-4"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2  focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none h-10 py-2 px-4 bg-a1 text-white mt-4"
               >
                 {saving ? "Salvando..." : "Salvar Alterações"}
               </button>
@@ -773,7 +773,7 @@ export default function PerfilAfiliado() {
                       onChange={handleInputChange}
                       className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-background0">
                       Exemplo: 3% = 0.03
                     </p>
                   </div>
@@ -825,7 +825,7 @@ export default function PerfilAfiliado() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none h-10 py-2 px-4 bg-blue-600 text-white hover:bg-blue-700 mt-4"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2  focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none h-10 py-2 px-4 bg-a1 text-white mt-4"
                 >
                   {saving ? "Salvando..." : "Salvar Configurações"}
                 </button>
@@ -915,7 +915,7 @@ export default function PerfilAfiliado() {
                     onChange={handleFileUpload}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-background0">
                     Formatos: JPG, PNG, GIF (Máx: 5MB)
                   </p>
                 </div>

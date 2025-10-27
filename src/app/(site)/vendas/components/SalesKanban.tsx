@@ -148,7 +148,7 @@ export default function SalesKanban({
                 Carregando...
               </div>
             ) : getCardsForColumn(column.id).length === 0 ? (
-              <div className="text-sm text-gray-500 text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+              <div className="text-sm text-background0 text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
                 Arraste negociações para aqui
               </div>
             ) : (

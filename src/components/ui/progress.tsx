@@ -23,7 +23,7 @@ function Progress({
   showMarkers = true,
   showLabels = true,
   markerColor = "bg-white/50",
-  labelColor = "text-gray-500",
+  labelColor = "text-background0",
   percentages = [3, 5, 7, 9, 12, 15],
   showTopLabels = true,
   ...props

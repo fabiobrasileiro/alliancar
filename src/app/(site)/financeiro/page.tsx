@@ -260,7 +260,7 @@ export default function FinanceiroPage() {
     //                     <TableRow>
     //                       <TableCell
     //                         colSpan={6}
-    //                         className="text-center py-8 text-gray-500"
+    //                         className="text-center py-8 text-background0"
     //                       >
     //                         Nenhum pagamento encontrado
     //                       </TableCell>
