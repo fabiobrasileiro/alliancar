@@ -60,7 +60,7 @@ export default function ReportTable({
               negociacoes.map((negociacao, index) => (
                 <TableRow
                   key={negociacao.id || index}
-                  className="hover:bg-gray-50"
+                  className="hover:bg-background"
                 >
                   <TableCell className="font-medium">
                     {negociacao.cliente}
@@ -69,7 +69,7 @@ export default function ReportTable({
                     <div className="flex flex-col">
                       <span className="font-medium">{negociacao.veiculo}</span>
                       {negociacao.placa && (
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-background0">
                           {negociacao.placa}
                         </span>
                       )}
@@ -88,7 +88,7 @@ export default function ReportTable({
                       {negociacao.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-500">
+                  <TableCell className="text-sm text-background0">
                     {negociacao.criadaEm}
                   </TableCell>
                 </TableRow>
@@ -97,7 +97,7 @@ export default function ReportTable({
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="text-center py-8 text-gray-500"
+                  className="text-center py-8 text-background0"
                 >
                   Nenhuma negociação encontrada
                 </TableCell>

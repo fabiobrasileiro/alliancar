@@ -101,7 +101,7 @@ export default function FormStep2({ form, onChange, onNext, onBack }: FormStep2P
       <div className="flex justify-between pt-4">
         <button 
           type="button" 
-          className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          className="bg-background0 text-white px-6 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-background0 focus:ring-offset-2"
           onClick={onBack}
         >
           Voltar

@@ -102,7 +102,7 @@ const Dashboard = () => {
   // 🔹 Loading
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           <p className="text-gray-600">Carregando dashboard...</p>
@@ -114,7 +114,7 @@ const Dashboard = () => {
   // 🔹 Erro
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
           <p className="text-red-800 font-semibold">Erro</p>
           <p className="text-red-600 mt-2">{error}</p>
@@ -126,7 +126,7 @@ const Dashboard = () => {
   // 🔹 Nenhum dado
   if (!dashboardData || dashboardData.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <p className="text-yellow-800">Nenhum dado encontrado</p>
         </div>
@@ -173,7 +173,7 @@ const Dashboard = () => {
     (b.total_pagamentos + b.total_assinaturas) - (a.total_pagamentos + a.total_assinaturas)
   );
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -198,7 +198,7 @@ const Dashboard = () => {
                 <div>
                   <p className={`text-sm font-medium ${card.textColor}`}>{card.title}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-2">{card.value}</p>
-                  <p className="text-xs text-gray-500 mt-1">{card.description}</p>
+                  <p className="text-xs text-background0 mt-1">{card.description}</p>
                 </div>
                 <div className={`${card.color} p-3 rounded-lg`}>
                   <card.icon className="h-6 w-6 text-white" />
@@ -242,7 +242,7 @@ const Dashboard = () => {
 
             <div className="overflow-x-auto">
               <table className="min-w-full border border-gray-200 text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-background">
                   <tr>
                     <th className="text-left px-4 py-2 border-b">Posição</th>
                     <th className="text-left px-4 py-2 border-b">Afiliado</th>
@@ -254,7 +254,7 @@ const Dashboard = () => {
                 </thead>
                 <tbody>
                   {ranking.map((afiliado, index) => (
-                    <tr key={afiliado.afiliado_id} className="hover:bg-gray-50">
+                    <tr key={afiliado.afiliado_id} className="hover:bg-background">
                       <td className="px-4 py-2 border-b font-medium">
                         {index + 1}º
                       </td>

@@ -330,7 +330,7 @@ export default function Saques() {
                   max={saldoDisponivel}
                   step="0.01"
                 />
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-background0 mt-1">
                   Valor mínimo: R$ 10,00 • Disponível: {formatarMoeda(saldoDisponivel)}
                 </div>
               </div>
@@ -350,7 +350,7 @@ export default function Saques() {
 
               {/* Informações Bancárias */}
               {bankData && (
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-background rounded-lg">
                   <h3 className="font-medium mb-2">Dados Cadastrados</h3>
                   <div className="text-sm space-y-1">
                     <div><strong>Nome:</strong> {bankData.ownerName}</div>
@@ -378,7 +378,7 @@ export default function Saques() {
             <h3 className="text-lg font-semibold mb-4">Histórico de Saques</h3>
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {saques.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">
+                <div className="text-center text-background0 py-8">
                   Nenhum saque realizado ainda
                 </div>
               ) : (
@@ -405,7 +405,7 @@ export default function Saques() {
                     )}
 
                     {saque.processado_em && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-background0 mt-1">
                         Processado em: {formatarData(saque.processado_em)}
                       </div>
                     )}

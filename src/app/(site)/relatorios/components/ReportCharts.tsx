@@ -276,7 +276,7 @@ function RankingList({
       {data.map((afiliado, index) => (
         <div
           key={index}
-          className="flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100"
+          className="flex items-center justify-between p-2 rounded-lg bg-background hover:bg-gray-100"
         >
           <div className="flex items-center gap-3">
             <div

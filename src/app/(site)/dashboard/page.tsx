@@ -102,7 +102,7 @@ const Dashboard = () => {
   // 🔹 Loading
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           <p className="text-gray-600">Carregando dashboard...</p>
@@ -114,7 +114,7 @@ const Dashboard = () => {
   // 🔹 Erro
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
           <p className="text-red-800 font-semibold">Erro</p>
           <p className="text-red-600 mt-2">{error}</p>
@@ -126,7 +126,7 @@ const Dashboard = () => {
   // 🔹 Nenhum dado
   if (!dashboardData || dashboardData.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <p className="text-yellow-800">Nenhum dado encontrado</p>
         </div>
@@ -173,14 +173,14 @@ const Dashboard = () => {
     (b.total_pagamentos + b.total_assinaturas) - (a.total_pagamentos + a.total_assinaturas)
   );
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            {perfilData?.super_admin ? 'Dashboard Geral' : `Bem vindo ${perfilData?.nome_completo ?? perfil?.nome_completo ?? 'Afiliado'}`}
+          <h1 className="text-3xl font-bold text-white">
+            {`Bem vindo,`} <span className='text-text'>{perfilData?.nome_completo }</span>
           </h1>
-          <p>
+          <p className='text-white'>
             {perfilData?.super_admin
               ? 'Visão geral do desempenho de todos os afiliados'
               : 'Visão geral do seu desempenho financeiro'}
@@ -198,7 +198,7 @@ const Dashboard = () => {
                 <div>
                   <p className={`text-sm font-medium ${card.textColor}`}>{card.title}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-2">{card.value}</p>
-                  <p className="text-xs text-gray-500 mt-1">{card.description}</p>
+                  <p className="text-xs text-background0 mt-1">{card.description}</p>
                 </div>
                 <div className={`${card.color} p-3 rounded-lg`}>
                   <card.icon className="h-6 w-6 text-white" />
@@ -209,7 +209,7 @@ const Dashboard = () => {
         </div>
 
         {/* Resumo Financeiro */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 ">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Resumo Financeiro</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="border-l-4 border-blue-500 pl-4">
@@ -242,7 +242,7 @@ const Dashboard = () => {
 
             <div className="overflow-x-auto">
               <table className="min-w-full border border-gray-200 text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-background">
                   <tr>
                     <th className="text-left px-4 py-2 border-b">Posição</th>
                     <th className="text-left px-4 py-2 border-b">Afiliado</th>
@@ -254,7 +254,7 @@ const Dashboard = () => {
                 </thead>
                 <tbody>
                   {ranking.map((afiliado, index) => (
-                    <tr key={afiliado.afiliado_id} className="hover:bg-gray-50">
+                    <tr key={afiliado.afiliado_id} className="hover:bg-background">
                       <td className="px-4 py-2 border-b font-medium">
                         {index + 1}º
                       </td>

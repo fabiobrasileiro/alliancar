@@ -138,8 +138,8 @@ export default function ContatosPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contatos</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-white">Contatos</h1>
+          <p className="text-gray-200 mt-2">
             Gerencie todos os seus contatos em um só lugar
           </p>
         </div>
@@ -236,30 +236,30 @@ export default function ContatosPage() {
         <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-white background">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
                     Id
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
                     name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
                     Contato
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
                     Localização
                   </th>
 
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
                     Telefone
                   </th>
 
-                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                   <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
                     Email
                   </th>
 
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
                     Data
                   </th>
 
@@ -268,7 +268,7 @@ export default function ContatosPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {contatosFiltrados.map((contato) => (
-                  <tr key={contato.id} className="hover:bg-gray-50">
+                  <tr key={contato.id} className="hover:bg-background">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-gray-900">{contato.id}</div>
                     </td>
@@ -277,7 +277,7 @@ export default function ContatosPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{contato.email}</div>
-                      <div className="text-sm text-gray-500">{contato.telefone}</div>
+                      <div className="text-sm text-background0">{contato.telefone}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
@@ -288,15 +288,15 @@ export default function ContatosPage() {
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-background0">
                         {contato.mobile_phone}
                     </td>
 
-                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                     <td className="px-6 py-4 whitespace-nowrap text-sm text-background0">
                         {contato.email}
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-background0">
                       {new Date(contato.created_at).toLocaleDateString('pt-BR')}
                     </td>
 
@@ -307,7 +307,7 @@ export default function ContatosPage() {
           </div>
 
           {contatosFiltrados.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-background0">
               Nenhum contato encontrado
             </div>
           )}

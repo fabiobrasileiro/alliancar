@@ -205,7 +205,7 @@ export default function MinhasVendas() {
   return (
     <SidebarLayout>
       <div className="p-6">
-        <h2 className="text-2xl font-semibold mb-6">
+        <h2 className="text-2xl font-semibold mb-6 text-white">
           {isAdmin ? "Dashboard Financeiro - Todos os Afiliados" : "Minhas Vendas"}
         </h2>
 
@@ -341,21 +341,21 @@ export default function MinhasVendas() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="p-4 text-center">
             <div className="text-sm text-gray-600">Valor Total Vendas</div>
-            <div className="text-xl font-bold text-blue-600">
+            <div className="text-xl font-bold text-a1">
               {formatarMoeda(totalValor)}
             </div>
           </Card>
           
           <Card className="p-4 text-center">
             <div className="text-sm text-gray-600">Comissão Total Vendas</div>
-            <div className="text-xl font-bold text-green-600">
+            <div className="text-xl font-bold text-a2">
               {formatarMoeda(totalComissao)}
             </div>
           </Card>
           
           <Card className="p-4 text-center">
             <div className="text-sm text-gray-600">Porcentagem</div>
-            <div className="text-xl font-bold text-purple-600">
+            <div className="text-xl font-bold text-purple-400">
               {totalValor > 0
                 ? `${(comissaoPercentual * 100).toFixed(0)}%`
                 : "0%"}
