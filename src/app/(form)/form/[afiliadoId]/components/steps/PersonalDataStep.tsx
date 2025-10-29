@@ -2,11 +2,13 @@ import { FormState } from "./types";
 
 interface PersonalDataStepProps {
     form: FormState;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
     onNext: () => void;
 }
 
 export default function PersonalDataStep({ form, onChange, onNext }: PersonalDataStepProps) {
+    const isFormValid = form.name && form.email && form.cpfCnpj && form.phone;
+
     return (
         <div className="space-y-4">
             <h3 className="text-lg font-semibold">Dados Pessoais</h3>
@@ -32,7 +34,7 @@ export default function PersonalDataStep({ form, onChange, onNext }: PersonalDat
 
             <input
                 name="cpfCnpj"
-                placeholder="CPF ou CNPJ"
+                placeholder="CPF/CNPJ"
                 value={form.cpfCnpj}
                 onChange={onChange}
                 className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
@@ -45,11 +47,12 @@ export default function PersonalDataStep({ form, onChange, onNext }: PersonalDat
                 value={form.phone}
                 onChange={onChange}
                 className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                required
             />
 
             <input
                 name="mobilePhone"
-                placeholder="Celular"
+                placeholder="Celular (opcional)"
                 value={form.mobilePhone}
                 onChange={onChange}
                 className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
@@ -58,7 +61,8 @@ export default function PersonalDataStep({ form, onChange, onNext }: PersonalDat
             <button
                 type="button"
                 onClick={onNext}
-                className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700"
+                disabled={!isFormValid}
+                className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 disabled:bg-gray-400"
             >
                 Próximo
             </button>

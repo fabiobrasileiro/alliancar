@@ -2,120 +2,135 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
     try {
-        // const body = {
-        //     "name": "John Doe",
-        //     "cpfCnpj": "24971563792",
-        //     "email": "john.doe@asaas.com.br",
-        //     "phone": "4738010919",
-        //     "mobilePhone": "4799376637",
-        //     "address": "Av. Paulista",
-        //     "addressNumber": "150",
-        //     "complement": "Sala 201",
-        //     "province": "Centro",
-        //     "postalCode": "01310-000",
-        //     "externalReference": "12987382",
-        //     "notificationDisabled": false,
-        //     "additionalEmails": "john.doe@asaas.com,john.doe.silva@asaas.com.br",
-        //     "groupName": "customers",
-        //     "externalReference": "83a47952-1bfb-4f62-96c9-884e50efbc26",
-
-
-        //     // Payments
-        //     "billingType": "CREDIT_CARD",
-        //     "customer": "cus_000007143938",
-        //     "value": 150,
-        //     "dueDate": "2026-11-01",
-        //     "description": "Pedido 056984",
-        //     "daysAfterDueDateToRegistrationCancellation": 1,
-        //     "externalReference": "83a47952-1bfb-4f62-96c9-884e50efbc26",
-
-        //     // Subscription
-        //     "billingType": "CREDIT_CARD",
-        //     "cycle": "MONTHLY",
-        //     "customer": "cus_000007143938",
-        //     "value": 200,
-        //     "nextDueDate": "2026-10-23",
-        //     "description": "Assinatura Plano Pró",
-        //     "externalReference": "83a47952-1bfb-4f62-96c9-884e50efbc26"
-        // };
-
-        // 1️⃣ Cria o cliente
-        
         const body = await request.json();
 
+        // Extrair dados do body incluindo serviços opcionais
+        const {
+            name,
+            email,
+            phone,
+            cpfCnpj,
+            mobilePhone,
+            address,
+            addressNumber,
+            complement,
+            province,
+            postalCode,
+            externalReference,
+            description,
+            finalValue,
+            plano,
+            selectedServices = [],
+            servicesTotal = 0,
+            discount = 0
+        } = body;
+
+        // 1️⃣ Cria o cliente
         const customerRes = await fetch(`${process.env.ASAAS_BASE_URL}/customers`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "access_token": process.env.ASAAS_API_KEY
             },
-
             body: JSON.stringify({
-                name: body.name,
-                email: body.email,
-                phone: body.phone,
-                cpfCnpj: body.cpfCnpj,
-                address: body.address,
-                addressNumber: body.addressNumber,
-                complement: body.complement,
-                province: body.province,
-                postalCode: body.postalCode,
-                externalReference: body.externalReference,
-                notificationDisabled: body.notificationDisabled,
-                additionalEmails: body.additionalEmails,
-                groupName: body.groupName,
-                mobilePhone: body.mobilePhone,
+                name: name,
+                email: email,
+                phone: phone,
+                cpfCnpj: cpfCnpj,
+                address: address,
+                addressNumber: addressNumber,
+                complement: complement,
+                province: province,
+                postalCode: postalCode,
+                externalReference: externalReference,
+                notificationDisabled: false,
+                additionalEmails: email,
+                groupName: "insurance_customers",
+                mobilePhone: mobilePhone || phone,
             }),
         });
+
         const customer = await customerRes.json();
 
-        //2️⃣ Cria o pagamento
+        // 2️⃣ Cria o pagamento (com serviços opcionais)
+        const today = new Date();
+        const dueDate = new Date();
+
+        dueDate.setDate(today.getDate() + 3); // Vencimento em 3 dias
+
+        const formattedDueDate = dueDate.toISOString().split('T')[0];
+
+        // Descrição detalhada incluindo serviços opcionais
+        const paymentDescription = plano
+            ? `Seguro Auto ${plano.category_name} - ${plano.vehicle_range}${selectedServices.length > 0 ? ` + ${selectedServices.length} serviço(s) opcional(is)` : ''}`
+            : `Seguro Auto${selectedServices.length > 0 ? ` + ${selectedServices.length} serviço(s) opcional(is)` : ''}`;
+
         const paymentRes = await fetch(`${process.env.ASAAS_BASE_URL}/payments`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "access_token": process.env.ASAAS_API_KEY
             },
-
             body: JSON.stringify({
                 billingType: "CREDIT_CARD",
                 customer: customer.id,
-                value: 150,
-                dueDate: "2026-11-01",
-                description: body.description,
+                value: finalValue, // Já inclui serviços opcionais e desconto
+                dueDate: formattedDueDate,
+                description: paymentDescription,
                 daysAfterDueDateToRegistrationCancellation: 1,
-                externalReference: body.externalReference,       
-                   
+                externalReference: externalReference,
             }),
         });
         const payment = await paymentRes.json();
 
-        // 3️⃣ Cria a assinatura
+        // 3️⃣ Cria a assinatura (apenas mensalidade do plano, sem serviços opcionais)
+        const nextDueDate = new Date();
+        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+
+        const formattedNextDueDate = nextDueDate.toISOString().split('T')[0];
+
+        // Valor da assinatura é apenas a mensalidade do plano
+        const subscriptionValue = plano?.monthly_payment || 200;
+
         const subscriptionRes = await fetch(`${process.env.ASAAS_BASE_URL}/subscriptions`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "access_token": process.env.ASAAS_API_KEY
             },
-
             body: JSON.stringify({
                 billingType: 'CREDIT_CARD',
                 cycle: "MONTHLY",
                 customer: customer.id,
-                value: 200,
-                nextDueDate: "2026-10-23",
-                description: body.description,
-                externalReference: body.externalReference
+                value: subscriptionValue,
+                nextDueDate: formattedNextDueDate,
+                description: `Mensalidade Seguro Auto - ${plano?.category_name || 'Plano'}`,
+                externalReference: externalReference,
+                split: [
+                    {
+                        "walletId": "a7732382-3e6b-4ac8-b3b4-6c6ff5653fe7",
+                        "percentualValue": 50
+                    }
+                ]
             }),
         });
         const subscription = await subscriptionRes.json();
 
-        // ✅ Retorna tudo junto
         return NextResponse.json({
             success: true,
             customer,
             payment,
             subscription,
+            checkoutUrl: payment.invoiceUrl || payment.bankSlipUrl,
+            summary: {
+                plano: plano?.category_name,
+                adesao: plano?.adesao || 0,
+                mensalidade: plano?.monthly_payment || 0,
+                servicosOpcionais: servicesTotal,
+                quantidadeServicos: selectedServices.length,
+                desconto: discount,
+                total: finalValue
+            }
         });
     } catch (error) {
         console.error(error);
