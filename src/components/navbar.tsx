@@ -125,13 +125,13 @@ export default function Navbar() {
 
       <Disclosure
         as="nav"
-        className="relative bg-jelly-bean-50 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-white/10"
+        className="relative bg-linear-to-r from-[#232049] to-[#26232f]"
       >
         <div className="px-2 sm:px-6 lg:px-8">
           <div className="relative flex h-16 items-center justify-between">
             <div className="absolute inset-y-0 left-0 flex items-center lg:hidden">
               {/* Mobile menu button*/}
-              <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-white">
+              <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-white hover:bg-white/5 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-white">
                 <span className="absolute -inset-0.5" />
                 <span className="sr-only">Open main menu</span>
                 <Bars3Icon
@@ -164,8 +164,8 @@ export default function Navbar() {
                         href={item.href}
                         className={classNames(
                           item.current
-                            ? "text-jelly-bean-950"
-                            : "text-jelly-bean-950 hover:bg-white/5 hover:text-white",
+                            ? "text-white"
+                            : "text-white hover:text-white",
                           "rounded-md px-3 py-2 text-sm font-medium transition-colors",
                         )}
                       >
@@ -178,8 +178,8 @@ export default function Navbar() {
                         href={item.href}
                         className={classNames(
                           item.current
-                            ? "bg-jelly-bean-950/50 text-white"
-                            : "text-jelly-bean-950 hover:text-jelly-bean-800",
+                            ? "bg-white text-white"
+                            : "text-white hover:text-jelly-bean-800",
                           "rounded-md px-3 py-2 text-sm font-medium transition-colors",
                         )}
                       >
@@ -200,7 +200,7 @@ export default function Navbar() {
                 </Button>
                 <Button
                   variant="default"
-                  className="mr-4 hidden md:flex bg-a2"
+                  className="mr-4 hidden md:flex bg-a1"
                   onClick={() => copyToClipboard("formulariolp")}
                 >
                   <CopyIcon className="mr-2 h-4 w-4" /> LP Link

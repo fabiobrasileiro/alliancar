@@ -23,7 +23,7 @@ function Progress({
   showMarkers = true,
   showLabels = true,
   markerColor = "bg-white/50",
-  labelColor = "text-background0",
+  labelColor = "text-white",
   percentages = [3, 5, 7, 9, 12, 15],
   showTopLabels = true,
   ...props
@@ -61,7 +61,7 @@ function Progress({
               >
                 {percentage}%
               </TooltipTrigger>
-              <TooltipContent className="bg-amber-400">
+              <TooltipContent className="bg-a1">
                 <p>{tooltipValues[index]}</p>
               </TooltipContent>
             </Tooltip>
@@ -80,7 +80,7 @@ function Progress({
       >
         <ProgressPrimitive.Indicator
           data-slot="progress-indicator"
-          className="bg-jelly-bean-500 h-full w-full flex-1 transition-all"
+          className="bg-a1 h-full w-full flex-1 transition-all"
           style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
         />
 
