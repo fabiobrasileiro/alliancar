@@ -35,12 +35,12 @@ function Progress({
 
   // Valores para os tooltips respectivamente
   const tooltipValues = [
-    "±220,00/A.M",
-    "±750,00/A.M", 
-    "±2.100,00/A.M",
-    "±4.700,00/A.M",
-    "±9.000,00/A.M",
-    "±10.000,00/A.M"
+    "R$220,00/a.m",
+    "R$750,00/a.m", 
+    "R$2.100,00/a.m",
+    "R$4.700,00/a.m",
+    "R$9.000,00/a.m",
+    "R$10.000,00/a.m"
   ];
 
   const markerPositions = markers.map(marker => (marker / maxValue) * 90);
