@@ -102,27 +102,27 @@ const Dashboard = () => {
   // 🔹 Loading
 
   // 🔹 Erro
-  if (error) {
-    return (
-      <div className="min-h-screen bg-navbar1 flex items-center justify-center">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <p className="text-red-800 font-semibold">Erro</p>
-          <p className="text-red-600 mt-2">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="min-h-screen bg-navbar1 flex items-center justify-center">
+  //       <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+  //         <p className="text-red-800 font-semibold">Erro</p>
+  //         <p className="text-red-600 mt-2">{error}</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
-  // 🔹 Nenhum dado
-  if (!dashboardData || dashboardData.length === 0) {
-    return (
-      <div className="min-h-screen bg-navbar1 flex items-center justify-center">
-        <div className="bg-bg border  rounded-lg p-6">
-          <p className="text-yellow-800">Nenhum dado encontrado</p>
-        </div>
-      </div>
-    );
-  }
+  // // 🔹 Nenhum dado
+  // if (!dashboardData || dashboardData.length === 0) {
+  //   return (
+  //     <div className="min-h-screen bg-navbar1 flex items-center justify-center">
+  //       <div className="bg-bg border  rounded-lg p-6">
+  //         <p className="text-yellow-800">Nenhum dado encontrado</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   // 🔹 Soma total de todos afiliados (ou único afiliado)
   const totalClientes = dashboardData.reduce((acc, cur) => acc + (cur.total_clientes || 0), 0);
