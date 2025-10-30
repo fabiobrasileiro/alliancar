@@ -5,7 +5,7 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-6 text-center text-slate-500">Carregando...</div>
+        <div className="p-6 text-center text-white">Carregando...</div>
       }
     >
       <SignupForm />

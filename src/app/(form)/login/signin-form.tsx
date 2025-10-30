@@ -162,11 +162,11 @@ export default function LoginForm() {
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
-          <p className="text-sm text-slate-600 text-center w-full">
+          <p className="text-sm text-white text-center w-full">
             Não tem uma conta?{" "}
             <Link
               href="/afiliacao"
-              className="text-blue-700 hover:underline font-medium"
+              className="text-a1 hover:underline font-medium"
             >
               Criar conta
             </Link>
