@@ -160,11 +160,11 @@ export default function SignupForm() {
               </Button>
 
               <div className="text-center mb-7">
-                <span className="text-sm text-gray-600 ">
+                <span className="text-sm text-white">
                   Já tem uma conta?{" "}
                   <Link
                     href="/login"
-                    className="text-blue-600 hover:text-blue-500 font-medium"
+                    className="text-a1 hover:text-a1 font-medium"
                   >
                     Fazer login
                   </Link>
