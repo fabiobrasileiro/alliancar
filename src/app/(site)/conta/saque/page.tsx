@@ -256,7 +256,7 @@ export default function Saques() {
       case 'cancelado':
         return 'text-red-600 bg-red-100';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-white bg-gray-100';
     }
   };
 
@@ -277,37 +277,30 @@ export default function Saques() {
   const totalSacado = dashboard?.total_sacado || 0;
   const comissaoTotal = dashboard?.comissao_assinaturas || 0;
 
-  if (loading) {
-    return (
-      <SidebarLayout>
-        <div className="p-6">Carregando...</div>
-      </SidebarLayout>
-    );
-  }
-
+ 
   return (
     <SidebarLayout>
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-6 max-w-6xl ">
         <h2 className="text-2xl font-semibold mb-6">Solicitar Saque</h2>
 
         {/* Cards de Resumo */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="p-4 text-center">
-            <div className="text-sm text-gray-600">Comissão</div>
+            <div className="text-sm text-white">Comissão</div>
             <div className="text-lg font-bold text-blue-600">
               {formatarMoeda(comissaoTotal)}
             </div>
           </Card>
           
           <Card className="p-4 text-center">
-            <div className="text-sm text-gray-600">Total Sacado</div>
+            <div className="text-sm text-white">Total Sacado</div>
             <div className="text-lg font-bold text-orange-600">
               {formatarMoeda(totalSacado)}
             </div>
           </Card>
           
-          <Card className="p-4 text-center bg-gradient-to-r from-green-50 to-emerald-50">
-            <div className="text-sm text-gray-600">Saldo Disponível</div>
+          <Card className="p-4 text-center bg-bg">
+            <div className="text-sm text-white">Saldo Disponível</div>
             <div className="text-xl font-bold text-green-600">
               {formatarMoeda(saldoDisponivel)}
             </div>
@@ -320,7 +313,7 @@ export default function Saques() {
             <h3 className="text-lg font-semibold mb-4">Solicitar Novo Saque</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Valor do Saque</label>
+                <label className="block text-sm font-medium mb-2 text-white">Valor do Saque</label>
                 <Input
                   type="number"
                   placeholder="Digite o valor"
@@ -330,27 +323,27 @@ export default function Saques() {
                   max={saldoDisponivel}
                   step="0.01"
                 />
-                <div className="text-xs text-background0 mt-1">
+                <div className="text-xs text-white mt-1 text-white">
                   Valor mínimo: R$ 10,00 • Disponível: {formatarMoeda(saldoDisponivel)}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Método de Pagamento</label>
-                <Select value={metodo} onValueChange={setMetodo}>
-                  <SelectTrigger>
+                <label className="block text-sm font-medium mb-2 text-white">Método de Pagamento</label>
+                <Select value={metodo} onValueChange={setMetodo} >
+                  <SelectTrigger className="border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PIX">PIX</SelectItem>
-                    <SelectItem value="TED">TED</SelectItem>
+                    <SelectItem value="PIX" className="text-white">PIX</SelectItem>
+                    <SelectItem value="TED" className="text-white">TED</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Informações Bancárias */}
               {bankData && (
-                <div className="p-4 bg-background rounded-lg">
+                <div className="p-4 bg-bg rounded-lg">
                   <h3 className="font-medium mb-2">Dados Cadastrados</h3>
                   <div className="text-sm space-y-1">
                     <div><strong>Nome:</strong> {bankData.ownerName}</div>
@@ -378,7 +371,7 @@ export default function Saques() {
             <h3 className="text-lg font-semibold mb-4">Histórico de Saques</h3>
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {saques.length === 0 ? (
-                <div className="text-center text-background0 py-8">
+                <div className="text-center text-white py-8">
                   Nenhum saque realizado ainda
                 </div>
               ) : (
@@ -389,7 +382,7 @@ export default function Saques() {
                         <div className="font-semibold">
                           {formatarMoeda(saque.valor)}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-white">
                           {saque.metodo} • {formatarData(saque.criado_em)}
                         </div>
                       </div>
@@ -399,13 +392,13 @@ export default function Saques() {
                     </div>
                     
                     {saque.observacao && (
-                      <div className="text-sm text-gray-600 mt-2">
+                      <div className="text-sm text-white mt-2">
                         {saque.observacao}
                       </div>
                     )}
 
                     {saque.processado_em && (
-                      <div className="text-xs text-background0 mt-1">
+                      <div className="text-xs text-white mt-1 text-white">
                         Processado em: {formatarData(saque.processado_em)}
                       </div>
                     )}
@@ -419,7 +412,7 @@ export default function Saques() {
         {/* Informações Adicionais */}
         <Card className="p-6 mt-6">
           <h3 className="font-medium mb-4">Informações Importantes</h3>
-          <ul className="text-sm space-y-2 text-gray-600">
+          <ul className="text-sm space-y-2 text-white">
             <li>• Saques são processados em até 2 dias úteis</li>
             <li>• O valor solicitado será deduzido automaticamente do seu saldo</li>
             <li>• Você será notificado quando o saque for processado</li>

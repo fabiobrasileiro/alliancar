@@ -9,22 +9,6 @@ interface ReportCardsProps {
 }
 
 export default function ReportCards({ summary, loading }: ReportCardsProps) {
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="rounded-md border p-4 bg-white">
-            <CardContent className="p-0">
-              <div className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
 
   if (!summary) {
     return (

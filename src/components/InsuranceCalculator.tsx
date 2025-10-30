@@ -16,7 +16,6 @@ export const InsuranceCalculator = () => {
     }
   };
 
-  if (loading) return <div>Carregando...</div>;
 
   return (
     <div className="p-6">

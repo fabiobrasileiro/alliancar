@@ -139,7 +139,7 @@ export default function ContatosPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Contatos</h1>
-          <p className="text-gray-200 mt-2">
+          <p className=" mt-2 text-white">
             Gerencie todos os seus contatos em um só lugar
           </p>
         </div>
@@ -147,51 +147,51 @@ export default function ContatosPage() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+      <div className="bg-bg p-4 rounded-lg shadow-sm text-white border mb-6 py-6 px-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 text-white lg:grid-cols-3 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium mb-1">name</label>
+            <label className="block text-sm text-white font-medium mb-1">name</label>
             <input
               type="text"
               value={filtros.name}
               onChange={(e) => handleFiltroChange('name', e.target.value)}
               placeholder="Filtrar por name..."
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 text-white border rounded-md placeholder-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
+            <label className="block text-sm text-white font-medium mb-1">Email</label>
             <input
               type="text"
               value={filtros.email}
               onChange={(e) => handleFiltroChange('email', e.target.value)}
               placeholder="Filtrar por email..."
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 text-white border rounded-md placeholder-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Telefone</label>
+            <label className="block text-sm text-white font-medium mb-1">Telefone</label>
             <input
               type="text"
               value={filtros.telefone}
               onChange={(e) => handleFiltroChange('telefone', e.target.value)}
               placeholder="Filtrar por telefone..."
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 text-white border rounded-md placeholder-white"
             />
           </div>
 
 
 
           <div>
-            <label className="block text-sm font-medium mb-1">Estado</label>
+            <label className="block text-sm text-white font-medium mb-1">Estado</label>
             <select
               value={filtros.estado}
               onChange={(e) => handleFiltroChange('estado', e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 text-white border rounded-md"
             >
-              <option value="">Todos os estados</option>
+              <option value="" className="bg-bg">Todos os estados</option>
               {estadosUnicos.map(estado => (
                 <option key={estado} value={estado}>{estado}</option>
               ))}
@@ -199,13 +199,13 @@ export default function ContatosPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">city_name</label>
+            <label className="block text-sm text-white font-medium mb-1">city_name</label>
             <select
               value={filtros.city_name}
               onChange={(e) => handleFiltroChange('city_name', e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 text-white border rounded-md"
             >
-              <option value="">Todas as cidades</option>
+              <option value="" className="bg-bg">Todas as cidades</option>
               {cidadesUnicas.map(city_name => (
                 <option key={city_name} value={city_name}>{city_name}</option>
               ))}
@@ -214,12 +214,12 @@ export default function ContatosPage() {
         </div>
 
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-white ">
             {contatosFiltrados.length} de {contatos.length} contatos
           </span>
           <button
             onClick={limparFiltros}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            className=" hover:text-blue-800 text-sm text-white font-medium"
           >
             Limpar Filtros
           </button>
@@ -228,59 +228,55 @@ export default function ContatosPage() {
 
 
       {/* Tabela de Contatos */}
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Carregando contatos...</div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+    
+        <div className="bg-bg rounded-lg shadow-sm text-white border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-white background">
+              <thead className="bg-bg background divide-y">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background uppercase tracking-wider">
                     Id
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background uppercase tracking-wider">
                     name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background uppercase tracking-wider">
                     Contato
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background uppercase tracking-wider">
                     Localização
                   </th>
 
-                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background uppercase tracking-wider">
                     Telefone
                   </th>
 
-                   <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
+                   <th className="px-6 py-3 text-left text-xs font-medium text-background uppercase tracking-wider">
                     Email
                   </th>
 
-                  <th className="px-6 py-3 text-left text-xs font-medium text-background0 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-background uppercase tracking-wider">
                     Data
                   </th>
 
 
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-bg divide-y divide-gray-200">
                 {contatosFiltrados.map((contato) => (
                   <tr key={contato.id} className="hover:bg-background">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{contato.id}</div>
+                      <div className="font-medium ">{contato.id}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{contato.name}</div>
+                      <div className="font-medium ">{contato.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{contato.email}</div>
-                      <div className="text-sm text-background0">{contato.telefone}</div>
+                      <div className="text-sm text-white ">{contato.email}</div>
+                      <div className="text-sm text-white text-white">{contato.telefone}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-white ">
                         {contato.city_name && contato.estado
                           ? `${contato.city_name}, ${contato.estado}`
                           : contato.city_name || contato.estado || '-'
@@ -288,15 +284,15 @@ export default function ContatosPage() {
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-background0">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white text-white">
                         {contato.mobile_phone}
                     </td>
 
-                     <td className="px-6 py-4 whitespace-nowrap text-sm text-background0">
+                     <td className="px-6 py-4 whitespace-nowrap text-sm text-white text-white">
                         {contato.email}
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-background0">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white text-white">
                       {new Date(contato.created_at).toLocaleDateString('pt-BR')}
                     </td>
 
@@ -307,12 +303,11 @@ export default function ContatosPage() {
           </div>
 
           {contatosFiltrados.length === 0 && (
-            <div className="text-center py-8 text-background0">
+            <div className="text-center py-8 text-white">
               Nenhum contato encontrado
             </div>
           )}
         </div>
-      )}
     </div>
   );
 }

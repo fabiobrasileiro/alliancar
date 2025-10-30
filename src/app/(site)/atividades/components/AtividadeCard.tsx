@@ -30,20 +30,20 @@ export const AtividadeCard: React.FC<AtividadeCardProps> = ({
     <Card className="p-4">
       <div className="flex justify-between items-start flex-wrap">
         <div className="flex-1">
-          <h4 className="font-semibold text-jelly-bean-950">
+          <h4 className="font-semibold ">
             {atividade.titulo}
           </h4>
-          <p className="text-sm text-jelly-bean-800 mt-1">
+          <p className="text-sm  mt-1">
             {atividade.descricao}
           </p>
           <div className="flex flex-wrap gap-3 mt-2">
-            <span className="text-xs bg-jelly-bean-100 text-jelly-bean-800 px-2 py-1 rounded capitalize">
+            <span className="text-xs  px-2 py-1 rounded capitalize text-white">
               Tipo: {atividade.tipo}
             </span>
-            <span className="text-xs text-jelly-bean-800">
+            <span className="text-xs text-white">
               Prazo: {formatDate(atividade.prazo)}
             </span>
-            <span className="text-xs text-jelly-bean-800">
+            <span className="text-xs text-white">
               Responsável:{" "}
               {usuarios.find((u) => u.id === atividade.afiliado_id)
                 ?.nome_completo || atividade.afiliado_id}
@@ -57,7 +57,7 @@ export const AtividadeCard: React.FC<AtividadeCardProps> = ({
                 ? "red"
                 : atividade.prioridade === "Normal"
                   ? "blue"
-                  : "gray"
+                  : "default"
             }
             className="capitalize"
           >

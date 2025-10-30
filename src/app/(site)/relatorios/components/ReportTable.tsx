@@ -22,13 +22,7 @@ export default function ReportTable({
   loading,
   onExportCSV,
 }: ReportTableProps) {
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <p>Carregando dados...</p>
-      </div>
-    );
-  }
+  
 
   return (
     <section className="mt-8 rounded-md border bg-white p-4">
@@ -69,7 +63,7 @@ export default function ReportTable({
                     <div className="flex flex-col">
                       <span className="font-medium">{negociacao.veiculo}</span>
                       {negociacao.placa && (
-                        <span className="text-xs text-background0">
+                        <span className="text-xs text-white">
                           {negociacao.placa}
                         </span>
                       )}
@@ -88,7 +82,7 @@ export default function ReportTable({
                       {negociacao.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-background0">
+                  <TableCell className="text-sm text-white">
                     {negociacao.criadaEm}
                   </TableCell>
                 </TableRow>
@@ -97,7 +91,7 @@ export default function ReportTable({
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="text-center py-8 text-background0"
+                  className="text-center py-8 text-white"
                 >
                   Nenhuma negociação encontrada
                 </TableCell>

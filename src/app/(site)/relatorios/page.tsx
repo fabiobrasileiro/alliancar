@@ -817,7 +817,7 @@ export default function RelatoriosAdminPage() {
                         <td className="py-3 px-4 text-sm text-gray-800">
                           {negociacao.veiculo}
                           {negociacao.placa && (
-                            <span className="text-background0 text-xs block mt-1">
+                            <span className="text-white text-xs block mt-1">
                               Placa: {negociacao.placa}
                             </span>
                           )}
@@ -847,7 +847,7 @@ export default function RelatoriosAdminPage() {
                           <div>
                             <div className="font-medium">{negociacao.afiliado}</div>
                             {negociacao.email_afiliado && (
-                              <div className="text-xs text-background0">{negociacao.email_afiliado}</div>
+                              <div className="text-xs text-white">{negociacao.email_afiliado}</div>
                             )}
                           </div>
                         </td>
@@ -864,7 +864,7 @@ export default function RelatoriosAdminPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhuma negociação encontrada</h3>
-                  <p className="mt-1 text-sm text-background0">
+                  <p className="mt-1 text-sm text-white">
                     Tente ajustar os filtros para ver mais resultados.
                   </p>
                 </div>

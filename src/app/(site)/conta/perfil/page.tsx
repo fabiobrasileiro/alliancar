@@ -479,14 +479,9 @@ export default function PerfilAfiliado() {
     }
   }
 
-
-
-  console.log(formData.foto_perfil_url)
-
   return (
     <SidebarLayout>
-
-      <div className="container mx-auto p-6 max-w-7xl">
+      <div className="container  p-5 max-w-12xl">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-white">Meu Perfil</h1>
           <p className="text-gray-200 mt-2">
@@ -495,7 +490,7 @@ export default function PerfilAfiliado() {
         </div>
 
         {message && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
+          <div className="bg-green-50 border border-green-200 text-a2 px-4 py-3 rounded mb-4">
             {message}
           </div>
         )}
@@ -510,18 +505,18 @@ export default function PerfilAfiliado() {
           {/* Coluna principal com formulários */}
           <div className="lg:col-span-2 space-y-6">
             {/* Dados Pessoais */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-bg rounded-lg border  p-6">
               <h3 className="text-xl font-semibold mb-4">Dados Pessoais</h3>
 
               <div className="mb-4">
-                <p className="text-gray-600">
+                <p className="text-white">
                   Aqui você pode configurar suas informações pessoais.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 <div className="space-y-2">
-                  <label htmlFor="nome_completo" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="nome_completo" className="block text-sm font-medium text-white">
                     Nome Completo <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -530,12 +525,12 @@ export default function PerfilAfiliado() {
                     maxLength={256}
                     value={formData.nome_completo}
                     onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex h-10 w-full rounded-md border bg-bg px-3 py-2 text-sm text-white"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="cpf_cnpj" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="cpf_cnpj" className="block text-sm font-medium text-white">
                     CPF/CNPJ
                   </label>
                   <input
@@ -544,12 +539,12 @@ export default function PerfilAfiliado() {
                     maxLength={18}
                     value={formData.cpf_cnpj}
                     onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex h-10 w-full rounded-md border bg-bg px-3 py-2 text-sm text-white"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="telefone" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="telefone" className="block text-sm font-medium text-white">
                     WhatsApp com DDD<span className="text-red-500">*</span>
                   </label>
                   <input
@@ -558,12 +553,12 @@ export default function PerfilAfiliado() {
                     maxLength={32}
                     value={formData.telefone}
                     onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex h-10 w-full rounded-md border bg-bg px-3 py-2 text-sm text-white "
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="email" className="block text-sm font-medium text-white">
                     E-mail <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -573,7 +568,7 @@ export default function PerfilAfiliado() {
                     value={formData.email}
                     onChange={handleInputChange}
                     disabled
-                    className="flex h-10 w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-background0 cursor-not-allowed"
+                    className="flex h-10 w-full rounded-md border bg-bg px-3 py-2 text-sm text-white cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -589,19 +584,19 @@ export default function PerfilAfiliado() {
 
             {/* Dados PIX */}
             {/* Dados Bancários e PIX */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-bg rounded-lg border  p-6">
               <h3 className="text-xl font-semibold mb-4">Dados Bancários e PIX</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     Tipo de Operação
                   </label>
                   <select
                     name="operation_type"
                     value={formPix.operation_type}
                     onChange={handlePixChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border rounded-md px-3 py-2 text-white"
                   >
                     <option value="PIX">PIX</option>
                     <option value="TED">TED</option>
@@ -609,14 +604,14 @@ export default function PerfilAfiliado() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     Tipo de Chave PIX
                   </label>
                   <select
                     name="pix_address_key_type"
                     value={formPix.pix_address_key_type}
                     onChange={handlePixChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border rounded-md px-3 py-2 text-white"
                   >
                     <option value="EMAIL">E-mail</option>
                     <option value="CPF">CPF</option>
@@ -627,7 +622,7 @@ export default function PerfilAfiliado() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     Chave PIX
                   </label>
                   <input
@@ -635,13 +630,13 @@ export default function PerfilAfiliado() {
                     name="pix_address_key"
                     value={formPix.pix_address_key}
                     onChange={handlePixChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border rounded-md px-3 py-2 text-white"
                     placeholder="chave@pix.com ou 123.456.789-00"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     Nome do Titular *
                   </label>
                   <input
@@ -650,12 +645,12 @@ export default function PerfilAfiliado() {
                     value={formPix.ownerName}
                     onChange={handlePixChange}
                     required
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border rounded-md px-3 py-2 text-white"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     CPF/CNPJ do Titular *
                   </label>
                   <input
@@ -664,12 +659,12 @@ export default function PerfilAfiliado() {
                     value={formPix.cpfCnpj}
                     onChange={handlePixChange}
                     required
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border rounded-md px-3 py-2 text-white"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     Agência *
                   </label>
                   <input
@@ -678,12 +673,12 @@ export default function PerfilAfiliado() {
                     value={formPix.agency}
                     onChange={handlePixChange}
                     required
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border rounded-md px-3 py-2 text-white"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     Conta *
                   </label>
                   <input
@@ -692,12 +687,12 @@ export default function PerfilAfiliado() {
                     value={formPix.account}
                     onChange={handlePixChange}
                     required
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border rounded-md px-3 py-2 text-white"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     Dígito da Conta *
                   </label>
                   <input
@@ -706,19 +701,19 @@ export default function PerfilAfiliado() {
                     value={formPix.accountDigit}
                     onChange={handlePixChange}
                     required
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border rounded-md px-3 py-2 text-white"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     Tipo de Conta
                   </label>
                   <select
                     name="bankAccountType"
                     value={formPix.bankAccountType}
                     onChange={handlePixChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full border rounded-md px-3 py-2 text-white"
                   >
                     <option value="CONTA_CORRENTE">Conta Corrente</option>
                     <option value="CONTA_POUPANCA">Conta Poupança</option>
@@ -749,18 +744,18 @@ export default function PerfilAfiliado() {
 
             {/* Dados Financeiros - Só mostra se for super_admin */}
             {afiliado?.super_admin && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-bg rounded-lg border  p-6">
                 <h3 className="text-xl font-semibold mb-4">Configurações Financeiras</h3>
 
                 <div className="mb-4">
-                  <p className="text-gray-600">
+                  <p className="text-white">
                     Configure suas metas e comissões.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                   <div className="space-y-2">
-                    <label htmlFor="porcentagem_comissao" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="porcentagem_comissao" className="block text-sm font-medium text-white">
                       Porcentagem de Comissão (%)
                     </label>
                     <input
@@ -771,15 +766,15 @@ export default function PerfilAfiliado() {
                       max="100"
                       value={formData.porcentagem_comissao}
                       onChange={handleInputChange}
-                      className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex h-10 w-full rounded-md border bg-bg px-3 py-2 text-sm text-white"
                     />
-                    <p className="text-xs text-background0">
+                    <p className="text-xs text-white">
                       Exemplo: 3% = 0.03
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="valor_adesao" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="valor_adesao" className="block text-sm font-medium text-white">
                       Valor de Adesão (R$)
                     </label>
                     <input
@@ -789,12 +784,12 @@ export default function PerfilAfiliado() {
                       min="0"
                       value={formData.valor_adesao}
                       onChange={handleInputChange}
-                      className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex h-10 w-full rounded-md border bg-bg px-3 py-2 text-sm placeholder:text-white"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="meta" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="meta" className="block text-sm font-medium text-white">
                       Meta Mensal (R$)
                     </label>
                     <input
@@ -804,7 +799,7 @@ export default function PerfilAfiliado() {
                       min="0"
                       value={formData.meta}
                       onChange={handleInputChange}
-                      className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex h-10 w-full rounded-md border bg-bg px-3 py-2 text-sm placeholder:text-white"
                     />
                   </div>
                 </div>
@@ -815,9 +810,9 @@ export default function PerfilAfiliado() {
                     id="ativo"
                     checked={formData.ativo}
                     onChange={handleInputChange}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 rounded"
                   />
-                  <label htmlFor="ativo" className="text-sm text-gray-900">
+                  <label htmlFor="ativo" className="text-sm text-white">
                     Conta ativa
                   </label>
                 </div>
@@ -836,25 +831,25 @@ export default function PerfilAfiliado() {
           {/* Sidebar com informações do sistema */}
           <div className="space-y-6">
             {/* Status da Conta */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-bg rounded-lg border  p-6">
               <h3 className="text-lg font-semibold mb-4">Status da Conta</h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Status:</span>
-                  <span className={`font-medium ${afiliado?.ativo ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className="text-white">Status:</span>
+                  <span className={`font-medium ${afiliado?.ativo ? 'text-a1' : 'text-a2'}`}>
                     {afiliado?.ativo ? 'Ativo' : 'Inativo'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Tipo:</span>
-                  <span className="font-medium text-gray-900 capitalize">
+                  <span className="text-white">Tipo:</span>
+                  <span className="font-medium text-white capitalize">
                     {afiliado?.tipo}
                   </span>
                 </div>
                 {afiliado?.super_admin && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Super Admin:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-white">Super Admin:</span>
+                    <span className="font-medium text-white">
                       {afiliado?.super_admin ? 'Sim' : 'Não'}
                     </span>
                   </div>
@@ -863,24 +858,24 @@ export default function PerfilAfiliado() {
             </div>
 
             {/* Informações do Sistema */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-bg rounded-lg border  p-6">
               <h3 className="text-lg font-semibold mb-4">Informações do Sistema</h3>
               <div className="space-y-3 text-sm">
                 <div>
-                  <span className="text-gray-600">ID:</span>
-                  <p className="text-gray-900 font-mono text-xs truncate">
+                  <span className="text-white">ID:</span>
+                  <p className="text-white font-mono text-xs truncate">
                     {afiliado?.id}
                   </p>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Criado em:</span>
-                  <span className="text-gray-900">
+                  <span className="text-white">Criado em:</span>
+                  <span className="text-white">
                     {afiliado?.criado_em ? new Date(afiliado!.criado_em).toLocaleDateString('pt-BR') : ''}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Atualizado em:</span>
-                  <span className="text-gray-900">
+                  <span className="text-white">Atualizado em:</span>
+                  <span className="text-white">
                     {afiliado?.atualizado_em ? new Date(afiliado!.atualizado_em).toLocaleDateString('pt-BR') : ''}
                   </span>
                 </div>
@@ -888,7 +883,7 @@ export default function PerfilAfiliado() {
             </div>
 
             {/* Foto de Perfil */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-bg rounded-lg border  p-6">
               <h3 className="text-lg font-semibold mb-4">Foto de Perfil</h3>
               <div className="space-y-4">
                 {formData.foto_perfil_url ? (
@@ -900,12 +895,12 @@ export default function PerfilAfiliado() {
                   />
                 ) : (
                   <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mx-auto">
-                    <span className="text-gray-400 text-sm">Sem foto</span>
+                    <span className="text-white text-sm">Sem foto</span>
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="file-upload" className="block text-sm font-medium text-white">
                     Escolher foto
                   </label>
                   <input
@@ -913,16 +908,16 @@ export default function PerfilAfiliado() {
                     type="file"
                     accept="image/*"
                     onChange={handleFileUpload}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border rounded-md text-sm"
                   />
-                  <p className="text-xs text-background0">
+                  <p className="text-xs text-white">
                     Formatos: JPG, PNG, GIF (Máx: 5MB)
                   </p>
                 </div>
 
                 {/* {formData.foto_perfil_url && (
                   <div className="space-y-2">
-                    <label htmlFor="foto_perfil_url" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="foto_perfil_url" className="block text-sm font-medium text-white">
                       URL da Foto
                     </label>
                     <input
@@ -930,7 +925,7 @@ export default function PerfilAfiliado() {
                       id="foto_perfil_url"
                       value={formData.foto_perfil_url}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border rounded-md text-sm"
                       placeholder="https://exemplo.com/foto.jpg"
                     />
                   </div>
@@ -941,6 +936,5 @@ export default function PerfilAfiliado() {
         </div>
       </div>
     </ SidebarLayout>
-
   )
 }

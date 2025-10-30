@@ -442,7 +442,7 @@ const AtividadesPage: React.FC = () => {
 
   return (
     <>
-      <div className="px-5 py-3">
+      <div className="px-5 py-3 ">
         {/* Header */}
         <header className="flex flex-col flex-wrap">
           <h2 className="font-bold leading-tight m-0 text-white text-2xl">
@@ -450,30 +450,8 @@ const AtividadesPage: React.FC = () => {
           </h2>
           <header className="flex items-center justify-between flex-wrap">
             <nav className="flex items-center flex-wrap gap-2 max-[450px]:pr-8">
-              <span className="text-gray-200 text-sm flex gap-2 items-center">
-                <Link className="hover:opacity-70" href="/">
-                  Home
-                </Link>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-chevron-right"
-                >
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </span>
-              <span className="text-sm text-a1">
-                <Link className="hover:opacity-70" href="/crm/activity">
-                  Atividades
-                </Link>
-              </span>
+
+
             </nav>
             <div className="flex items-center justify-center gap-4 pl-2 flex-row-reverse flex-wrap mt-4 lg:flex-row lg:mt-0">
               <Button
@@ -524,68 +502,61 @@ const AtividadesPage: React.FC = () => {
         </header>
 
         <div className="flex flex-col lg:flex-row gap-4 mt-8 items-start w-full">
-          <div className="flex flex-col max-[1024px]:w-full lg:w-4/6">
-            <Card className="w-full p-6 md:p-8">
+          <div className="flex flex-col max-[1024px]:w-full lg:w-4/6 bg-bg">
+            <Card className="w-full p-6 md:p-8 bg-bg">
               <div className="w-full block">
                 <Tabs
                   value={activeTab}
                   onValueChange={(value) => setActiveTab(value as any)}
                   className=""
                 >
-                  <TabsList className="w-full md:h-12 h-16 flex flex-wrap mb-14 md:mb-0">
-                    <TabsTrigger value="atrasada">
+                  <TabsList className="w-full md:h-12 h-16 flex flex-wrap mb-14 md:mb-0 gap-6 ">
+                    <TabsTrigger value="atrasada" className="bg-white cursor-pointer">
                       Atrasadas
                       <Badge variant="red">{countByStatus.atrasada}</Badge>
+
                     </TabsTrigger>
-                    <TabsTrigger value="hoje">
+                    <TabsTrigger value="hoje" className="bg-white cursor-pointer">
                       Para hoje
                       <Badge variant="blue">{countByStatus.hoje}</Badge>
                     </TabsTrigger>
-                    <TabsTrigger value="planejada">
+                    <TabsTrigger value="planejada" className="bg-white cursor-pointer">
                       Planejadas
                       <Badge variant="gray">{countByStatus.planejada}</Badge>
                     </TabsTrigger>
-                    <TabsTrigger value="concluida">
+                    <TabsTrigger value="concluida" className="bg-white cursor-pointer">
                       Concluídas
-                      <Badge variant="green">{countByStatus.concluida}</Badge>
+                      <Badge variant="default">{countByStatus.concluida}</Badge>
                     </TabsTrigger>
                   </TabsList>
 
-                  {loading ? (
-                    <div className="flex justify-center items-center my-8">
-                      <p>Carregando atividades...</p>
-                    </div>
-                  ) : (
-                    <>
-                      {(
-                        ["atrasada", "hoje", "planejada", "concluida"] as const
-                      ).map((status) => (
-                        <TabsContent key={status} value={status}>
-                          <div className="flex flex-col gap-4 mt-4">
-                            {filteredAtividades.filter(
-                              (a) => a.status === status,
-                            ).length > 0 ? (
-                              filteredAtividades
-                                .filter((a) => a.status === status)
-                                .map((atividade) => (
-                                  <AtividadeCard
-                                    key={atividade.id}
-                                    atividade={atividade}
-                                    usuarios={usuarios}
-                                    onEdit={handleEdit}
-                                    onConcluir={handleConcluir}
-                                    onReabrir={handleReabrir}
-                                    onExcluir={handleExcluir}
-                                  />
-                                ))
-                            ) : (
-                              <EmptyState />
-                            )}
-                          </div>
-                        </TabsContent>
-                      ))}
-                    </>
-                  )}
+                  {(
+                    ["atrasada", "hoje", "planejada", "concluida"] as const
+                  ).map((status) => (
+                    <TabsContent key={status} value={status}>
+                      <div className="flex flex-col gap-4 mt-4">
+                        {filteredAtividades.filter(
+                          (a) => a.status === status,
+                        ).length > 0 ? (
+                          filteredAtividades
+                            .filter((a) => a.status === status)
+                            .map((atividade) => (
+                              <AtividadeCard
+                                key={atividade.id}
+                                atividade={atividade}
+                                usuarios={usuarios}
+                                onEdit={handleEdit}
+                                onConcluir={handleConcluir}
+                                onReabrir={handleReabrir}
+                                onExcluir={handleExcluir}
+                              />
+                            ))
+                        ) : (
+                          <EmptyState />
+                        )}
+                      </div>
+                    </TabsContent>
+                  ))}
                 </Tabs>
               </div>
             </Card>

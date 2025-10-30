@@ -24,24 +24,24 @@ const Sidebar: React.FC<SidebarProps> = ({ title, items, className }) => {
 
   return (
     <aside
-      className={`bg-slate-50 border rounded-md h-screen ms-5 mt-5 ${collapsed ? "w-14" : "w-64"} shrink-0 transition-all ${
+      className={`bg-bg border rounded-md h-screen ms-5 mt-5 ${collapsed ? "w-14" : "w-64"} shrink-0 transition-all ${
         className || ""
       }`}
     >
       <div className="flex items-center justify-between px-3 py-3 border-b">
         {!collapsed && (
-          <h3 className="font-semibold text-slate-700 text-base">{title}</h3>
+          <h3 className="font-semibold text-white text-base">{title}</h3>
         )}
         <button
           type="button"
-          className="p-1 rounded-md hover:bg-slate-200"
+          className="p-1 rounded-md hover:bg-a1"
           onClick={() => setCollapsed((v) => !v)}
           aria-label={collapsed ? "Expandir" : "Recolher"}
         >
           {collapsed ? (
-            <ChevronRight className="h-4 w-4 text-slate-700" />
+            <ChevronRight className="h-4 w-4 text-white" />
           ) : (
-            <ChevronLeft className="h-4 w-4 text-slate-700" />
+            <ChevronLeft className="h-4 w-4 text-white" />
           )}
         </button>
       </div>
@@ -56,12 +56,12 @@ const Sidebar: React.FC<SidebarProps> = ({ title, items, className }) => {
                   href={item.href}
                   className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${
                     isActive
-                      ? "bg-white shadow-sm text-slate-800"
-                      : "text-slate-600 hover:bg-slate-100"
+                      ? "bg-a1 shadow-sm text-white"
+                      : "text-white hover:bg-a1"
                   } ${collapsed ? "justify-center" : ""}`}
                 >
                   {item.icon && (
-                    <span className="text-slate-500">{item.icon}</span>
+                    <span className="text-white">{item.icon}</span>
                   )}
                   {!collapsed && <span>{item.label}</span>}
                 </Link>

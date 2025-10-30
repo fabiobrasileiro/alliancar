@@ -97,27 +97,13 @@ export default function Powerlinks() {
     },
   ];
 
-   if (loading) {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md p-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-a1 mx-auto mb-4"></div>
-            <p className="text-gray-600">Carregando...</p>
-          </div>
-        </Card>
-      </div>
-      );
-    }
-
-
   return (
     <SidebarLayout>
       <div className="p-4 space-y-8">
         {/* Título */}
         <div>
           <h3 className="text-2xl font-semibold mb-2 text-white">Hot links</h3>
-          <p className="text-gray-200">
+          <p className="text-white">
             Estes são os seus powerlinks, envie para seus clientes para receber
             diretamente os pedidos de cotação.
           </p>
@@ -126,19 +112,19 @@ export default function Powerlinks() {
         {/* Lista de Powerlinks */}
         <div className="space-y-4">
           {allLinks.length === 0 ? (
-            <p className="text-background0 text-center py-8">
+            <p className="text-white text-center py-8">
               Nenhum powerlink encontrado.
             </p>
           ) : (
             allLinks.map((link) => (
               <div
                 key={link.id}
-                className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm"
+                className="border  rounded-lg p-4 bg-bg shadow-sm"
               >
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* QR Code para todos os links */}
                   <div className="flex-shrink-0 flex flex-col items-center gap-2">
-                    <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center border">
+                    <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center">
                       {link.qrcode_url ? (
                         <img
                           src={link.qrcode_url}
@@ -167,15 +153,15 @@ export default function Powerlinks() {
                   {/* Informações do link */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-semibold text-lg">{link.nome}</h4>
+                      <h4 className="font-semibold text-lg text-white">{link.nome}</h4>
                       {link.id === "default" && (
-                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                        <span className="bg-a1 text-white text-xs px-2 py-1 rounded-full ">
                           Padrão
                         </span>
                       )}
                     </div>
 
-                    <p className="text-gray-900 text-sm break-all mb-4 p-2 bg-bwhite rounded border">
+                    <p className="text-white text-sm break-all mb-4 p-2 bg-bwhite rounded border">
                       {link.url}
                     </p>
 
@@ -184,7 +170,7 @@ export default function Powerlinks() {
                       <Button
                         onClick={() => copyToClipboard(link.url, link.id)}
                         disabled={copying === link.id}
-                        className="bg-a1  text-white flex items-center gap-2"
+                        className="bg-a1 text-white flex items-center gap-2"
                         size="sm"
                       >
                         <Copy className="w-4 h-4" />
@@ -197,7 +183,7 @@ export default function Powerlinks() {
                         rel="noopener noreferrer"
                       >
                         <Button
-                          className="bg-a2 text-white flex items-center gap-2"
+                          className="bg-a1 text-white flex items-center gap-2"
                           size="sm"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -214,8 +200,8 @@ export default function Powerlinks() {
 
         {/* Informação adicional */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-blue-800 mb-2">Como usar seus Powerlinks?</h4>
-          <ul className="text-blue-700 text-sm space-y-1">
+          <h4 className="font-semibold text-a1 mb-2">Como usar seus Powerlinks?</h4>
+          <ul className="text-a1 text-sm space-y-1">
             <li>• Compartilhe os links com seus clientes por WhatsApp, e-mail ou redes sociais</li>
             <li>• Use o QR Code para materiais impressos ou apresentações</li>
             <li>• Baixe o QR Code para usar em materiais offline</li>

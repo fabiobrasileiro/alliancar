@@ -100,21 +100,11 @@ const Dashboard = () => {
   }, [supabase, perfilData]);
 
   // 🔹 Loading
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-gray-600">Carregando dashboard...</p>
-        </div>
-      </div>
-    );
-  }
 
   // 🔹 Erro
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-navbar1 flex items-center justify-center">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
           <p className="text-red-800 font-semibold">Erro</p>
           <p className="text-red-600 mt-2">{error}</p>
@@ -126,8 +116,8 @@ const Dashboard = () => {
   // 🔹 Nenhum dado
   if (!dashboardData || dashboardData.length === 0) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+      <div className="min-h-screen bg-navbar1 flex items-center justify-center">
+        <div className="bg-bg border  rounded-lg p-6">
           <p className="text-yellow-800">Nenhum dado encontrado</p>
         </div>
       </div>
@@ -144,8 +134,8 @@ const Dashboard = () => {
       title: 'Total de Clientes',
       value: totalClientes.toLocaleString('pt-BR'),
       icon: Users,
-      color: 'bg-blue-500',
-      textColor: 'text-blue-600',
+      color: 'bg-a1',
+      textColor: 'text-white',
       bgColor: 'bg-blue-50',
       description: 'Clientes ativos no sistema'
     },
@@ -153,8 +143,8 @@ const Dashboard = () => {
       title: 'Valor em Assinaturas',
       value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAssinaturas),
       icon: TrendingUp,
-      color: 'bg-green-500',
-      textColor: 'text-green-600',
+      color: 'bg-a2',
+      textColor: 'text-white',
       bgColor: 'bg-green-50',
       description: 'Soma de todas as assinaturas ativas'
     },
@@ -162,8 +152,8 @@ const Dashboard = () => {
       title: 'Valor em Pagamentos',
       value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPagamentos),
       icon: DollarSign,
-      color: 'bg-purple-500',
-      textColor: 'text-purple-600',
+      color: 'bg-a3',
+      textColor: 'text-white',
       bgColor: 'bg-purple-50',
       description: 'Total de pagamentos confirmados'
     }
@@ -178,7 +168,7 @@ const Dashboard = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white">
-            {`Bem vindo,`} <span className='text-text'>{perfilData?.nome_completo }</span>
+            {perfilData?.super_admin ? 'Dashboard Geral' : `Bem vindo ${perfilData?.nome_completo ?? perfil?.nome_completo ?? 'Afiliado'}`}
           </h1>
           <p className='text-white'>
             {perfilData?.super_admin
@@ -192,13 +182,13 @@ const Dashboard = () => {
           {cards.map((card, index) => (
             <div
               key={index}
-              className={`${card.bgColor} rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow`}
+              className={` bg-bg rounded-xl p-6 shadow-sm  hover:shadow-md transition-shadow`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className={`text-sm font-medium ${card.textColor}`}>{card.title}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-2">{card.value}</p>
-                  <p className="text-xs text-background0 mt-1">{card.description}</p>
+                  <p className="text-2xl font-bold text-white mt-2">{card.value}</p>
+                  <p className="text-xs text-white mt-1">{card.description}</p>
                 </div>
                 <div className={`${card.color} p-3 rounded-lg`}>
                   <card.icon className="h-6 w-6 text-white" />
@@ -209,12 +199,12 @@ const Dashboard = () => {
         </div>
 
         {/* Resumo Financeiro */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Resumo Financeiro</h2>
+        <div className="bg-bg rounded-xl shadow-sm p-6 ">
+          <h2 className="text-xl font-semibold text-white mb-4">Resumo Financeiro</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="border-l-4 border-blue-500 pl-4">
-              <p className="text-sm text-gray-600">Ticket Médio por Cliente</p>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-sm text-white">Ticket Médio por Cliente</p>
+              <p className="text-lg font-semibold text-white">
                 {totalClientes > 0
                   ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                     totalAssinaturas / totalClientes
@@ -223,8 +213,8 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="border-l-4 border-green-500 pl-4">
-              <p className="text-sm text-gray-600">Potencial Total</p>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-sm text-white">Potencial Total</p>
+              <p className="text-lg font-semibold text-white">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                   totalAssinaturas + totalPagamentos
                 )}
@@ -235,14 +225,14 @@ const Dashboard = () => {
 
         {/* Ranking de Afiliados */}
         {perfilData?.super_admin && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-10 mb-10">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="bg-bg rounded-xl shadow-sm border border-gray-200 p-6 mt-10 mb-10">
+            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
               🏆 Ranking dos Afiliados
             </h2>
 
             <div className="overflow-x-auto">
               <table className="min-w-full border border-gray-200 text-sm">
-                <thead className="bg-background">
+                <thead className="bg-navbar1">
                   <tr>
                     <th className="text-left px-4 py-2 border-b">Posição</th>
                     <th className="text-left px-4 py-2 border-b">Afiliado</th>
@@ -254,11 +244,11 @@ const Dashboard = () => {
                 </thead>
                 <tbody>
                   {ranking.map((afiliado, index) => (
-                    <tr key={afiliado.afiliado_id} className="hover:bg-background">
+                    <tr key={afiliado.afiliado_id} className="hover:bg-navbar1">
                       <td className="px-4 py-2 border-b font-medium">
                         {index + 1}º
                       </td>
-                      <td className="px-4 py-2 border-b text-gray-800">
+                      <td className="px-4 py-2 border-b text-white">
                         {afiliado.afiliado_id}
                       </td>
                       <td className="px-4 py-2 border-b text-right">{afiliado.total_clientes}</td>
@@ -270,7 +260,7 @@ const Dashboard = () => {
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
                           .format(afiliado.total_pagamentos)}
                       </td>
-                      <td className="px-4 py-2 border-b text-right font-semibold text-green-700">
+                      <td className="px-4 py-2 border-b text-right font-semibold text-white ">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
                           .format(afiliado.total_assinaturas + afiliado.total_pagamentos)}
                       </td>
@@ -283,11 +273,13 @@ const Dashboard = () => {
         )}
 
 
-        <GoalsProgressAfiliado
-          metaMensal={3600} // valor da meta mensal
-          totalAssinaturas={totalAssinaturas}
-          totalPagamentos={totalPagamentos}
-        />
+        <div className="mt-10">
+          <GoalsProgressAfiliado
+            metaMensal={3600} // valor da meta mensal
+            totalAssinaturas={totalAssinaturas}
+            totalPagamentos={totalPagamentos}
+          />
+        </div>
       </div>
     </div>
   );

@@ -24,13 +24,13 @@ export default function GoalsProgressAfiliado({
     }).format(valor);
 
   return (
-    <Card className="mb-8">
+    <Card className="mb-8 bg-bg py-4 border-0 text-white">
       <CardHeader>
-        <CardTitle>🎯 Metas e Progresso</CardTitle>
+        <CardTitle className="text-white">Metas e Progresso</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4 px-9 mb-12">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <div className="flex justify-between text-sm text-white mb-2">
             <span>Progresso</span>
             <span>{progressoPorcentagem.toFixed(0)}%</span>
           </div>
@@ -39,7 +39,7 @@ export default function GoalsProgressAfiliado({
 
           <div
             className={`${
-              progressoPorcentagem >= 100 ? "bg-green-500" : "bg-blue-600"
+              progressoPorcentagem >= 100 ? "bg-green-a2" : "bg-a1"
             } p-4 rounded-lg mt-4`}
           >
             {progressoPorcentagem >= 100 ? (
