@@ -16,66 +16,198 @@ import {
 } from "@/components/ui/card";
 
 export default function SignupForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    fullName: "",
+    cnpj: ""
+  });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectedFrom") || "/";
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    
+    // Formatação automática do CNPJ
+    if (id === 'cnpj') {
+      const cleanValue = value.replace(/\D/g, '');
+      let formattedValue = cleanValue;
+      
+      if (cleanValue.length <= 2) {
+        formattedValue = cleanValue;
+      } else if (cleanValue.length <= 5) {
+        formattedValue = `${cleanValue.slice(0, 2)}.${cleanValue.slice(2)}`;
+      } else if (cleanValue.length <= 8) {
+        formattedValue = `${cleanValue.slice(0, 2)}.${cleanValue.slice(2, 5)}.${cleanValue.slice(5)}`;
+      } else if (cleanValue.length <= 12) {
+        formattedValue = `${cleanValue.slice(0, 2)}.${cleanValue.slice(2, 5)}.${cleanValue.slice(5, 8)}/${cleanValue.slice(8)}`;
+      } else {
+        formattedValue = `${cleanValue.slice(0, 2)}.${cleanValue.slice(2, 5)}.${cleanValue.slice(5, 8)}/${cleanValue.slice(8, 12)}-${cleanValue.slice(12, 14)}`;
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        [id]: formattedValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [id]: value
+      }));
+    }
+  };
+
+  const validateCNPJ = (cnpj: string) => {
+    const cleanCNPJ = cnpj.replace(/\D/g, '');
+    return cleanCNPJ.length === 14;
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
+    setMessage(null);
 
-    // Validações básicas
-    if (!email || !password || !confirmPassword || !fullName) {
-      setMessage("Todos os campos são obrigatórios");
+    // Validações
+    if (!formData.email || !formData.password || !formData.confirmPassword || !formData.fullName || !formData.cnpj) {
+      setMessage({ type: 'error', text: "Todos os campos são obrigatórios" });
       setLoading(false);
       return;
     }
 
-    if (password !== confirmPassword) {
-      setMessage("As senhas não coincidem");
+    if (formData.password !== formData.confirmPassword) {
+      setMessage({ type: 'error', text: "As senhas não coincidem" });
       setLoading(false);
       return;
     }
 
-    if (password.length < 6) {
-      setMessage("A senha deve ter pelo menos 6 caracteres");
+    if (formData.password.length < 6) {
+      setMessage({ type: 'error', text: "A senha deve ter pelo menos 6 caracteres" });
+      setLoading(false);
+      return;
+    }
+
+    if (!validateCNPJ(formData.cnpj)) {
+      setMessage({ type: 'error', text: "CNPJ deve ter 14 dígitos" });
       setLoading(false);
       return;
     }
 
     try {
       const supabase = createClient();
+      const cleanCNPJ = formData.cnpj.replace(/\D/g, '');
 
-      // Só faz o signup - o trigger cuida do resto!
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+      // 1. Verifica se o CNPJ já existe
+      const { data: existingAfiliado, error: checkError } = await supabase
+        .from('afiliados')
+        .select('id')
+        .eq('cnpj', cleanCNPJ)
+        .single();
+
+      if (existingAfiliado) {
+        setMessage({ type: 'error', text: "CNPJ já cadastrado" });
+        setLoading(false);
+        return;
+      }
+
+      // 2. Verifica se o email já existe
+      const { data: existingEmail, error: emailCheckError } = await supabase
+        .from('afiliados')
+        .select('id')
+        .eq('email', formData.email)
+        .single();
+
+      if (existingEmail) {
+        setMessage({ type: 'error', text: "Email já cadastrado" });
+        setLoading(false);
+        return;
+      }
+
+      // 3. Cria o usuário no Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
         options: {
-          data: { full_name: fullName },
+          data: {
+            nome_completo: formData.fullName,
+            name: formData.fullName,
+            cnpj: cleanCNPJ
+          },
         },
       });
 
-      if (error) {
-        setMessage(`Erro: ${error.message}`);
-      } else {
-        setMessage("✅ Conta criada com sucesso! Verifique seu email para confirmar.");
-        // Limpa o form
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        setFullName("");
+      if (authError) {
+        console.error('Auth error:', authError);
+        setMessage({ type: 'error', text: `Erro no cadastro: ${authError.message}` });
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      setMessage("Erro inesperado. Tente novamente.");
-      console.error("Signup error:", err);
+
+      if (!authData.user) {
+        setMessage({ type: 'error', text: "Erro ao criar usuário" });
+        setLoading(false);
+        return;
+      }
+
+      // 4. Cria o afiliado manualmente na tabela
+      console.log('Criando afiliado para user:', authData.user.id);
+      
+      const { data: afiliadoData, error: afiliadoError } = await supabase
+        .from('afiliados')
+        .insert({
+          auth_id: authData.user.id,
+          nome_completo: formData.fullName,
+          email: formData.email,
+          cnpj: cleanCNPJ,
+          ativo: true,
+          tipo: 'afiliado',
+          porcentagem_comissao: 0.03,
+          valor_adesao: 0.00,
+          meta: 2500.00,
+          super_admin: false
+        })
+        .select()
+        .single();
+
+      if (afiliadoError) {
+        console.error('Error creating afiliado:', afiliadoError);
+        
+        // Se der erro ao criar afiliado, tenta deletar o usuário criado
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        
+        setMessage({ type: 'error', text: `Erro ao criar afiliado: ${afiliadoError.message}` });
+        setLoading(false);
+        return;
+      }
+
+      // SUCCESSO!
+      console.log('Afiliado criado:', afiliadoData);
+      
+      setMessage({ 
+        type: 'success', 
+        text: "✅ Conta criada com sucesso! Afiliado registrado. Verifique seu email para confirmar a conta." 
+      });
+      
+      // Limpa o form
+      setFormData({
+        email: "",
+        password: "",
+        confirmPassword: "",
+        fullName: "",
+        cnpj: ""
+      });
+
+      // Redireciona para login após 3 segundos
+      setTimeout(() => {
+        router.push("/login");
+      }, 3000);
+
+    } catch (err: any) {
+      console.error("Unexpected error:", err);
+      setMessage({ type: 'error', text: `Erro inesperado: ${err.message}` });
     } finally {
       setLoading(false);
     }
@@ -87,7 +219,7 @@ export default function SignupForm() {
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">
-              Criar Conta
+              Criar Conta Afiliado
             </CardTitle>
             <CardDescription className="text-center">
               Preencha os dados abaixo para criar sua conta
@@ -96,58 +228,79 @@ export default function SignupForm() {
           <CardContent className="px-5">
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Nome Completo</Label>
+                <Label htmlFor="fullName">Nome Completo *</Label>
                 <Input
                   id="fullName"
                   type="text"
                   placeholder="Digite seu nome completo"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  value={formData.fullName}
+                  onChange={handleChange}
                   required
+                  disabled={loading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="Digite seu email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                   required
+                  disabled={loading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="cnpj">CNPJ *</Label>
+                <Input
+                  id="cnpj"
+                  type="text"
+                  placeholder="00.000.000/0000-00"
+                  value={formData.cnpj}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                  maxLength={18}
+                />
+                <p className="text-xs text-muted-foreground">Apenas números serão salvos</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha *</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Digite sua senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Digite sua senha (mín. 6 caracteres)"
+                  value={formData.password}
+                  onChange={handleChange}
                   required
+                  disabled={loading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   placeholder="Confirme sua senha"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
                   required
+                  disabled={loading}
                 />
               </div>
 
               {message && (
-                <div className={`text-sm text-center ${
-                  message.includes("Erro") ? "text-red-600" : "text-green-600"
+                <div className={`text-sm text-center p-3 rounded ${
+                  message.type === 'error' 
+                    ? "text-red-600 bg-red-50 border border-red-200" 
+                    : "text-green-600 bg-green-50 border border-green-200"
                 }`}>
-                  {message}
+                  {message.text}
                 </div>
               )}
 
@@ -156,15 +309,15 @@ export default function SignupForm() {
                 className="w-full mt-5"
                 disabled={loading}
               >
-                {loading ? "Criando conta..." : "Criar Conta"}
+                {loading ? "Criando conta..." : "Criar Conta Afiliado"}
               </Button>
 
               <div className="text-center mb-7">
-                <span className="text-sm text-white">
+                <span className="text-sm text-muted-foreground">
                   Já tem uma conta?{" "}
                   <Link
                     href="/login"
-                    className="text-a1 hover:text-a1 font-medium"
+                    className="text-primary hover:underline font-medium"
                   >
                     Fazer login
                   </Link>
