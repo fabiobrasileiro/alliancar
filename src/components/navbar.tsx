@@ -13,7 +13,7 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import Alliancar from "../../public/alliancar.avif";
+import Alliancar from "../../public/alliancar.png";
 import { useUser } from "@/context/UserContext";
 import { Button } from "./ui/button";
 import { CopyIcon, LogOut, User } from "lucide-react";
@@ -127,7 +127,7 @@ export default function Navbar() {
         as="nav"
         className="relative bg-linear-to-r from-[#232049] to-[#26232f]"
       >
-        <div className="px-2 sm:px-6 lg:px-8 bg-">
+        <div className="px-2 sm:px-6 lg:px-8 bg-bg py-2">
           <div className="relative flex h-16 items-center justify-between">
             <div className="absolute inset-y-0 left-0 flex items-center lg:hidden">
               {/* Mobile menu button*/}
@@ -149,8 +149,8 @@ export default function Navbar() {
                 <Link href="/">
                   <Image
                     src={Alliancar}
-                    width={150}
-                    height={150}
+                    width={100}
+                    height={100}
                     alt="Alliancar"
                   />
                 </Link>

@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
 interface GoalsProgressAfiliadoProps {
-  totalPlacas: number; // aqui você passa dashboardData.total_clientes
+  totalPlacas: number; // passe dashboardData.total_clientes
 }
 
 const FAIXAS = [
@@ -20,28 +20,23 @@ function findFaixaIndex(placas: number) {
 
 export default function GoalsProgressAfiliado({ totalPlacas }: GoalsProgressAfiliadoProps) {
   const placas = totalPlacas || 0;
+
+  // META FIXA: 500 placas = 100%
+  const META_PLACAS = 500;
+
+  // progresso global relativo à meta fixa (0..100)
+  const progressoGlobal = Math.min((placas / META_PLACAS) * 100, 100);
+
+  // faixa atual / próxima faixa (mantive pra informação extra)
   const idx = findFaixaIndex(placas);
   const faixaAtual = FAIXAS[Math.max(idx, 0)];
   const proximaFaixa = idx >= 0 && idx < FAIXAS.length - 1 ? FAIXAS[idx + 1] : null;
 
-  // Se houver próxima faixa, calcular quanto falta para alcançá-la
-  const faltaParaProxima = proximaFaixa
-    ? Math.max(proximaFaixa.min - placas, 0)
-    : 0;
+  // quanto falta para entrar na próxima faixa (se existir)
+  const faltaParaProxima = proximaFaixa ? Math.max(proximaFaixa.min - placas, 0) : 0;
 
-  // Progresso relativo dentro da faixa atual (0..100)
-  let progressoRelativo = 0;
-  if (proximaFaixa) {
-    const faixaWidth = proximaFaixa.min - faixaAtual.min;
-    progressoRelativo = faixaWidth > 0
-      ? ((placas - faixaAtual.min) / faixaWidth) * 100
-      : 100;
-  } else {
-    // última faixa -> 100%
-    progressoRelativo = 100;
-  }
-  // limitar 0..100
-  progressoRelativo = Math.min(Math.max(progressoRelativo, 0), 100);
+  // formata plural
+  const placaLabel = (n: number) => (n === 1 ? "placa" : "placas");
 
   return (
     <Card className="mb-8 bg-bg py-4 border-0 text-white">
@@ -51,27 +46,58 @@ export default function GoalsProgressAfiliado({ totalPlacas }: GoalsProgressAfil
 
       <CardContent>
         <div className="space-y-4 px-6">
-          <div>
-            <Progress value={progressoRelativo} className="h-2" />
+          {/* Cabeçalho com número de placas e % relativo a 500 */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white">Suas placas</p>
+              <p className="text-2xl font-bold text-white">{placas}</p>
+            </div>
+            <div className="text-right">
+              {/* <p className="text-sm text-white">Meta fixa</p>
+              {/* <p className="font-medium text-white">{META_PLACAS} placas = 100%</p>
+              <p className="text-xs text-white/80">{progressoGlobal.toFixed(0)}%</p> */}
+            </div>
           </div>
 
-          {proximaFaixa && (
-            <div className="mt-3 text-white/90 bg-a1 px-16 py-4 rounded-lg">
-              <h2 className="text-2xl font-bold">
-                Para passar para a próxima fase ({proximaFaixa.min} — {proximaFaixa.max === Infinity ? "∞" : proximaFaixa.max} placas)
-                você precisa de <strong>{faltaParaProxima}</strong> placas a mais.
-              </h2>
-              <p className="mt-1">
-                Próxima comissão: <strong>{proximaFaixa.percent}%</strong> — estimativa: <strong>{proximaFaixa.estimate}</strong>
-              </p>
+          {/* Barra de progresso (em relação a 500) */}
+          <div>
+            <div className="flex justify-between text-sm text-white mb-2">
+              <span>Progresso</span>
+              <span>{progressoGlobal.toFixed(0)}%</span>
             </div>
-          )}
 
-          {!proximaFaixa && (
-            <div className="mt-3 text-sm text-white/90">
-              <p>Você já atingiu a maior faixa (máxima comissão).</p>
+            <Progress value={progressoGlobal} className="h-2" />
+          </div>
+
+          {/* Informação sobre falta para entrar na próxima fase */}
+          <div className="mt-3 text-white/90 bg-a1 px-6 py-4 rounded-lg">
+            {proximaFaixa ? (
+              faltaParaProxima > 0 ? (
+                <h2 className="text-lg font-semibold">
+                  Falta(m) <strong>{faltaParaProxima}</strong> {placaLabel(faltaParaProxima)} para entrar na próxima fase (
+                  {proximaFaixa.min} — {proximaFaixa.max === Infinity ? "∞" : proximaFaixa.max} placas).
+                </h2>
+              ) : (
+                <h2 className="text-lg font-semibold">
+                  🎉 Você já entrou na próxima fase ({proximaFaixa.min} — {proximaFaixa.max === Infinity ? "∞" : proximaFaixa.max} placas)!
+                </h2>
+              )
+            ) : (
+              <h2 className="text-lg font-semibold">Você já atingiu a maior faixa (máxima comissão).</h2>
+            )}
+
+            {/* Faixa atual / próxima faixa (informação adicional) */}
+            <div className="mt-2 text-sm">
+              <p>
+                Faixa atual: <strong>{faixaAtual.min} — {faixaAtual.max === Infinity ? "∞" : faixaAtual.max} placas</strong> — {faixaAtual.percent}% ({faixaAtual.estimate})
+              </p>
+              {proximaFaixa && (
+                <p className="mt-1">
+                  Próxima faixa: <strong>{proximaFaixa.min} — {proximaFaixa.max === Infinity ? "∞" : proximaFaixa.max} placas</strong> — {proximaFaixa.percent}% ({proximaFaixa.estimate})
+                </p>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </CardContent>
     </Card>
