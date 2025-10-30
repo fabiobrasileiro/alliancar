@@ -4,9 +4,6 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-a1: #1eb2fc;
-  --color-a2: #5ce880;
-
   --color-primary-50: #effbfc;
   --color-primary-100: #d6f4f7;
   --color-primary-200: #b1e7f0;
@@ -71,7 +68,17 @@
 
   --color-gray-900: #06a7b1;
 
-  --color-background: #041c26;
+  --color-background: #022059;
+  --color-background1: #013d47;
+  --color-background2: #230145;
+  --color-background3: #013614;
+
+  --color-navbar1: #1C1C1C;
+
+  --color-a1: #1eb2fc;
+  --color-a2: #5ce880;
+  --color-a3: #1eb2fc;
+  --color-a4: #5ce880;
 
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -140,9 +147,6 @@
 body {
   background: var(--color-background);
 }
-
-
-
 
 :root {
   --heading-color: var(--color-jelly-bean-950, inherit);
