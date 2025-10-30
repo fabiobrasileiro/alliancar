@@ -275,11 +275,11 @@ const Dashboard = () => {
 
         <div className="mt-10">
           <GoalsProgressAfiliado
-            metaMensal={3600} // valor da meta mensal
-            totalAssinaturas={totalAssinaturas}
-            totalPagamentos={totalPagamentos}
+            metaPlacas={500}          // exemplo: meta de 500 placas
+            totalPlacas={35} // passe o número real de placas do afiliado
           />
         </div>
+
       </div>
     </div>
   );
