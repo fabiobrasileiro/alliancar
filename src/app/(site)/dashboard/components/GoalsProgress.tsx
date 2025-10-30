@@ -2,8 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
 interface GoalsProgressAfiliadoProps {
-  metaPlacas: number;         // meta em número de placas
-  totalPlacas: number;        // placas atuais do afiliado
+  totalPlacas: number; // aqui você passa dashboardData.total_clientes
 }
 
 const FAIXAS = [
@@ -15,66 +14,64 @@ const FAIXAS = [
   { min: 500, max: Infinity, percent: 15, estimate: "±R$ 15.000+ a.m" },
 ];
 
-function findFaixa(placas: number) {
-  return FAIXAS.find((f) => placas >= f.min && placas <= f.max) ?? FAIXAS[0];
+function findFaixaIndex(placas: number) {
+  return FAIXAS.findIndex((f) => placas >= f.min && placas <= f.max);
 }
 
-export default function GoalsProgressAfiliado({
-  metaPlacas,
-  totalPlacas,
-}: GoalsProgressAfiliadoProps) {
-  const progresso = totalPlacas;
-  // porcentagem do progresso em relação à meta de placas
-  const progressoPorcentagem = Math.min((progresso / Math.max(metaPlacas, 1)) * 100, 120);
-  const placasNecessarias = Math.max(metaPlacas - progresso, 0);
+export default function GoalsProgressAfiliado({ totalPlacas }: GoalsProgressAfiliadoProps) {
+  const placas = totalPlacas || 0;
+  const idx = findFaixaIndex(placas);
+  const faixaAtual = FAIXAS[Math.max(idx, 0)];
+  const proximaFaixa = idx >= 0 && idx < FAIXAS.length - 1 ? FAIXAS[idx + 1] : null;
 
-  const faixaAtual = findFaixa(progresso);
+  // Se houver próxima faixa, calcular quanto falta para alcançá-la
+  const faltaParaProxima = proximaFaixa
+    ? Math.max(proximaFaixa.min - placas, 0)
+    : 0;
+
+  // Progresso relativo dentro da faixa atual (0..100)
+  let progressoRelativo = 0;
+  if (proximaFaixa) {
+    const faixaWidth = proximaFaixa.min - faixaAtual.min;
+    progressoRelativo = faixaWidth > 0
+      ? ((placas - faixaAtual.min) / faixaWidth) * 100
+      : 100;
+  } else {
+    // última faixa -> 100%
+    progressoRelativo = 100;
+  }
+  // limitar 0..100
+  progressoRelativo = Math.min(Math.max(progressoRelativo, 0), 100);
 
   return (
     <Card className="mb-8 bg-bg py-4 border-0 text-white">
       <CardHeader>
-        <CardTitle className="text-white">Metas e Progresso</CardTitle>
+        <CardTitle className="text-white">Progresso e Metas</CardTitle>
       </CardHeader>
 
       <CardContent>
-        <div className="space-y-4 px-9 mb-12">
-          <div className="flex justify-between text-sm text-white mb-2">
-            <span>Progresso (placas)</span>
-            <span>{progressoPorcentagem.toFixed(0)}%</span>
+        <div className="space-y-4 px-6">
+          <div>
+            <Progress value={progressoRelativo} className="h-2" />
           </div>
 
-          {/* Passamos a porcentagem para o componente Progress (0..100) */}
-          <Progress value={progressoPorcentagem} className="h-2" />
-
-          <div
-            className={`${
-              progressoPorcentagem >= 100 ? "bg-green-a2" : "bg-a1"
-            } p-4 rounded-lg mt-4`}
-          >
-            {progressoPorcentagem >= 100 ? (
-              <p className="text-white font-medium">
-                🏆 Parabéns! Você atingiu sua meta de{" "}
-                <strong>{metaPlacas}</strong> placas (total atual:{" "}
-                <strong>{progresso}</strong> placas).
-              </p>
-            ) : (
-              <p className="text-white font-medium">
-                Faltam <strong>{placasNecessarias}</strong> placas para bater a
-                meta de <strong>{metaPlacas}</strong>.
-              </p>
-            )}
-
-            {/* Informação da faixa atual: % e estimativa R$/mês */}
-            <div className="mt-3 text-sm">
-              <p>
-                Faixa atual: <strong>{faixaAtual.min}–{faixaAtual.max === Infinity ? "∞" : faixaAtual.max} placas</strong>
-              </p>
-              <p>
-                Comissão: <strong>{faixaAtual.percent}%</strong> — estimativa:
-                <strong> {faixaAtual.estimate}</strong>
+          {proximaFaixa && (
+            <div className="mt-3 text-white/90 bg-a1 px-16 py-4 rounded-lg">
+              <h2 className="text-2xl font-bold">
+                Para passar para a próxima fase ({proximaFaixa.min} — {proximaFaixa.max === Infinity ? "∞" : proximaFaixa.max} placas)
+                você precisa de <strong>{faltaParaProxima}</strong> placas a mais.
+              </h2>
+              <p className="mt-1">
+                Próxima comissão: <strong>{proximaFaixa.percent}%</strong> — estimativa: <strong>{proximaFaixa.estimate}</strong>
               </p>
             </div>
-          </div>
+          )}
+
+          {!proximaFaixa && (
+            <div className="mt-3 text-sm text-white/90">
+              <p>Você já atingiu a maior faixa (máxima comissão).</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
