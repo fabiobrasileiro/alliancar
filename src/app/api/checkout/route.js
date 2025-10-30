@@ -79,6 +79,12 @@ export async function POST(request) {
                 description: paymentDescription,
                 daysAfterDueDateToRegistrationCancellation: 1,
                 externalReference: externalReference,
+                 split: [
+                    {
+                        "walletId": "a7732382-3e6b-4ac8-b3b4-6c6ff5653fe7",
+                        "percentualValue": 50
+                    }
+                ]
             }),
         });
         const payment = await paymentRes.json();
@@ -106,12 +112,7 @@ export async function POST(request) {
                 nextDueDate: formattedNextDueDate,
                 description: `Mensalidade Seguro Auto - ${plano?.category_name || 'Plano'}`,
                 externalReference: externalReference,
-                split: [
-                    {
-                        "walletId": "a7732382-3e6b-4ac8-b3b4-6c6ff5653fe7",
-                        "percentualValue": 50
-                    }
-                ]
+               
             }),
         });
         const subscription = await subscriptionRes.json();
