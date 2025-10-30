@@ -157,7 +157,7 @@ export default function NegociacaoAdesao() {
                                     />
                                     <div>
                                         <h3 className="font-medium text-gray-900">{plano.nome}</h3>
-                                        <p className="text-sm text-background0">{plano.descricao}</p>
+                                        <p className="text-sm text-white">{plano.descricao}</p>
                                     </div>
                                 </div>
                                 <span className="text-lg font-bold text-gray-900">
@@ -186,7 +186,7 @@ export default function NegociacaoAdesao() {
                             className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                     </div>
-                    <p className="text-sm text-background0 mt-1">
+                    <p className="text-sm text-white mt-1">
                         Digite o valor que deseja cobrar
                     </p>
                 </div>

@@ -8,9 +8,9 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: "bg-jelly-bean-300 text-jelly-bean-50",
-  blue: "bg-jelly-bean-100 text-white",
-  red: "bg-red-300 text-white",
+  default: "bg-a1 text-jelly-bean-50 text-white",
+  blue: "bg-a2 text-white",
+  red: "bg-a3 text-white",
   green: "bg-green-300 text-white",
   gray: "bg-slate-300 text-white",
 };

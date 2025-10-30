@@ -234,28 +234,28 @@ export default function MinhasVendas() {
         {isAdmin && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card className="p-4 text-center">
-              <div className="text-sm text-gray-600">Total Afiliados</div>
+              <div className="text-sm text-white">Total Afiliados</div>
               <div className="text-xl font-bold text-blue-600">
                 {totaisGerais.totalAfiliados}
               </div>
             </Card>
             
             <Card className="p-4 text-center">
-              <div className="text-sm text-gray-600">Total Clientes</div>
+              <div className="text-sm text-white">Total Clientes</div>
               <div className="text-xl font-bold text-green-600">
                 {totaisGerais.totalClientes}
               </div>
             </Card>
             
             <Card className="p-4 text-center">
-              <div className="text-sm text-gray-600">Total Assinaturas</div>
+              <div className="text-sm text-white">Total Assinaturas</div>
               <div className="text-xl font-bold text-purple-600">
                 {totaisGerais.totalAssinaturas}
               </div>
             </Card>
             
             <Card className="p-4 text-center">
-              <div className="text-sm text-gray-600">Comissão Total</div>
+              <div className="text-sm text-white">Comissão Total</div>
               <div className="text-xl font-bold text-orange-600">
                 {formatarMoeda(totaisGerais.totalComissao)}
               </div>
@@ -267,28 +267,28 @@ export default function MinhasVendas() {
         {afiliadoAtual && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card className="p-4 text-center">
-              <div className="text-sm text-gray-600">Clientes</div>
+              <div className="text-sm text-white">Clientes</div>
               <div className="text-xl font-bold text-blue-600">
                 {afiliadoAtual.total_clientes}
               </div>
             </Card>
             
             <Card className="p-4 text-center">
-              <div className="text-sm text-gray-600">Assinaturas</div>
+              <div className="text-sm text-white">Assinaturas</div>
               <div className="text-xl font-bold text-green-600">
                 {afiliadoAtual.total_assinaturas}
               </div>
             </Card>
             
             <Card className="p-4 text-center">
-              <div className="text-sm text-gray-600">Valor Assinaturas</div>
+              <div className="text-sm text-white">Valor Assinaturas</div>
               <div className="text-xl font-bold text-purple-600">
                 {formatarMoeda(afiliadoAtual.valor_assinaturas)}
               </div>
             </Card>
             
             <Card className="p-4 text-center">
-              <div className="text-sm text-gray-600">Comissão</div>
+              <div className="text-sm text-white">Comissão</div>
               <div className="text-xl font-bold text-orange-600">
                 {formatarMoeda(afiliadoAtual.comissao_total)}
               </div>
@@ -297,8 +297,8 @@ export default function MinhasVendas() {
         )}
 
         {/* Resto do código permanece igual (filtros, tabela de vendas, etc.) */}
-        <Card className="p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="p-4 mb-6 bg-bg">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-white">
             <div>
               <span className="block mb-1 text-sm">De:</span>
               <Input
@@ -317,15 +317,15 @@ export default function MinhasVendas() {
             </div>
             <div>
               <span className="block mb-1 text-sm">Status:</span>
-              <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
+              <Select value={filtroStatus} onValueChange={setFiltroStatus} >
+                <SelectTrigger className="bg-bg">
+                  <SelectValue placeholder="Todos"  className="bg-bg"/>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="pago">Pago</SelectItem>
-                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                  <SelectItem value="todos" className="bg-bg">Todos</SelectItem>
+                  <SelectItem value="pendente" className="bg-bg">Pendente</SelectItem>
+                  <SelectItem value="pago" className="bg-bg">Pago</SelectItem>
+                  <SelectItem value="cancelado" className="bg-bg">Cancelado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -339,22 +339,22 @@ export default function MinhasVendas() {
 
         {/* totais das vendas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="p-4 text-center">
-            <div className="text-sm text-gray-600">Valor Total Vendas</div>
+          <Card className="p-4 text-center bg-bg">
+            <div className="text-sm text-white">Valor Total Vendas</div>
             <div className="text-xl font-bold text-a1">
               {formatarMoeda(totalValor)}
             </div>
           </Card>
           
-          <Card className="p-4 text-center">
-            <div className="text-sm text-gray-600">Comissão Total Vendas</div>
+          <Card className="p-4 text-center bg-bg">
+            <div className="text-sm text-white">Comissão Total Vendas</div>
             <div className="text-xl font-bold text-a2">
               {formatarMoeda(totalComissao)}
             </div>
           </Card>
           
-          <Card className="p-4 text-center">
-            <div className="text-sm text-gray-600">Porcentagem</div>
+          <Card className="p-4 text-center bg-bg">
+            <div className="text-sm text-white">Porcentagem</div>
             <div className="text-xl font-bold text-purple-400">
               {totalValor > 0
                 ? `${(comissaoPercentual * 100).toFixed(0)}%`

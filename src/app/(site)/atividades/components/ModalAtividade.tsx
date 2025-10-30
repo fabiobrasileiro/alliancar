@@ -42,13 +42,13 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <DialogPanel className="relative transform overflow-hidden rounded-lg text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg bg-white">
-                <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+              <DialogPanel className="relative transform overflow-hidden rounded-lg text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg bg-bg">
+                <div className="bg-bg px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                   <div className="sm:flex sm:items-start">
                     <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
                       <Dialog.Title
                         as="h3"
-                        className="text-base font-semibold leading-6 text-gray-900 mb-4"
+                        className="text-base font-semibold leading-6 text-white mb-4"
                       >
                         {mode === "create"
                           ? "Nova Atividade"
@@ -83,7 +83,7 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                           <textarea
                             id="descricao"
                             rows={3}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
+                            className="w-full rounded-md border px-3 py-2 text-sm focus:border-a1 focus:ring-a1 text-white bg-bg text-white placeholder-white"
                             placeholder="Descreva a atividade..."
                             value={atividade.descricao}
                             onChange={(e) =>
@@ -101,7 +101,7 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                           </Label>
                           <select
                             id="afiliado_id"
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
+                            className="w-full rounded-md border px-3 py-2 text-sm focus:border-a1 focus:a1 text-white"
                             value={atividade.afiliado_id}
                             onChange={(e) =>
                               onChange("afiliado_id", e.target.value)
@@ -141,7 +141,7 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                           </Label>
                           <select
                             id="prioridade"
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
+                            className="w-full rounded-md border px-3 py-2 text-sm focus:border-a1 focus:ring-a1 text-white bg-bg"
                             value={atividade.prioridade}
                             onChange={(e) =>
                               onChange("prioridade", e.target.value)
@@ -159,7 +159,7 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                           </Label>
                           <select
                             id="tipo"
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-jelly-bean-500 focus:ring-jelly-bean-500"
+                            className="w-full rounded-md border px-3 py-2 text-sm focus:border-a1 focus:ring-a1 text-white bg-bg"
                             value={atividade.tipo}
                             onChange={(e) => onChange("tipo", e.target.value)}
                           >
@@ -180,7 +180,7 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                 <div className="bg-background px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                   <button
                     type="button"
-                    className="inline-flex w-full justify-center rounded-md bg-jelly-bean-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-jelly-bean-500 sm:ml-3 sm:w-auto"
+                    className="inline-flex w-full justify-center rounded-md bg-a1 cursor-pointer px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-a1 sm:ml-3 sm:w-auto"
                     onClick={onSave}
                   >
                     {mode === "create"
@@ -189,7 +189,7 @@ export const ModalAtividade: React.FC<ModalAtividadeProps> = ({
                   </button>
                   <button
                     type="button"
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-background sm:mt-0 sm:w-auto"
+                    className="mt-3 inline-flex w-full justify-center rounded-md cursor-pointer bg-bg px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-background sm:mt-0 sm:w-auto"
                     onClick={onClose}
                   >
                     Cancelar

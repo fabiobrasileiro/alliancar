@@ -52,27 +52,29 @@ export const ContactFilters: React.FC<ContactFiltersProps> = ({
           <div className="flex flex-col gap-4 max-lg:w-full">
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col">
-                <Label htmlFor="nome" className="text-jelly-bean-900">
+                <Label htmlFor="nome" className="">
                   Nome
                 </Label>
                 <Input
+                  className="placeholder-white"
                   id="nome"
                   value={nome}
                   onChange={(e) => onNomeChange(e.target.value)}
                 />
               </div>
               <div className="flex flex-col">
-                <Label htmlFor="email" className="text-jelly-bean-900">
+                <Label htmlFor="email" className="">
                   E-mail
                 </Label>
                 <Input
+                  className="placeholder-white"
                   id="email"
                   value={email}
                   onChange={(e) => onEmailChange(e.target.value)}
                 />
               </div>
               <div className="flex flex-col">
-                <Label htmlFor="celular" className="text-jelly-bean-900">
+                <Label htmlFor="celular" className="">
                   Celular
                 </Label>
                 <Input
@@ -82,7 +84,7 @@ export const ContactFilters: React.FC<ContactFiltersProps> = ({
                 />
               </div>
               <div className="flex flex-col">
-                <Label htmlFor="cpfCnpj" className="text-jelly-bean-900">
+                <Label htmlFor="cpfCnpj" className="">
                   CPF/CNPJ
                 </Label>
                 <Input
@@ -92,7 +94,7 @@ export const ContactFilters: React.FC<ContactFiltersProps> = ({
                 />
               </div>
               <div className="flex flex-col">
-                <Label htmlFor="estado" className="text-jelly-bean-900">
+                <Label htmlFor="estado" className="">
                   Estado
                 </Label>
                 <Input
@@ -102,7 +104,7 @@ export const ContactFilters: React.FC<ContactFiltersProps> = ({
                 />
               </div>
               <div className="flex flex-col">
-                <Label htmlFor="origemLead" className="text-jelly-bean-900">
+                <Label htmlFor="origemLead" className="">
                   Origem do Lead
                 </Label>
                 <Select value={origemLead} onValueChange={onOrigemLeadChange}>

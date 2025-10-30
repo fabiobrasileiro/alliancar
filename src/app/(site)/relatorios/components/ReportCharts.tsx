@@ -10,23 +10,7 @@ export default function ReportCharts({
   chartData,
   loading,
 }: ReportChartsProps) {
-  if (loading) {
-    return (
-      <section className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {[1, 2].map((i) => (
-          <Card key={i} className="rounded-md border bg-white">
-            <CardHeader>
-              <div className="animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-64 bg-gray-100 rounded"></div>
-              </div>
-            </CardHeader>
-          </Card>
-        ))}
-      </section>
-    );
-  }
-
+  
   return (
     <section className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Gráfico de Vendas por Status */}

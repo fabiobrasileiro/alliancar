@@ -80,11 +80,11 @@ export default function SalesCard({ card, onDragStart }: SalesCardProps) {
             <span className="text-sm font-medium text-gray-900">
               {card.clientName}
             </span>
-            <span className="text-xs text-background0">• {card.date}</span>
+            <span className="text-xs text-white">• {card.date}</span>
           </div>
           <p className="text-sm text-gray-700 font-medium">{card.vehicle}</p>
           <div className="text-sm font-bold text-green-600">{card.price}</div>
-          <div className="text-xs text-background0">Placa: {card.placa}</div>
+          <div className="text-xs text-white">Placa: {card.placa}</div>
         </div>
 
         {/* Footer */}
@@ -92,7 +92,7 @@ export default function SalesCard({ card, onDragStart }: SalesCardProps) {
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-1">
               <AlertTriangle className="w-4 h-4 text-yellow-500" />
-              <span className="text-xs text-background0">
+              <span className="text-xs text-white">
                 Sem atividade pendente
               </span>
             </div>

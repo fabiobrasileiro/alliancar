@@ -140,7 +140,7 @@ export default function CustomersPage() {
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold">Todos os Clientes</h2>
-          <div className="text-sm text-background0">
+          <div className="text-sm text-white">
             Total: {filteredCustomers.length} cliente(s)
           </div>
         </div>
@@ -249,7 +249,7 @@ export default function CustomersPage() {
                   </TableRow>
                 ) : filteredCustomers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-background0 py-8">
+                    <TableCell colSpan={8} className="text-center text-white py-8">
                       Nenhum cliente encontrado
                     </TableCell>
                   </TableRow>
@@ -258,7 +258,7 @@ export default function CustomersPage() {
                     <TableRow key={customer.id} className={customer.deleted ? "bg-background" : ""}>
                       <TableCell>
                         <div className="font-medium">{customer.name}</div>
-                        <div className="text-sm text-background0">ID: {customer.id}</div>
+                        <div className="text-sm text-white">ID: {customer.id}</div>
                         {customer.external_reference && (
                           <div className="text-xs text-gray-400">
                             Ref: {customer.external_reference}
@@ -268,10 +268,10 @@ export default function CustomersPage() {
                       
                       <TableCell>
                         <div>{customer.email}</div>
-                        <div className="text-sm text-background0">
+                        <div className="text-sm text-white">
                           Tel: {customer.phone}
                         </div>
-                        <div className="text-sm text-background0">
+                        <div className="text-sm text-white">
                           Cel: {customer.mobile_phone}
                         </div>
                       </TableCell>
@@ -287,14 +287,14 @@ export default function CustomersPage() {
                           {customer.address}, {customer.address_number}
                         </div>
                         {customer.complement && (
-                          <div className="text-xs text-background0">
+                          <div className="text-xs text-white">
                             {customer.complement}
                           </div>
                         )}
-                        <div className="text-xs text-background0">
+                        <div className="text-xs text-white">
                           {customer.city_name} - {customer.province}
                         </div>
-                        <div className="text-xs text-background0">
+                        <div className="text-xs text-white">
                           CEP: {customer.postal_code}
                         </div>
                       </TableCell>
@@ -303,7 +303,7 @@ export default function CustomersPage() {
                         <div className="text-sm font-medium">
                           {customer.afiliado_nome}
                         </div>
-                        <div className="text-xs text-background0">
+                        <div className="text-xs text-white">
                           ID: {customer.afiliado_id}
                         </div>
                       </TableCell>
@@ -321,7 +321,7 @@ export default function CustomersPage() {
                         <div className="text-sm">
                           {formatDate(customer.created_at)}
                         </div>
-                        <div className="text-xs text-background0">
+                        <div className="text-xs text-white">
                           {formatDateTime(customer.created_at).split(' ')[1]}
                         </div>
                       </TableCell>
@@ -330,7 +330,7 @@ export default function CustomersPage() {
                         <div className="text-sm">
                           {formatDate(customer.updated_at)}
                         </div>
-                        <div className="text-xs text-background0">
+                        <div className="text-xs text-white">
                           {formatDateTime(customer.updated_at).split(' ')[1]}
                         </div>
                       </TableCell>
