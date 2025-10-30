@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // rotas públicas
-  const publicRoutes = ["/login", "/signup", "/public", "/api", "/favicon.ico"];
+  const publicRoutes = ["/login", "/signup", "/public", "/api", "/favicon.ico", "/form", "/formulario", "/afiliacao"];
   const isPublic = publicRoutes.some((p) => pathname.startsWith(p));
 
   if (!session && !isPublic) {

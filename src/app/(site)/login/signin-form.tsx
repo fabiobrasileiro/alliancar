@@ -165,7 +165,7 @@ export default function LoginForm() {
           <p className="text-sm text-slate-600 text-center w-full">
             Não tem uma conta?{" "}
             <Link
-              href="/signup"
+              href="/afiliacao"
               className="text-blue-700 hover:underline font-medium"
             >
               Criar conta
