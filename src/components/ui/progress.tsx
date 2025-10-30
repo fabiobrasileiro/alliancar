@@ -22,7 +22,7 @@ function Progress({
   markers = [0, 49, 99, 199, 340, 490],
   showMarkers = true,
   showLabels = true,
-  markerColor = "bg-white/50",
+  markerColor = "bg-black",
   labelColor = "text-white",
   percentages = [3, 5, 7, 9, 12, 15],
   showTopLabels = true,
@@ -73,7 +73,7 @@ function Progress({
       <ProgressPrimitive.Root
         data-slot="progress"
         className={cn(
-          "bg-primary/20 relative h-2 w-full overflow-hidden rounded-full",
+          "bg-white   relative h-2 w-full overflow-hidden rounded-full",
           className,
         )}
         {...props}

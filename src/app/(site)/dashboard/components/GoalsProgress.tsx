@@ -2,8 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
 interface GoalsProgressAfiliadoProps {
-  metaPlacas: number;         // meta em número de placas
-  totalPlacas: number;        // placas atuais do afiliado
+  totalPlacas: number; // passe dashboardData.total_clientes
 }
 
 const FAIXAS = [
@@ -15,64 +14,88 @@ const FAIXAS = [
   { min: 500, max: Infinity, percent: 15, estimate: "±R$ 15.000+ a.m" },
 ];
 
-function findFaixa(placas: number) {
-  return FAIXAS.find((f) => placas >= f.min && placas <= f.max) ?? FAIXAS[0];
+function findFaixaIndex(placas: number) {
+  return FAIXAS.findIndex((f) => placas >= f.min && placas <= f.max);
 }
 
-export default function GoalsProgressAfiliado({
-  metaPlacas,
-  totalPlacas,
-}: GoalsProgressAfiliadoProps) {
-  const progresso = totalPlacas;
-  // porcentagem do progresso em relação à meta de placas
-  const progressoPorcentagem = Math.min((progresso / Math.max(metaPlacas, 1)) * 100, 120);
-  const placasNecessarias = Math.max(metaPlacas - progresso, 0);
+export default function GoalsProgressAfiliado({ totalPlacas }: GoalsProgressAfiliadoProps) {
+  const placas = totalPlacas || 0;
 
-  const faixaAtual = findFaixa(progresso);
+  // META FIXA: 500 placas = 100%
+  const META_PLACAS = 500;
+
+  // progresso global relativo à meta fixa (0..100)
+  const progressoGlobal = Math.min((placas / META_PLACAS) * 100, 100);
+
+  // faixa atual / próxima faixa (mantive pra informação extra)
+  const idx = findFaixaIndex(placas);
+  const faixaAtual = FAIXAS[Math.max(idx, 0)];
+  const proximaFaixa = idx >= 0 && idx < FAIXAS.length - 1 ? FAIXAS[idx + 1] : null;
+
+  // quanto falta para entrar na próxima faixa (se existir)
+  const faltaParaProxima = proximaFaixa ? Math.max(proximaFaixa.min - placas, 0) : 0;
+
+  // formata plural
+  const placaLabel = (n: number) => (n === 1 ? "placa" : "placas");
 
   return (
     <Card className="mb-8 bg-bg py-4 border-0 text-white">
       <CardHeader>
-        <CardTitle className="text-white">Metas e Progresso</CardTitle>
+        <CardTitle className="text-white">Progresso e Metas</CardTitle>
       </CardHeader>
 
       <CardContent>
-        <div className="space-y-4 px-9 mb-12">
-          <div className="flex justify-between text-sm text-white mb-2">
-            <span>Progresso (placas)</span>
-            <span>{progressoPorcentagem.toFixed(0)}%</span>
+        <div className="space-y-4 px-6">
+          {/* Cabeçalho com número de placas e % relativo a 500 */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-white">Suas placas</p>
+              <p className="text-2xl font-bold text-white">{placas}</p>
+            </div>
+            <div className="text-right">
+              {/* <p className="text-sm text-white">Meta fixa</p>
+              {/* <p className="font-medium text-white">{META_PLACAS} placas = 100%</p>
+              <p className="text-xs text-white/80">{progressoGlobal.toFixed(0)}%</p> */}
+            </div>
           </div>
 
-          {/* Passamos a porcentagem para o componente Progress (0..100) */}
-          <Progress value={progressoPorcentagem} className="h-2" />
+          {/* Barra de progresso (em relação a 500) */}
+          <div>
+            <div className="flex justify-between text-sm text-white mb-2">
+              <span>Progresso</span>
+              <span>{progressoGlobal.toFixed(0)}%</span>
+            </div>
 
-          <div
-            className={`${
-              progressoPorcentagem >= 100 ? "bg-green-a2" : "bg-a1"
-            } p-4 rounded-lg mt-4`}
-          >
-            {progressoPorcentagem >= 100 ? (
-              <p className="text-white font-medium">
-                🏆 Parabéns! Você atingiu sua meta de{" "}
-                <strong>{metaPlacas}</strong> placas (total atual:{" "}
-                <strong>{progresso}</strong> placas).
-              </p>
+            <Progress value={progressoGlobal} className="h-2" />
+          </div>
+
+          {/* Informação sobre falta para entrar na próxima fase */}
+          <div className="mt-3 text-white/90 bg-a1 px-6 py-4 rounded-lg">
+            {proximaFaixa ? (
+              faltaParaProxima > 0 ? (
+                <h2 className="text-lg font-semibold">
+                  Falta(m) <strong>{faltaParaProxima}</strong> {placaLabel(faltaParaProxima)} para entrar na próxima fase (
+                  {proximaFaixa.min} — {proximaFaixa.max === Infinity ? "∞" : proximaFaixa.max} placas).
+                </h2>
+              ) : (
+                <h2 className="text-lg font-semibold">
+                  🎉 Você já entrou na próxima fase ({proximaFaixa.min} — {proximaFaixa.max === Infinity ? "∞" : proximaFaixa.max} placas)!
+                </h2>
+              )
             ) : (
-              <p className="text-white font-medium">
-                Faltam <strong>{placasNecessarias}</strong> placas para bater a
-                meta de <strong>{metaPlacas}</strong>.
-              </p>
+              <h2 className="text-lg font-semibold">Você já atingiu a maior faixa (máxima comissão).</h2>
             )}
 
-            {/* Informação da faixa atual: % e estimativa R$/mês */}
-            <div className="mt-3 text-sm">
+            {/* Faixa atual / próxima faixa (informação adicional) */}
+            <div className="mt-2 text-sm">
               <p>
-                Faixa atual: <strong>{faixaAtual.min}–{faixaAtual.max === Infinity ? "∞" : faixaAtual.max} placas</strong>
+                Faixa atual: <strong>{faixaAtual.min} — {faixaAtual.max === Infinity ? "∞" : faixaAtual.max} placas</strong> — {faixaAtual.percent}% ({faixaAtual.estimate})
               </p>
-              <p>
-                Comissão: <strong>{faixaAtual.percent}%</strong> — estimativa:
-                <strong> {faixaAtual.estimate}</strong>
-              </p>
+              {proximaFaixa && (
+                <p className="mt-1">
+                  Próxima faixa: <strong>{proximaFaixa.min} — {proximaFaixa.max === Infinity ? "∞" : proximaFaixa.max} placas</strong> — {proximaFaixa.percent}% ({proximaFaixa.estimate})
+                </p>
+              )}
             </div>
           </div>
         </div>

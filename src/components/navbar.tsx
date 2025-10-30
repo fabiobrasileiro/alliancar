@@ -13,7 +13,7 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import Alliancar from "../../public/alliancar.avif";
+import Alliancar from "../../public/alliancar.png";
 import { useUser } from "@/context/UserContext";
 import { Button } from "./ui/button";
 import { CopyIcon, LogOut, User } from "lucide-react";
@@ -127,7 +127,7 @@ export default function Navbar() {
         as="nav"
         className="relative bg-linear-to-r from-[#232049] to-[#26232f]"
       >
-        <div className="px-2 sm:px-6 lg:px-8">
+        <div className="px-2 sm:px-6 lg:px-8 bg-bg py-2">
           <div className="relative flex h-16 items-center justify-between">
             <div className="absolute inset-y-0 left-0 flex items-center lg:hidden">
               {/* Mobile menu button*/}
@@ -149,8 +149,8 @@ export default function Navbar() {
                 <Link href="/">
                   <Image
                     src={Alliancar}
-                    width={150}
-                    height={150}
+                    width={100}
+                    height={100}
                     alt="Alliancar"
                   />
                 </Link>
@@ -208,7 +208,7 @@ export default function Navbar() {
               </div>
 
               {/* afiliados dropdown */}
-              <Menu as="div" className="relative ml-3">
+              <Menu as="div" className="relative ml-3 ">
                 <MenuButton className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                   <span className="absolute -inset-1.5" />
                   <span className="sr-only">Open user menu</span>
@@ -221,7 +221,7 @@ export default function Navbar() {
 
                 <MenuItems
                   transition
-                  className="absolute right-0 z-10 mt-2 w-64 origin-top-right rounded-md bg-background py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+                  className="absolute right-0 z-10 mt-2 w-64 origin-top-right rounded-md bg-background py-1 outline -outline-offset-1 outline-white/10 transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in bg-bg"
                 >
                   <div className="flex items-center gap-3 px-4 py-2 border-b border-white/10">
                     <div>
@@ -230,8 +230,8 @@ export default function Navbar() {
                           perfil?.nome_completo ||
                           "Usuário"}
                       </p>
-                      <p className="text-sm text-gray-300">{user?.email}</p>
-                      <p className="text-[10px] text-gray-400 mt-1">
+                      <p className="text-sm text-white">{user?.email}</p>
+                      <p className="text-[10px] text-white mt-1">
                         Último acesso: {formatDateBR(user?.last_sign_in_at ?? "")}
                       </p>
                     </div>
@@ -240,7 +240,7 @@ export default function Navbar() {
 
                     <Link
                       href="/conta"
-                      className=" px-4 py-2 text-sm text-jelly-bean-600 data-focus:bg-white/5 data-focus:outline-hidden flex items-center gap-1"
+                      className=" px-4 py-2 text-sm text-a1 data-focus:bg-white/5 data-focus:outline-hidden flex items-center gap-1"
                     >
                       <User size={14} />
                       Minha conta
@@ -251,7 +251,7 @@ export default function Navbar() {
 
                     <Link
                       href="/logout"
-                      className="px-4 py-2 text-sm text-jelly-bean-600 data-focus:bg-white/5 data-focus:outline-hidden flex items-center gap-1"
+                      className="px-4 py-2 text-sm text-a1 data-focus:bg-white/5 data-focus:outline-hidden flex items-center gap-1"
                     >
                       <LogOut size={14} />
                       Sair

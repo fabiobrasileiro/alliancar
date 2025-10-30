@@ -272,13 +272,11 @@ const Dashboard = () => {
           </div>
         )}
 
-
-        <div className="mt-10">
-          <GoalsProgressAfiliado
-            metaPlacas={500}          // exemplo: meta de 500 placas
-            totalPlacas={35} // passe o número real de placas do afiliado
-          />
-        </div>
+        {!perfilData?.super_admin && (
+          <div className="mt-10">
+            <GoalsProgressAfiliado totalPlacas={totalClientes} />
+          </div>
+        )}
 
       </div>
     </div>
