@@ -225,15 +225,15 @@ const Dashboard = () => {
 
         {/* Ranking de Afiliados */}
         {perfilData?.super_admin && (
-          <div className="bg-bg rounded-xl shadow-sm border border-gray-200 p-6 mt-10 mb-10">
+          <div className="bg-bg rounded-xl shadow-sm border    p-6 mt-10 mb-10">
             <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
               🏆 Ranking dos Afiliados
             </h2>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full border border-gray-200 text-sm">
+              <table className="min-w-full border  text-sm">
                 <thead className="bg-navbar1">
-                  <tr>
+                  <tr className='text-white'>
                     <th className="text-left px-4 py-2 border-b">Posição</th>
                     <th className="text-left px-4 py-2 border-b">Afiliado</th>
                     <th className="text-right px-4 py-2 border-b">Clientes</th>
@@ -245,18 +245,18 @@ const Dashboard = () => {
                 <tbody>
                   {ranking.map((afiliado, index) => (
                     <tr key={afiliado.afiliado_id} className="hover:bg-navbar1">
-                      <td className="px-4 py-2 border-b font-medium">
+                      <td className="px-4 py-2 border-b font-medium text-white">
                         {index + 1}º
                       </td>
                       <td className="px-4 py-2 border-b text-white">
                         {afiliado.afiliado_id}
                       </td>
-                      <td className="px-4 py-2 border-b text-right">{afiliado.total_clientes}</td>
-                      <td className="px-4 py-2 border-b text-right">
+                      <td className="px-4 py-2 border-b text-right text-white">{afiliado.total_clientes}</td>
+                      <td className="px-4 py-2 border-b text-right text-white">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
                           .format(afiliado.total_assinaturas)}
                       </td>
-                      <td className="px-4 py-2 border-b text-right">
+                      <td className="px-4 py-2 border-b text-right text-white">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
                           .format(afiliado.total_pagamentos)}
                       </td>
