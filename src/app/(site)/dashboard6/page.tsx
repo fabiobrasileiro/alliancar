@@ -145,7 +145,7 @@ const Dashboard = () => {
       value: totalClientes.toLocaleString('pt-BR'),
       icon: Users,
       color: 'bg-blue-500',
-      textColor: 'text-blue-600',
+      textColor: 'text-white',
       bgColor: 'bg-blue-50',
       description: 'Clientes ativos no sistema'
     },
@@ -154,7 +154,7 @@ const Dashboard = () => {
       value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalAssinaturas),
       icon: TrendingUp,
       color: 'bg-green-500',
-      textColor: 'text-green-600',
+      textColor: 'text-white',
       bgColor: 'bg-green-50',
       description: 'Soma de todas as assinaturas ativas'
     },
@@ -163,7 +163,7 @@ const Dashboard = () => {
       value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPagamentos),
       icon: DollarSign,
       color: 'bg-purple-500',
-      textColor: 'text-purple-600',
+      textColor: 'text-white',
       bgColor: 'bg-purple-50',
       description: 'Total de pagamentos confirmados'
     }
@@ -173,7 +173,7 @@ const Dashboard = () => {
     (b.total_pagamentos + b.total_assinaturas) - (a.total_pagamentos + a.total_assinaturas)
   );
   return (
-    <div className="min-h-screen bg-navbar1 p-6">
+    <div className="min-h-screen bg-linear-to-r from-[#232049] to-[#26232f] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -192,13 +192,13 @@ const Dashboard = () => {
           {cards.map((card, index) => (
             <div
               key={index}
-              className={`${card.bgColor} rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow`}
+              className={` bg-[#12101e] rounded-xl p-6 shadow-sm  hover:shadow-md transition-shadow`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className={`text-sm font-medium ${card.textColor}`}>{card.title}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-2">{card.value}</p>
-                  <p className="text-xs text-background0 mt-1">{card.description}</p>
+                  <p className="text-2xl font-bold text-white mt-2">{card.value}</p>
+                  <p className="text-xs text-white mt-1">{card.description}</p>
                 </div>
                 <div className={`${card.color} p-3 rounded-lg`}>
                   <card.icon className="h-6 w-6 text-white" />
@@ -209,12 +209,12 @@ const Dashboard = () => {
         </div>
 
         {/* Resumo Financeiro */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 ">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Resumo Financeiro</h2>
+        <div className="bg-[#12101e] rounded-xl shadow-sm p-6 ">
+          <h2 className="text-xl font-semibold text-white mb-4">Resumo Financeiro</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="border-l-4 border-blue-500 pl-4">
-              <p className="text-sm text-gray-600">Ticket Médio por Cliente</p>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-sm text-white">Ticket Médio por Cliente</p>
+              <p className="text-lg font-semibold text-white">
                 {totalClientes > 0
                   ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                     totalAssinaturas / totalClientes
@@ -223,8 +223,8 @@ const Dashboard = () => {
               </p>
             </div>
             <div className="border-l-4 border-green-500 pl-4">
-              <p className="text-sm text-gray-600">Potencial Total</p>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-sm text-white">Potencial Total</p>
+              <p className="text-lg font-semibold text-white">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
                   totalAssinaturas + totalPagamentos
                 )}
@@ -235,8 +235,8 @@ const Dashboard = () => {
 
         {/* Ranking de Afiliados */}
         {perfilData?.super_admin && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-10 mb-10">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="bg-[#12101e] rounded-xl shadow-sm border border-gray-200 p-6 mt-10 mb-10">
+            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
               🏆 Ranking dos Afiliados
             </h2>
 
@@ -258,7 +258,7 @@ const Dashboard = () => {
                       <td className="px-4 py-2 border-b font-medium">
                         {index + 1}º
                       </td>
-                      <td className="px-4 py-2 border-b text-gray-800">
+                      <td className="px-4 py-2 border-b text-white">
                         {afiliado.afiliado_id}
                       </td>
                       <td className="px-4 py-2 border-b text-right">{afiliado.total_clientes}</td>
@@ -270,7 +270,7 @@ const Dashboard = () => {
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
                           .format(afiliado.total_pagamentos)}
                       </td>
-                      <td className="px-4 py-2 border-b text-right font-semibold text-green-700">
+                      <td className="px-4 py-2 border-b text-right font-semibold text-white ">
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
                           .format(afiliado.total_assinaturas + afiliado.total_pagamentos)}
                       </td>

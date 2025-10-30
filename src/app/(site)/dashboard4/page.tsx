@@ -173,7 +173,7 @@ const Dashboard = () => {
     (b.total_pagamentos + b.total_assinaturas) - (a.total_pagamentos + a.total_assinaturas)
   );
   return (
-    <div className="min-h-screen bg-navbar1 p-6">
+    <div className="min-h-screen bg-linear-to-r from-cyan-500 to-blue-500 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
