@@ -23,7 +23,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
         if (form.vehicleInfo.model && form.vehicleInfo.model.length > 2) {
             const timer = setTimeout(() => {
                 buscarPlanoPorModelo(form.vehicleInfo.model);
-            }, 500);
+            }, 500 );
             
             return () => clearTimeout(timer);
         }
@@ -79,7 +79,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 value={form.vehicleInfo.plate}
                 onChange={onChange}
                 maxLength={7}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white text-white"
                 required
             />
 
@@ -87,10 +87,10 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 name="vehicleType"
                 value={form.vehicleInfo.vehicleType}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white text-white bg-bg"
                 required
             >
-                <option value="">Selecione o tipo</option>
+                <option value="" className="text-white">Selecione o tipo</option>
                 <option value="carro">Carro</option>
                 <option value="utilitario">Utilitário</option>
             </select>
@@ -100,7 +100,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 placeholder="Marca (ex: Volkswagen, Fiat)"
                 value={form.vehicleInfo.brand}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white"
                 required
             />
 
@@ -109,7 +109,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 placeholder="Ano (ex: 2020)"
                 value={form.vehicleInfo.year}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white"
                 required
             />
 
@@ -119,7 +119,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                     placeholder="Modelo (ex: GOL, COROLLA, CIVIC)"
                     value={form.vehicleInfo.model}
                     onChange={onChange}
-                    className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                    className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white"
                     required
                 />
                 {loadingPlano && (
@@ -151,7 +151,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 name="state"
                 value={form.vehicleInfo.state}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white text-white bg-bg"
                 required
             >
                 <option value="">Selecione o estado</option>
@@ -189,7 +189,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 placeholder="Cidade"
                 value={form.vehicleInfo.city}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white"
                 required
             />
 
@@ -202,7 +202,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                     className="mr-2"
                     id="taxiApp"
                 />
-                <label htmlFor="taxiApp" className="text-sm">
+                <label htmlFor="taxiApp" className="text-sm text-white">
                     Taxi/App (Uber, 99, etc)
                 </label>
             </div>
@@ -213,7 +213,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 value={form.vehicleInfo.observations}
                 onChange={onChange}
                 rows={3}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className=" text-white w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white"
             />
 
             <div className="flex gap-3">

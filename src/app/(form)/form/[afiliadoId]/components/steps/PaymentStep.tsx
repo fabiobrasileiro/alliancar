@@ -24,7 +24,7 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading 
                 placeholder="Nome no cartão"
                 value={form.creditCard.holderName}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border placeholder-white rounded focus:outline-none focus:border-blue-500"
                 required
             />
 
@@ -33,7 +33,7 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading 
                 placeholder="Número do cartão"
                 value={form.creditCard.number}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border placeholder-white rounded focus:outline-none focus:border-blue-500"
                 required
             />
 
@@ -43,7 +43,7 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading 
                     placeholder="Mês (MM)"
                     value={form.creditCard.expiryMonth}
                     onChange={onChange}
-                    className="p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                    className="p-3 border placeholder-white rounded focus:outline-none focus:border-blue-500"
                     required
                 />
 
@@ -52,7 +52,7 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading 
                     placeholder="Ano (AAAA)"
                     value={form.creditCard.expiryYear}
                     onChange={onChange}
-                    className="p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                    className="p-3 border placeholder-white rounded focus:outline-none focus:border-blue-500"
                     required
                 />
 
@@ -61,7 +61,7 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading 
                     placeholder="CVV"
                     value={form.creditCard.ccv}
                     onChange={onChange}
-                    className="p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                    className="p-3 border placeholder-white rounded focus:outline-none focus:border-blue-500"
                     required
                 />
             </div>

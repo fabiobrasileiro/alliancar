@@ -62,15 +62,15 @@ export default function PlanSelectionStep({
 
     return (
         <div className="space-y-6">
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="bg-bg border rounded-lg p-6">
                 {/* Cabeçalho do Plano */}
                 <div className="flex justify-between items-center mb-6 pb-4 border-b">
-                    <h2 className="text-2xl font-bold text-gray-800">
+                    <h2 className="text-2xl font-bold text-a1">
                         {plano?.category_name || 'PLANO ENCONTRADO'}
                     </h2>
                     <div className="text-right">
                         <div className="text-sm text-gray-600">Faixa: {plano?.vehicle_range}</div>
-                        <div className="text-lg font-bold text-blue-600">
+                        <div className="text-lg font-bold text-a1">
                             R$ {plano?.monthly_payment || '0,00'}/mês
                         </div>
                     </div>
@@ -78,60 +78,60 @@ export default function PlanSelectionStep({
 
                 {/* Serviços Incluídos */}
                 <div className="mb-8">
-                    <p className="text-gray-700 mb-4 text-lg">Coberturas do plano:</p>
+                    <p className="text-white mb-4 text-lg">Coberturas do plano:</p>
                     <ul className="space-y-3">
                         <li className="flex justify-between items-center py-3 border-b">
                             <div className="flex items-center">
-                                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                                <div className="w-6 h-6 bg-a2 rounded-full flex items-center justify-center mr-3">
                                     <span className="text-white text-sm">✓</span>
                                 </div>
-                                <span className="text-gray-700 font-medium">Roubo e Furto</span>
+                                <span className="text-white font-medium">Roubo e Furto</span>
                             </div>
-                            <div className="text-green-600 font-semibold">
+                            <div className="text-a2 font-semibold">
                                 R$ {coberturas.rouboFurto?.toFixed(2) || '0,00'}
                             </div>
                         </li>
                         <li className="flex justify-between items-center py-3 border-b">
                             <div className="flex items-center">
-                                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                                <div className="w-6 h-6 bg-a2 rounded-full flex items-center justify-center mr-3">
                                     <span className="text-white text-sm">✓</span>
                                 </div>
-                                <span className="text-gray-700 font-medium">Colisão/Incêndio</span>
+                                <span className="text-white font-medium">Colisão/Incêndio</span>
                             </div>
-                            <div className="text-green-600 font-semibold">
+                            <div className="text-a2 font-semibold">
                                 R$ {coberturas.colisaoIncendio?.toFixed(2) || '0,00'}
                             </div>
                         </li>
                         <li className="flex justify-between items-center py-3 border-b">
                             <div className="flex items-center">
-                                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                                <div className="w-6 h-6 bg-a2 rounded-full flex items-center justify-center mr-3">
                                     <span className="text-white text-sm">✓</span>
                                 </div>
-                                <span className="text-gray-700 font-medium">Danos a Terceiros</span>
+                                <span className="text-white font-medium">Danos a Terceiros</span>
                             </div>
-                            <div className="text-green-600 font-semibold">
+                            <div className="text-a2 font-semibold">
                                 R$ {coberturas.danosTerceiros?.toFixed(2) || '0,00'}
                             </div>
                         </li>
                         <li className="flex justify-between items-center py-3 border-b">
                             <div className="flex items-center">
-                                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                                <div className="w-6 h-6 bg-a2 rounded-full flex items-center justify-center mr-3">
                                     <span className="text-white text-sm">✓</span>
                                 </div>
-                                <span className="text-gray-700 font-medium">Assistência 24H</span>
+                                <span className="text-white font-medium">Assistência 24H</span>
                             </div>
-                            <div className="text-green-600 font-semibold">
+                            <div className="text-a2 font-semibold">
                                 R$ {coberturas.assistencia?.toFixed(2) || '0,00'}
                             </div>
                         </li>
                         <li className="flex justify-between items-center py-3 border-b">
                             <div className="flex items-center">
-                                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                                <div className="w-6 h-6 bg-a2 rounded-full flex items-center justify-center mr-3">
                                     <span className="text-white text-sm">✓</span>
                                 </div>
-                                <span className="text-gray-700 font-medium">Vidros</span>
+                                <span className="text-white font-medium">Vidros</span>
                             </div>
-                            <div className="text-green-600 font-semibold">
+                            <div className="text-a2 font-semibold">
                                 R$ {coberturas.vidros?.toFixed(2) || '0,00'}
                             </div>
                         </li>
@@ -144,7 +144,7 @@ export default function PlanSelectionStep({
                         <h3 className="text-xl font-bold text-gray-800">Serviços Opcionais</h3>
                     </div>
                     
-                    <p className="text-gray-700 mb-6">Acrescente serviços opcionais ao seu plano</p>
+                    <p className="text-white mb-6">Acrescente serviços opcionais ao seu plano</p>
                     
                     <ul className="space-y-4 mb-6">
                         {services.map((service) => (
@@ -160,11 +160,11 @@ export default function PlanSelectionStep({
                                         <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                     </label>
                                     <div className="flex-1">
-                                        <span className="text-gray-700 block">{service.name}</span>
+                                        <span className="text-white block">{service.name}</span>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <strong className="text-gray-900 text-lg">R$ {service.price.toFixed(2)}</strong>
+                                    <strong className="text-white text-lg">R$ {service.price.toFixed(2)}</strong>
                                 </div>
                             </li>
                         ))}
@@ -174,8 +174,8 @@ export default function PlanSelectionStep({
                     {selectedServices.length > 0 && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                             <div className="flex justify-between items-center">
-                                <span className="text-blue-800 font-semibold">Total dos serviços opcionais:</span>
-                                <span className="text-blue-800 font-bold text-lg">R$ {calculateTotal().toFixed(2)}</span>
+                                <span className="text-a1 font-semibold">Total dos serviços opcionais:</span>
+                                <span className="text-a1 font-bold text-lg">R$ {calculateTotal().toFixed(2)}</span>
                             </div>
                         </div>
                     )}

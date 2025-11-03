@@ -19,7 +19,7 @@ export default function AddressStep({ form, onChange, onBack, onNext }: AddressS
                 placeholder="Endereço"
                 value={form.address}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border text-white rounded focus:outline-none focus:border-blue- placeholder-white"
                 required
             />
 
@@ -29,7 +29,7 @@ export default function AddressStep({ form, onChange, onBack, onNext }: AddressS
                     placeholder="Número"
                     value={form.addressNumber}
                     onChange={onChange}
-                    className="p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                    className="p-3 border text-white rounded focus:outline-none focus:border-blue- placeholder-white"
                     required
                 />
 
@@ -38,7 +38,7 @@ export default function AddressStep({ form, onChange, onBack, onNext }: AddressS
                     placeholder="Complemento"
                     value={form.complement}
                     onChange={onChange}
-                    className="p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                    className="p-3 border text-white rounded focus:outline-none focus:border-blue- placeholder-white"
                 />
             </div>
 
@@ -47,7 +47,7 @@ export default function AddressStep({ form, onChange, onBack, onNext }: AddressS
                 placeholder="Bairro"
                 value={form.province}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border text-white rounded focus:outline-none focus:border-blue- placeholder-white"
                 required
             />
 
@@ -56,7 +56,7 @@ export default function AddressStep({ form, onChange, onBack, onNext }: AddressS
                 placeholder="CEP"
                 value={form.postalCode}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border text-white rounded focus:outline-none focus:border-blue- placeholder-white"
                 required
             />
 
@@ -64,7 +64,7 @@ export default function AddressStep({ form, onChange, onBack, onNext }: AddressS
                 <button
                     type="button"
                     onClick={onBack}
-                    className="flex-1 bg-gray-500 text-white p-3 rounded hover:bg-gray-600"
+                    className="flex-1 bg-gray- placeholder-white text-white p-3 rounded hover:bg-gray-600"
                 >
                     Voltar
                 </button>
