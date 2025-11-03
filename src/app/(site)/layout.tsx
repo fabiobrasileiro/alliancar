@@ -36,6 +36,10 @@ export default function RootLayout({
           <IdleLogout />
           <NavbarWrapper>{children}</NavbarWrapper>
         </UserProvider>
+
+        <footer className="w-full h-15 bg-bg text-white font-bold text-center py-5">
+          Direitos autorais © 2025 alliancar. Todos os direitos reservados.
+        </footer>
       </body>
     </html>
   );
