@@ -293,7 +293,7 @@ export default function MultiStepForm() {
     const totalWithDiscount = orderValues.total - discount;
 
     return (
-        <div className="max-w-6xl mx-auto p-6 bg-white shadow-lg rounded-lg">
+        <div className="max-w-6xl mx-auto p-6 my-14 bg-bg shadow-lg rounded-lg ">
             <h2 className="text-2xl font-bold mb-6 text-center">Checkout Seguro Auto</h2>
 
             <ProgressSteps currentStep={step} totalSteps={5} />

@@ -18,7 +18,7 @@ export default function PersonalDataStep({ form, onChange, onNext }: PersonalDat
                 placeholder="Nome completo"
                 value={form.name}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border text-white rounded focus:outline-none focus:border-blue- placeholder-white"
                 required
             />
 
@@ -28,7 +28,7 @@ export default function PersonalDataStep({ form, onChange, onNext }: PersonalDat
                 placeholder="E-mail"
                 value={form.email}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border text-white rounded focus:outline-none focus:border-blue- placeholder-white"
                 required
             />
 
@@ -37,7 +37,7 @@ export default function PersonalDataStep({ form, onChange, onNext }: PersonalDat
                 placeholder="CPF/CNPJ"
                 value={form.cpfCnpj}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border text-white rounded focus:outline-none focus:border-blue- placeholder-white"
                 required
             />
 
@@ -46,7 +46,7 @@ export default function PersonalDataStep({ form, onChange, onNext }: PersonalDat
                 placeholder="Telefone"
                 value={form.phone}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border text-white rounded focus:outline-none focus:border-blue- placeholder-white"
                 required
             />
 
@@ -55,7 +55,7 @@ export default function PersonalDataStep({ form, onChange, onNext }: PersonalDat
                 placeholder="Celular (opcional)"
                 value={form.mobilePhone}
                 onChange={onChange}
-                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-3 border text-white rounded focus:outline-none focus:border-blue- placeholder-white"
             />
 
             <button
