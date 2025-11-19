@@ -40,7 +40,6 @@ export default function ContatosPage() {
     city_name: ""
   });
 
-
   // Carregar contatos
   const loadContatos = async () => {
     try {
@@ -102,8 +101,6 @@ export default function ContatosPage() {
     filtrarContatos();
   }, [filtros, contatos]);
 
-
-
   // Limpar filtros
   const limparFiltros = () => {
     setFiltros({
@@ -122,7 +119,6 @@ export default function ContatosPage() {
       [campo]: valor
     }));
   };
-
 
   // Carregar dados na inicialização
   useEffect(() => {
