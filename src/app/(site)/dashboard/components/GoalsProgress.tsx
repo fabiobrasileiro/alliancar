@@ -41,14 +41,14 @@ export default function GoalsProgressAfiliado({ totalPlacas }: GoalsProgressAfil
   return (
     <Card className="mb-8 bg-bg py-4 border-0 text-white">
       <CardHeader>
-        <CardTitle className="text-white">Progresso e Metas</CardTitle>
+        <CardTitle className="text-white">Metas</CardTitle>
       </CardHeader>
 
       <CardContent>
         <div className="space-y-4 px-6">
           {/* Cabeçalho com número de placas e % relativo a 500 */}
           <div className="flex items-center justify-between">
-            <div>
+            <div className="d-flex">
               <p className="text-sm text-white">Suas placas</p>
               <p className="text-2xl font-bold text-white">{placas}</p>
             </div>
@@ -63,7 +63,6 @@ export default function GoalsProgressAfiliado({ totalPlacas }: GoalsProgressAfil
           <div>
             <div className="flex justify-between text-sm text-white mb-2">
               <span>Progresso</span>
-              <span>{progressoGlobal.toFixed(0)}%</span>
             </div>
 
             <Progress value={progressoGlobal} className="h-2" />

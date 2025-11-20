@@ -93,7 +93,7 @@ export default function Navbar() {
 
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(`http://localhost:3000/formulario/` + text);
+    navigator.clipboard.writeText(`https://alliancar.vercel.app/form/` + text);
     toast.success("Link copiado para a área de transferência!");
   };
 

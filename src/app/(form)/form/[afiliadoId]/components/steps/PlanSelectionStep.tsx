@@ -1,13 +1,20 @@
 import { useState } from "react";
-import { InsurancePlan, VehicleInfo, OptionalService } from "./types";
+
+interface OptionalService {
+    id: string;
+    name: string;
+    price: number;
+    included: boolean;
+    conflicts?: string[];
+    tracker?: string;
+}
 
 interface PlanSelectionStepProps {
     onBack: () => void;
     onNext: () => void;
     selectedServices: string[];
     onServicesChange: (services: string[]) => void;
-    plano: InsurancePlan | null;
-    vehicleInfo: VehicleInfo;
+    plano: any;
 }
 
 export default function PlanSelectionStep({ 
@@ -15,34 +22,15 @@ export default function PlanSelectionStep({
     onNext, 
     selectedServices, 
     onServicesChange,
-    plano,
-    vehicleInfo
+    plano 
 }: PlanSelectionStepProps) {
-    const [expandedService, setExpandedService] = useState<string | null>(null);
-
-    const services: OptionalService[] = [
-        { 
-            id: "danos_terceiros", 
-            name: "Danos a Terceiros", 
-            price: 43.10, 
-            included: false,
-            description: "Cobertura ampliada para danos causados a terceiros em caso de acidente. Inclui proteção para veículos de terceiros e propriedades."
-        },
-        { 
-            id: "assistencia_24h", 
-            name: "Assistência 24h", 
-            price: 32.10, 
-            included: false,
-            description: "Assistência completa 24 horas por dia, 7 dias por semana. Inclui reboque, chaveiro, pane seca e troca de pneus."
-        },
-        { 
-            id: "vidros", 
-            name: "Vidros", 
-            price: 25.00, 
-            included: false,
-            description: "Cobertura especial para quebra de vidros, lanternas e retrovisores. Reparo ou substituição sem franquia."
-        },
-    ];
+    const [services, setServices] = useState<OptionalService[]>([
+        { id: "38966", name: "Assistência 24H 500km", price: 32.10, included: false },
+        { id: "39000", name: "Danos a Terceiros 100 Mil", price: 43.10, included: false },
+        { id: "37208", name: "Colisão, Incêndio, Vidros, Lanterna e Carro Reserva 7 dias", price: 40.20, included: false },
+        { id: "38896", name: "Carro Reserva 15 dias (7 dias* + 8 dias adicionais)", price: 10.00, included: false },
+        { id: "38897", name: "Carro Reserva 30 dias (7 dias* + 23 dias adicionais)", price: 18.00, included: false },
+    ]);
 
     const handleServiceToggle = (serviceId: string) => {
         const newServices = selectedServices.includes(serviceId)
@@ -52,136 +40,171 @@ export default function PlanSelectionStep({
         onServicesChange(newServices);
     };
 
-    const toggleServiceDetails = (serviceId: string) => {
-        setExpandedService(expandedService === serviceId ? null : serviceId);
+    const calculateTotal = () => {
+        return services
+            .filter(service => selectedServices.includes(service.id))
+            .reduce((total, service) => total + service.price, 0);
     };
+
+    const calcularCoberturas = () => {
+        if (!plano) return {};
+        
+        return {
+            rouboFurto: plano.monthly_payment * (plano.percentual_70 || 0.7),
+            colisaoIncendio: plano.monthly_payment * (plano.percentual_7_5 || 0.075),
+            danosTerceiros: plano.monthly_payment * (plano.percentual_7_5 || 0.075),
+            assistencia: plano.monthly_payment * (plano.percentual_7_5 || 0.075),
+            vidros: plano.monthly_payment * (plano.percentual_7_5 || 0.075)
+        };
+    };
+
+    const coberturas = calcularCoberturas();
 
     return (
         <div className="space-y-6">
-            <div className="bg-gray-800 border border-gray-600 rounded-lg p-6">
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h3 className="font-semibold text-blue-800 mb-2">Veículo Selecionado</h3>
-                    <div className="grid grid-cols-2 gap-2 text-sm text-blue-700">
-                        <div><strong>Tipo:</strong> {vehicleInfo.vehicleType || 'Não informado'}</div>
-                        <div><strong>Marca:</strong> {vehicleInfo.brand || 'Não informada'}</div>
-                        <div><strong>Modelo:</strong> {vehicleInfo.model || 'Não informado'}</div>
-                        <div><strong>Placa:</strong> {vehicleInfo.plate || 'Não informada'}</div>
-                    </div>
-                </div>
-
-                <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-600">
-                    <h2 className="text-2xl font-bold text-white">
+            <div className="bg-bg border rounded-lg p-6">
+                {/* Cabeçalho do Plano */}
+                <div className="flex justify-between items-center mb-6 pb-4 border-b">
+                    <h2 className="text-2xl font-bold text-a1">
                         {plano?.category_name || 'PLANO ENCONTRADO'}
                     </h2>
                     <div className="text-right">
-                        <div className="text-sm text-gray-300">Faixa: {plano?.vehicle_range}</div>
-                        <div className="text-lg font-bold text-blue-400">
-                            R$ {plano?.monthly_payment?.toFixed(2) || '0,00'}/mês
+                        <div className="text-sm text-gray-600">Faixa: {plano?.vehicle_range}</div>
+                        <div className="text-lg font-bold text-a1">
+                            R$ {plano?.monthly_payment || '0,00'}/mês
                         </div>
                     </div>
                 </div>
 
+                {/* Serviços Incluídos */}
                 <div className="mb-8">
-                    <p className="text-white mb-4 text-lg font-semibold">Coberturas incluídas no plano:</p>
+                    <p className="text-white mb-4 text-lg">Coberturas do plano:</p>
                     <ul className="space-y-3">
-                        <li className="flex justify-between items-center py-3 border-b border-gray-600">
+                        <li className="flex justify-between items-center py-3 border-b">
                             <div className="flex items-center">
-                                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                                <div className="w-6 h-6 bg-a2 rounded-full flex items-center justify-center mr-3">
                                     <span className="text-white text-sm">✓</span>
                                 </div>
                                 <span className="text-white font-medium">Roubo e Furto</span>
                             </div>
+                            <div className="text-a2 font-semibold">
+                                R$ {coberturas.rouboFurto?.toFixed(2) || '0,00'}
+                            </div>
                         </li>
-                        <li className="flex justify-between items-center py-3 border-b border-gray-600">
+                        <li className="flex justify-between items-center py-3 border-b">
                             <div className="flex items-center">
-                                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                                <div className="w-6 h-6 bg-a2 rounded-full flex items-center justify-center mr-3">
                                     <span className="text-white text-sm">✓</span>
                                 </div>
                                 <span className="text-white font-medium">Colisão/Incêndio</span>
                             </div>
+                            <div className="text-a2 font-semibold">
+                                R$ {coberturas.colisaoIncendio?.toFixed(2) || '0,00'}
+                            </div>
                         </li>
-                        <li className="flex justify-between items-center py-3 border-b border-gray-600">
+                        <li className="flex justify-between items-center py-3 border-b">
                             <div className="flex items-center">
-                                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                                <div className="w-6 h-6 bg-a2 rounded-full flex items-center justify-center mr-3">
                                     <span className="text-white text-sm">✓</span>
                                 </div>
-                                <span className="text-white font-medium">Carro Reserva 7 dias</span>
+                                <span className="text-white font-medium">Danos a Terceiros</span>
+                            </div>
+                            <div className="text-a2 font-semibold">
+                                R$ {coberturas.danosTerceiros?.toFixed(2) || '0,00'}
+                            </div>
+                        </li>
+                        <li className="flex justify-between items-center py-3 border-b">
+                            <div className="flex items-center">
+                                <div className="w-6 h-6 bg-a2 rounded-full flex items-center justify-center mr-3">
+                                    <span className="text-white text-sm">✓</span>
+                                </div>
+                                <span className="text-white font-medium">Assistência 24H</span>
+                            </div>
+                            <div className="text-a2 font-semibold">
+                                R$ {coberturas.assistencia?.toFixed(2) || '0,00'}
+                            </div>
+                        </li>
+                        <li className="flex justify-between items-center py-3 border-b">
+                            <div className="flex items-center">
+                                <div className="w-6 h-6 bg-a2 rounded-full flex items-center justify-center mr-3">
+                                    <span className="text-white text-sm">✓</span>
+                                </div>
+                                <span className="text-white font-medium">Vidros</span>
+                            </div>
+                            <div className="text-a2 font-semibold">
+                                R$ {coberturas.vidros?.toFixed(2) || '0,00'}
                             </div>
                         </li>
                     </ul>
                 </div>
 
-                <div className="border-t border-gray-600 pt-6">
-                    <h3 className="text-xl font-bold text-white mb-4">Serviços Opcionais</h3>
+                {/* Serviços Opcionais */}
+                <div className="border-t pt-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-gray-800">Serviços Opcionais</h3>
+                    </div>
                     
-                    <div className="space-y-3">
+                    <p className="text-white mb-6">Acrescente serviços opcionais ao seu plano</p>
+                    
+                    <ul className="space-y-4 mb-6">
                         {services.map((service) => (
-                            <div key={service.id} className="border border-gray-600 rounded-lg p-4 hover:border-blue-500 transition-colors">
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center space-x-4 flex-1">
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedServices.includes(service.id)}
-                                                onChange={() => handleServiceToggle(service.id)}
-                                                className="sr-only peer"
-                                            />
-                                            <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                        </label>
-                                        <div className="flex-1">
-                                            <span className="text-white block font-medium">{service.name}</span>
-                                            <span className="text-blue-400 text-lg font-bold">+ R$ {service.price.toFixed(2)}/mês</span>
-                                        </div>
+                            <li key={service.id} className="flex justify-between items-center py-4 border-b">
+                                <div className="flex items-center space-x-4 flex-1">
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedServices.includes(service.id)}
+                                            onChange={() => handleServiceToggle(service.id)}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                    <div className="flex-1">
+                                        <span className="text-white block">{service.name}</span>
                                     </div>
-                                    <button
-                                        onClick={() => toggleServiceDetails(service.id)}
-                                        className="text-white hover:text-blue-300 transition-transform p-1"
-                                    >
-                                        <svg 
-                                            className={`w-6 h-6 transform transition-transform ${
-                                                expandedService === service.id ? 'rotate-180' : ''
-                                            }`} 
-                                            fill="none" 
-                                            stroke="currentColor" 
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
                                 </div>
-                                
-                                {expandedService === service.id && service.description && (
-                                    <div className="mt-3 p-3 bg-gray-700 rounded text-gray-200 text-sm">
-                                        {service.description}
-                                    </div>
-                                )}
-                            </div>
+                                <div className="text-right">
+                                    <strong className="text-white text-lg">R$ {service.price.toFixed(2)}</strong>
+                                </div>
+                            </li>
                         ))}
-                    </div>
+                    </ul>
 
-                    <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-yellow-800 text-sm">
-                            💡 <strong>Atenção:</strong> O valor da mensalidade será cobrado apenas 30 dias após o pagamento da adesão.
-                        </p>
-                    </div>
+                    {/* Total dos Opcionais */}
+                    {selectedServices.length > 0 && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                            <div className="flex justify-between items-center">
+                                <span className="text-a1 font-semibold">Total dos serviços opcionais:</span>
+                                <span className="text-a1 font-bold text-lg">R$ {calculateTotal().toFixed(2)}</span>
+                            </div>
+                        </div>
+                    )}
 
-                    <div className="flex gap-3 mt-6">
-                        <button
-                            type="button"
-                            onClick={onBack}
-                            className="flex-1 bg-gray-500 text-white p-3 rounded hover:bg-gray-600 transition-colors"
-                        >
-                            Voltar
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onNext}
-                            className="flex-1 bg-blue-600 text-white p-3 rounded hover:bg-blue-700 font-semibold transition-colors"
-                        >
-                            Confirmar e Ir para Pagamento
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={onNext}
+                        className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 font-semibold text-lg"
+                    >
+                        Confirmar e Ir para Pagamento
+                    </button>
                 </div>
+            </div>
+
+            <div className="flex gap-3">
+                <button
+                    type="button"
+                    onClick={onBack}
+                    className="flex-1 bg-gray-500 text-white p-3 rounded hover:bg-gray-600"
+                >
+                    Voltar
+                </button>
+                <button
+                    type="button"
+                    onClick={onNext}
+                    className="flex-1 bg-blue-600 text-white p-3 rounded hover:bg-blue-700"
+                >
+                    Próximo
+                </button>
             </div>
         </div>
     );

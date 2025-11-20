@@ -28,11 +28,8 @@ export async function POST(request: Request) {
     console.log("🔑 Afiliado ID:", afiliado_id);
     console.log("👤 Customer ID:", customerId);
 
-    // Tratamento para todos os métodos de pagamento
     if (
-      event === "PAYMENT_CONFIRMED" ||
-      event === "PAYMENT_RECEIVED" ||
-      event === "PAYMENT_OVERDUE"
+      event === "PAYMENT_CONFIRMED"
     ) {
       await handlePayment(payment, afiliado_id);
       // CORREÇÃO: Só chamar handleCustomer se tiver customerId
@@ -41,17 +38,13 @@ export async function POST(request: Request) {
       }
     } else if (
       event === "SUBSCRIPTION_CREATED" ||
-      event === "SUBSCRIPTION_UPDATED" ||
-      event === "SUBSCRIPTION_ACTIVATED"
+      event === "SUBSCRIPTION_UPDATED"
     ) {
       await handleSubscription(subscription, afiliado_id);
       // CORREÇÃO: Só chamar handleCustomer se tiver customerId
       if (customerId) {
         await handleCustomer(customerId, afiliado_id);
       }
-    } else if (event === "PAYMENT_CREATED") {
-      // Pagamento criado (PIX/Boleto aguardando pagamento)
-      await handlePayment(payment, afiliado_id);
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
@@ -123,7 +116,7 @@ const handleCustomer = async (customerId: string, afiliado_id: string) => {
   }
 };
 
-// Função para salvar pagamento com TODOS os campos (atualizada para PIX/Boleto)
+// Função para salvar pagamento com TODOS os campos
 async function handlePayment(payment: any, afiliado_id: string) {
   try {
     const paymentData = {
@@ -182,10 +175,7 @@ async function handlePayment(payment: any, afiliado_id: string) {
       credit_card_brand: payment.creditCard?.creditCardBrand,
 
       // PIX
-      pix_qr_code: payment.pixQrCode,
-      pix_payload: payment.pixPayload,
       pix_transaction: payment.pixTransaction,
-      pix_expiration_date: payment.expirationDate,
 
       // Descontos e multas
       discount_value: payment.discount?.value,
