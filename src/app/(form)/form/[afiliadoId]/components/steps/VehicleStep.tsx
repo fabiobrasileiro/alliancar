@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FormState } from "./types";
+import { FormState, InsurancePlan } from "./types";
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -12,42 +12,63 @@ interface VehicleStepProps {
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
     onBack: () => void;
     onNext: () => void;
-    onPlanoEncontrado: (plano: any) => void;
+    onPlanoEncontrado: (plano: InsurancePlan | null) => void;
+}
+
+interface VehicleOption {
+    brand: string;
+    model: string;
+    year: string;
 }
 
 export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEncontrado }: VehicleStepProps) {
     const [loadingPlano, setLoadingPlano] = useState(false);
-    const [planoEncontrado, setPlanoEncontrado] = useState<any>(null);
+    const [planoEncontrado, setPlanoEncontrado] = useState<InsurancePlan | null>(null);
+    const [showVehicleModal, setShowVehicleModal] = useState(false);
+    const [vehicleOptions, setVehicleOptions] = useState<VehicleOption[]>([]);
+    const [filteredVehicles, setFilteredVehicles] = useState<VehicleOption[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
-        if (form.vehicleInfo.model && form.vehicleInfo.model.length > 2) {
-            const timer = setTimeout(() => {
-                buscarPlanoPorModelo(form.vehicleInfo.model);
-            }, 500 );
-            
-            return () => clearTimeout(timer);
-        }
-    }, [form.vehicleInfo.model]);
+        const mockVehicles: VehicleOption[] = [
+            { brand: "Volkswagen", model: "GOL", year: "2023" },
+            { brand: "Toyota", model: "COROLLA", year: "2023" },
+            { brand: "Honda", model: "CIVIC", year: "2023" },
+            { brand: "Fiat", model: "UNO", year: "2023" },
+            { brand: "Chevrolet", model: "ONIX", year: "2023" },
+            { brand: "Ford", model: "KA", year: "2023" },
+            { brand: "Hyundai", model: "HB20", year: "2023" },
+            { brand: "Renault", model: "KWID", year: "2023" },
+        ];
+        setVehicleOptions(mockVehicles);
+        setFilteredVehicles(mockVehicles);
+    }, []);
 
     const buscarPlanoPorModelo = async (modelo: string) => {
+        if (!modelo || modelo.length < 3) return;
+        
         setLoadingPlano(true);
         try {
-            const { data: planos, error } = await supabase
-                .from('insurance_plans')
-                .select('*');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const mockPlan: InsurancePlan = {
+                id: "1",
+                category_name: "PROTEÇÃO ESSENCIAL",
+                vehicle_range: "Até R$ 50.000",
+                adesao: 149.90,
+                monthly_payment: 89.90,
+                percentual_7_5: 7.5,
+                percentual_70: 70,
+                participation_min: "100",
+                vehicles: ["GOL", "COROLLA", "CIVIC", "UNO", "ONIX", "KA", "HB20", "KWID"]
+            };
 
-            if (error) throw error;
-
-            const plano = planos?.find(plano => 
-                plano.vehicles.some((veiculo: string) => 
-                    veiculo.toLowerCase().includes(modelo.toLowerCase()) ||
-                    modelo.toLowerCase().includes(veiculo.toLowerCase())
-                )
-            );
-
-            if (plano) {
-                setPlanoEncontrado(plano);
-                onPlanoEncontrado(plano);
+            if (mockPlan.vehicles.some(vehicle => 
+                vehicle.toLowerCase().includes(modelo.toLowerCase()) ||
+                modelo.toLowerCase().includes(vehicle.toLowerCase())
+            )) {
+                setPlanoEncontrado(mockPlan);
+                onPlanoEncontrado(mockPlan);
             } else {
                 setPlanoEncontrado(null);
                 onPlanoEncontrado(null);
@@ -61,6 +82,48 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
         }
     };
 
+    const handleVehicleSelect = (vehicle: VehicleOption) => {
+        const brandEvent = {
+            target: {
+                name: "brand",
+                value: vehicle.brand
+            }
+        } as React.ChangeEvent<HTMLInputElement>;
+        onChange(brandEvent);
+
+        const modelEvent = {
+            target: {
+                name: "model",
+                value: vehicle.model
+            }
+        } as React.ChangeEvent<HTMLInputElement>;
+        onChange(modelEvent);
+
+        const yearEvent = {
+            target: {
+                name: "year",
+                value: vehicle.year
+            }
+        } as React.ChangeEvent<HTMLInputElement>;
+        onChange(yearEvent);
+
+        buscarPlanoPorModelo(vehicle.model);
+
+        setShowVehicleModal(false);
+        setSearchTerm("");
+    };
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const term = e.target.value.toUpperCase();
+        setSearchTerm(term);
+        
+        const filtered = vehicleOptions.filter(vehicle => 
+            vehicle.model.includes(term) || 
+            vehicle.brand.toUpperCase().includes(term)
+        );
+        setFilteredVehicles(filtered);
+    };
+
     const isFormValid = form.vehicleInfo.plate && 
                        form.vehicleInfo.brand && 
                        form.vehicleInfo.year && 
@@ -71,7 +134,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
 
     return (
         <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Informações do Veículo</h3>
+            <h3 className="text-lg font-semibold text-white">Informações do Veículo</h3>
 
             <input
                 name="plate"
@@ -79,71 +142,88 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 value={form.vehicleInfo.plate}
                 onChange={onChange}
                 maxLength={7}
-                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white text-white"
+                className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded focus:outline-none focus:border-blue-500 placeholder-gray-400"
                 required
             />
 
-            <select
-                name="vehicleType"
-                value={form.vehicleInfo.vehicleType}
-                onChange={onChange}
-                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white text-white bg-bg"
-                required
+            <button
+                type="button"
+                onClick={() => setShowVehicleModal(true)}
+                className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded focus:outline-none focus:border-blue-500 text-left hover:bg-gray-700 transition-colors"
             >
-                <option value="" className="text-white">Selecione o tipo</option>
-                <option value="carro">Carro</option>
-                <option value="utilitario">Utilitário</option>
-            </select>
+                {form.vehicleInfo.model ? 
+                    `${form.vehicleInfo.brand} ${form.vehicleInfo.model} ${form.vehicleInfo.year}` : 
+                    "Selecione o veículo"
+                }
+            </button>
 
-            <input
-                name="brand"
-                placeholder="Marca (ex: Volkswagen, Fiat)"
-                value={form.vehicleInfo.brand}
-                onChange={onChange}
-                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white"
-                required
-            />
+            {showVehicleModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-96 overflow-y-auto">
+                        <h3 className="text-lg font-semibold mb-4 text-black">Selecione seu veículo</h3>
+                        
+                        <input
+                            type="text"
+                            placeholder="Buscar modelo ou marca..."
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            className="w-full p-3 border rounded mb-4 text-black placeholder-gray-500"
+                        />
+                        
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {filteredVehicles.map((vehicle, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => handleVehicleSelect(vehicle)}
+                                    className="w-full p-3 text-left border rounded hover:bg-gray-100 text-black transition-colors"
+                                >
+                                    <div className="font-semibold">{vehicle.brand} {vehicle.model}</div>
+                                    <div className="text-sm text-gray-600">Ano: {vehicle.year}</div>
+                                </button>
+                            ))}
+                        </div>
 
-            <input
-                name="year"
-                placeholder="Ano (ex: 2020)"
-                value={form.vehicleInfo.year}
-                onChange={onChange}
-                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white"
-                required
-            />
+                        {filteredVehicles.length === 0 && (
+                            <div className="text-center py-4 text-gray-500">
+                                Nenhum veículo encontrado
+                            </div>
+                        )}
 
-            <div className="relative">
-                <input
-                    name="model"
-                    placeholder="Modelo (ex: GOL, COROLLA, CIVIC)"
-                    value={form.vehicleInfo.model}
-                    onChange={onChange}
-                    className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white"
-                    required
-                />
-                {loadingPlano && (
-                    <div className="absolute right-3 top-3">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                        <button
+                            onClick={() => setShowVehicleModal(false)}
+                            className="w-full mt-4 p-3 bg-gray-500 text-white rounded hover:bg-gray-600"
+                        >
+                            Fechar
+                        </button>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
-            {planoEncontrado && (
+            {loadingPlano && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-blue-800">Buscando plano disponível...</p>
+                </div>
+            )}
+
+            {planoEncontrado && !loadingPlano && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                     <h4 className="font-semibold text-green-800 mb-2">Plano Encontrado!</h4>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                         <div><strong>Categoria:</strong> {planoEncontrado.category_name}</div>
                         <div><strong>Faixa:</strong> {planoEncontrado.vehicle_range}</div>
-                        <div><strong>Adesão:</strong> R$ {planoEncontrado.adesao}</div>
-                        <div><strong>Mensalidade:</strong> R$ {planoEncontrado.monthly_payment}</div>
+                        <div><strong>Adesão:</strong> R$ {planoEncontrado.adesao?.toFixed(2)}</div>
+                        <div><strong>Mensalidade:</strong> R$ {planoEncontrado.monthly_payment?.toFixed(2)}</div>
                     </div>
                 </div>
             )}
 
             {form.vehicleInfo.model && !planoEncontrado && !loadingPlano && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
-                    Modelo não encontrado na tabela de planos. Verifique a grafia.
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h4 className="font-semibold text-yellow-800 mb-2">Modelo não encontrado</h4>
+                    <p className="text-yellow-700 text-sm">
+                        Este modelo não está disponível em nossa lista atual. 
+                        Entre em contato com nosso atendimento para mais informações.
+                    </p>
                 </div>
             )}
 
@@ -151,10 +231,10 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 name="state"
                 value={form.vehicleInfo.state}
                 onChange={onChange}
-                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white text-white bg-bg"
+                className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded focus:outline-none focus:border-blue-500"
                 required
             >
-                <option value="">Selecione o estado</option>
+                <option value="" className="text-gray-500">Selecione o estado</option>
                 <option value="AC">Acre</option>
                 <option value="AL">Alagoas</option>
                 <option value="AM">Amazonas</option>
@@ -189,7 +269,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 placeholder="Cidade"
                 value={form.vehicleInfo.city}
                 onChange={onChange}
-                className="w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white"
+                className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded focus:outline-none focus:border-blue-500 placeholder-gray-400"
                 required
             />
 
@@ -207,20 +287,11 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 </label>
             </div>
 
-            <textarea
-                name="observations"
-                placeholder="Observações"
-                value={form.vehicleInfo.observations}
-                onChange={onChange}
-                rows={3}
-                className=" text-white w-full p-3 border rounded focus:outline-none focus:border-blue-500 placeholder-white"
-            />
-
             <div className="flex gap-3">
                 <button
                     type="button"
                     onClick={onBack}
-                    className="flex-1 bg-gray-500 text-white p-3 rounded hover:bg-gray-600"
+                    className="flex-1 bg-gray-500 text-white p-3 rounded hover:bg-gray-600 transition-colors"
                 >
                     Voltar
                 </button>
@@ -229,7 +300,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                     type="button"
                     onClick={onNext}
                     disabled={!isFormValid}
-                    className="flex-1 bg-blue-600 text-white p-3 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                    className="flex-1 bg-blue-600 text-white p-3 rounded hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
                 >
                     Próximo
                 </button>
