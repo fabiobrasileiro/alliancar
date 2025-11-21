@@ -1,35 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, TrendingUp, DollarSign, Loader2, CreditCard, BarChart3, Target } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, CreditCard, Loader2, RefreshCw } from 'lucide-react';
+import GoalsProgressAfiliado from '@/app/(site)/dashboard/components/GoalsProgress';
 
 interface DashboardData {
   afiliado_id: string;
   total_clientes: number;
-  total_assinaturas: number;
-  comissao_assinaturas: number;
-  total_pagamentos: number;
-  comissao_pagamentos: number;
-  total_geral: number;
-  comissao_total: number;
-  metrics: {
-    payments: {
-      total: number;
-      confirmed: number;
-      pending: number;
-      overdue: number;
-      totalValue: number;
-    };
-    subscriptions: {
-      total: number;
-      active: number;
-      inactive: number;
-      totalValue: number;
-    };
-    customers: {
-      total: number;
-      uniqueFromPayments: number;
-    };
+  pagamentos_a_receber: number;
+  mensalidades_a_receber: number;
+  total_a_receber: number;
+  detalhes: {
+    clientes: number;
+    pagamentos_confirmados: number;
+    assinaturas_ativas: number;
+    valor_total_mensalidades: number;
   };
 }
 
@@ -41,47 +26,45 @@ interface DashboardAsaasProps {
 export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaasProps) {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!afiliadoId) return;
+  const fetchDashboardData = async () => {
+    if (!afiliadoId) return;
 
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setRefreshing(true);
+      setError(null);
 
-        console.log("🔄 Buscando dados do Asaas para:", afiliadoId);
+      console.log("🔄 Buscando dados do Asaas para:", afiliadoId);
 
-        const response = await fetch(`/api/dashboard?afiliadoId=${afiliadoId}`);
-        
-        if (!response.ok) {
-          throw new Error('Erro ao buscar dados do dashboard');
-        }
-
-        const data = await response.json();
-        
-        if (data.success) {
-          setDashboardData(data.data);
-          setLastUpdated(new Date());
-          console.log("✅ Dados do dashboard carregados:", data.data);
-        } else {
-          throw new Error(data.error || 'Erro ao carregar dados');
-        }
-      } catch (err) {
-        console.error('❌ Erro ao buscar dados:', err);
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        setLoading(false);
+      const response = await fetch(`/api/dashboard?afiliadoId=${afiliadoId}`);
+      
+      if (!response.ok) {
+        throw new Error('Erro ao buscar dados do dashboard');
       }
-    };
 
+      const data = await response.json();
+      
+      if (data.success) {
+        setDashboardData(data.data);
+        setLastUpdated(new Date());
+        console.log("✅ Dados do dashboard carregados:", data.data);
+      } else {
+        throw new Error(data.error || 'Erro ao carregar dados');
+      }
+    } catch (err) {
+      console.error('❌ Erro ao buscar dados:', err);
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDashboardData();
-
-    // Atualizar a cada 5 minutos
-    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
   }, [afiliadoId]);
 
   // 🔹 Loading
@@ -108,7 +91,7 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
             <h3 className="text-red-400 text-xl font-semibold mb-2">Erro ao carregar dados</h3>
             <p className="text-red-300">{error}</p>
             <button 
-              onClick={() => window.location.reload()}
+              onClick={fetchDashboardData}
               className="mt-4 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
             >
               Tentar Novamente
@@ -128,7 +111,7 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
             <div className="text-gray-500 text-4xl mb-4">💸</div>
             <h3 className="text-gray-400 text-xl font-semibold mb-2">Nenhum dado encontrado</h3>
             <p className="text-gray-500">
-              Ainda não há pagamentos ou assinaturas vinculados ao seu afiliado ID.
+              Ainda não há clientes ou pagamentos vinculados ao seu afiliado ID.
             </p>
           </div>
         </div>
@@ -136,75 +119,39 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
     );
   }
 
-  // 🔹 Cards principais
-  const mainCards = [
+  // 🔹 Cards principais - APENAS 4 CARDS
+  const cards = [
     {
       title: 'Total de Clientes',
       value: dashboardData.total_clientes.toLocaleString('pt-BR'),
+      subtitle: `${dashboardData.detalhes.clientes} clientes cadastrados`,
       icon: Users,
       color: 'bg-blue-500',
-      description: 'Clientes únicos com pagamentos',
-      trend: dashboardData.metrics.customers.uniqueFromPayments
+      description: 'Clientes únicos no sistema'
     },
     {
-      title: 'Valor em Assinaturas',
-      value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dashboardData.total_assinaturas),
-      icon: TrendingUp,
-      color: 'bg-green-500',
-      description: `${dashboardData.metrics.subscriptions.active} assinaturas ativas`,
-      trend: dashboardData.metrics.subscriptions.active
-    },
-    {
-      title: 'Valor em Pagamentos',
-      value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dashboardData.total_pagamentos),
+      title: 'Pagamentos a Receber',
+      value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dashboardData.pagamentos_a_receber),
+      subtitle: `${dashboardData.detalhes.pagamentos_confirmados} pagamentos confirmados`,
       icon: DollarSign,
-      color: 'bg-purple-500',
-      description: `${dashboardData.metrics.payments.confirmed} pagamentos confirmados`,
-      trend: dashboardData.metrics.payments.confirmed
+      color: 'bg-green-500',
+      description: 'Valor disponível para saque'
     },
     {
-      title: 'Comissão Total',
-      value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dashboardData.comissao_total),
+      title: 'Mensalidades a Receber',
+      value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dashboardData.mensalidades_a_receber),
+      subtitle: `${dashboardData.detalhes.assinaturas_ativas} assinaturas ativas`,
+      icon: TrendingUp,
+      color: 'bg-purple-500',
+      description: '3% sobre R$ ' + new Intl.NumberFormat('pt-BR').format(dashboardData.detalhes.valor_total_mensalidades)
+    },
+    {
+      title: 'Total a Receber',
+      value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dashboardData.total_a_receber),
+      subtitle: 'Soma de todos os recebíveis',
       icon: CreditCard,
       color: 'bg-orange-500',
-      description: '3% sobre vendas totais',
-      trend: dashboardData.comissao_total
-    }
-  ];
-
-  // 🔹 Cards de métricas detalhadas
-  const metricCards = [
-    {
-      title: 'Pagamentos Pendentes',
-      value: dashboardData.metrics.payments.pending,
-      icon: BarChart3,
-      color: 'bg-yellow-500',
-      description: 'Aguardando confirmação'
-    },
-    {
-      title: 'Pagamentos Atrasados',
-      value: dashboardData.metrics.payments.overdue,
-      icon: BarChart3,
-      color: 'bg-red-500',
-      description: 'Vencidos não pagos'
-    },
-    {
-      title: 'Assinaturas Inativas',
-      value: dashboardData.metrics.subscriptions.inactive,
-      icon: Target,
-      color: 'bg-gray-500',
-      description: 'Canceladas ou suspensas'
-    },
-    {
-      title: 'Ticket Médio',
-      value: dashboardData.total_clientes > 0 
-        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-            dashboardData.total_geral / dashboardData.total_clientes
-          )
-        : 'R$ 0,00',
-      icon: DollarSign,
-      color: 'bg-indigo-500',
-      description: 'Por cliente'
+      description: 'Saldo total disponível'
     }
   ];
 
@@ -227,120 +174,87 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
                 )}
               </p>
             </div>
-            <div className="bg-green-900/20 border border-green-500 rounded-lg px-3 py-1">
-              <span className="text-green-400 text-sm font-medium">✅ Conectado ao Asaas</span>
+            
+            <div className="flex items-center gap-4">
+              <div className="bg-green-900/20 border border-green-500 rounded-lg px-3 py-1">
+                <span className="text-green-400 text-sm font-medium">✅ Conectado ao Asaas</span>
+              </div>
+              
+              <button
+                onClick={fetchDashboardData}
+                disabled={refreshing}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                Atualizar
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Stats Grid Principal */}
+        {/* Grid de 4 Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {mainCards.map((card, index) => (
+          {cards.map((card, index) => (
             <div
               key={index}
               className="bg-bg border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-colors"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <p className="text-gray-400 text-sm mb-1">{card.title}</p>
                   <p className="text-2xl font-bold text-white mb-2">{card.value}</p>
-                  <p className="text-gray-500 text-xs">{card.description}</p>
+                  <p className="text-gray-500 text-xs">{card.subtitle}</p>
                 </div>
                 <div className={`${card.color} p-3 rounded-lg`}>
                   <card.icon className="h-6 w-6 text-white" />
                 </div>
               </div>
-              {card.trend > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-700">
-                  <p className="text-green-400 text-xs">
-                    +{card.trend} {card.title.includes('Clientes') ? 'clientes' : card.title.includes('Assinaturas') ? 'ativas' : 'confirmados'}
-                  </p>
-                </div>
-              )}
+              <p className="text-gray-400 text-xs border-t border-gray-700 pt-3">
+                {card.description}
+              </p>
             </div>
           ))}
         </div>
 
-        {/* Métricas Detalhadas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {metricCards.map((card, index) => (
-            <div
-              key={index}
-              className="bg-navbar1 rounded-lg p-4 border border-gray-800"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">{card.title}</p>
-                  <p className="text-white font-semibold text-lg mt-1">{card.value}</p>
-                  <p className="text-gray-500 text-xs mt-1">{card.description}</p>
-                </div>
-                <div className={`${card.color} p-2 rounded-lg`}>
-                  <card.icon className="h-4 w-4 text-white" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Resumo Financeiro */}
-        <div className="bg-bg border border-gray-700 rounded-xl p-6 mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4">Resumo Financeiro</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="border-l-4 border-blue-500 pl-4">
-              <p className="text-gray-400 text-sm">Faturamento Total</p>
-              <p className="text-lg font-semibold text-white">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dashboardData.total_geral)}
-              </p>
-            </div>
-            <div className="border-l-4 border-green-500 pl-4">
-              <p className="text-gray-400 text-sm">Sua Comissão (3%)</p>
-              <p className="text-lg font-semibold text-white">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dashboardData.comissao_total)}
-              </p>
-            </div>
-            <div className="border-l-4 border-purple-500 pl-4">
-              <p className="text-gray-400 text-sm">Valor Processado</p>
-              <p className="text-lg font-semibold text-white">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                  dashboardData.metrics.payments.totalValue + dashboardData.metrics.subscriptions.totalValue
-                )}
-              </p>
-            </div>
-            <div className="border-l-4 border-orange-500 pl-4">
-              <p className="text-gray-400 text-sm">Potencial Mensal</p>
-              <p className="text-lg font-semibold text-white">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                  dashboardData.total_assinaturas * 12
-                )}
-              </p>
-            </div>
+        {/* Componente de Metas */}
+        {!perfilData?.super_admin && (
+          <div className="mb-8">
+            <GoalsProgressAfiliado totalPlacas={dashboardData.total_clientes} />
           </div>
-        </div>
+        )}
 
-        {/* Informações da API */}
+        {/* Informações Detalhadas */}
         <div className="bg-bg border border-gray-700 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">📊 Detalhes da Conexão Asaas</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <h3 className="text-lg font-semibold text-white mb-4">📊 Detalhes da Conexão</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-gray-400">Afiliado ID</p>
-              <p className="text-white font-mono">{afiliadoId}</p>
+              <p className="text-white font-mono text-xs">{afiliadoId}</p>
             </div>
             <div>
-              <p className="text-gray-400">Total de Transações</p>
-              <p className="text-white">
-                {dashboardData.metrics.payments.total + dashboardData.metrics.subscriptions.total}
-              </p>
+              <p className="text-gray-400">Clientes Cadastrados</p>
+              <p className="text-white">{dashboardData.detalhes.clientes}</p>
             </div>
             <div>
-              <p className="text-gray-400">Taxa de Sucesso</p>
-              <p className="text-green-400">
-                {dashboardData.metrics.payments.total > 0 
-                  ? Math.round((dashboardData.metrics.payments.confirmed / dashboardData.metrics.payments.total) * 100) 
-                  : 0
-                }%
-              </p>
+              <p className="text-gray-400">Assinaturas Ativas</p>
+              <p className="text-white">{dashboardData.detalhes.assinaturas_ativas}</p>
+            </div>
+            <div>
+              <p className="text-gray-400">Pagamentos Confirmados</p>
+              <p className="text-white">{dashboardData.detalhes.pagamentos_confirmados}</p>
             </div>
           </div>
+        </div>
+
+        {/* Legenda */}
+        <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500 rounded-lg">
+          <h4 className="text-blue-400 font-semibold mb-2">💡 Como funciona:</h4>
+          <ul className="text-blue-300 text-sm space-y-1">
+            <li>• <strong>Clientes</strong>: Quantidade de clientes únicos cadastrados no Asaas com seu externalReference</li>
+            <li>• <strong>Pagamentos a Receber</strong>: Soma de todos os pagamentos confirmados (RECEIVED/CONFIRMED)</li>
+            <li>• <strong>Mensalidades a Receber</strong>: 3% do valor total das assinaturas ativas</li>
+            <li>• <strong>Total a Receber</strong>: Soma de Pagamentos + Mensalidades disponíveis</li>
+          </ul>
         </div>
       </div>
     </div>

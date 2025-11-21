@@ -1,5 +1,26 @@
 import { NextResponse } from "next/server";
 
+interface AsaasCustomer {
+  id: string;
+  name: string;
+  email: string;
+  // ... outros campos do customer
+}
+
+interface AsaasPayment {
+  id: string;
+  value: number;
+  status: string;
+  // ... outros campos do payment
+}
+
+interface AsaasSubscription {
+  id: string;
+  value: number;
+  status: string;
+  // ... outros campos do subscription
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -12,137 +33,92 @@ export async function GET(request: Request) {
       );
     }
 
-    console.log("📊 Buscando dados do dashboard para afiliado:", afiliadoId);
+    console.log("📊 Buscando dados simplificados para afiliado:", afiliadoId);
 
-    // 1️⃣ Buscar pagamentos do afiliado
-    const paymentsResponse = await fetch(
-      `${process.env.ASAAS_BASE_URL}/payments?externalReference=${afiliadoId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "access_token": process.env.ASAAS_API_KEY!
-        }
-      }
-    );
-
-    if (!paymentsResponse.ok) {
-      throw new Error(`Erro ao buscar pagamentos: ${paymentsResponse.status}`);
-    }
-
-    const paymentsData = await paymentsResponse.json();
-    const payments = paymentsData.data || [];
-
-    // 2️⃣ Buscar assinaturas do afiliado
-    const subscriptionsResponse = await fetch(
-      `${process.env.ASAAS_BASE_URL}/subscriptions?externalReference=${afiliadoId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "access_token": process.env.ASAAS_API_KEY!
-        }
-      }
-    );
-
-    const subscriptionsData = await subscriptionsResponse.ok ? await subscriptionsResponse.json() : { data: [] };
-    const subscriptions = subscriptionsData.data || [];
-
-    // 3️⃣ Buscar clientes do afiliado
+    // 1️⃣ Buscar CLIENTES do afiliado (para placas)
     const customersResponse = await fetch(
       `${process.env.ASAAS_BASE_URL}/customers?externalReference=${afiliadoId}`,
       {
-        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           "access_token": process.env.ASAAS_API_KEY!
         }
       }
     );
 
-    const customersData = await customersResponse.ok ? await customersResponse.json() : { data: [] };
-    const customers = customersData.data || [];
+    const customersData = customersResponse.ok ? await customersResponse.json() : { data: [] };
+    const customers: AsaasCustomer[] = customersData.data || [];
+    const totalClientes = customers.length;
 
-    console.log("📈 Dados encontrados:", {
-      payments: payments.length,
-      subscriptions: subscriptions.length,
-      customers: customers.length
-    });
+    // 2️⃣ Buscar PAGAMENTOS do afiliado (para pagamentos a receber)
+    const paymentsResponse = await fetch(
+      `${process.env.ASAAS_BASE_URL}/payments?externalReference=${afiliadoId}`,
+      {
+        headers: {
+          "access_token": process.env.ASAAS_API_KEY!
+        }
+      }
+    );
 
-    // 4️⃣ Calcular métricas
-    const metrics = calculateMetrics(payments, subscriptions, customers, afiliadoId);
+    const paymentsData = paymentsResponse.ok ? await paymentsResponse.json() : { data: [] };
+    const payments: AsaasPayment[] = paymentsData.data || [];
+
+    // Pagamentos CONFIRMADOS mas não sacados
+    const pagamentosAReceber = payments
+      .filter(p => p.status === 'RECEIVED' || p.status === 'CONFIRMED')
+      .reduce((sum: number, p: AsaasPayment) => sum + p.value, 0);
+
+    // 3️⃣ Buscar ASSINATURAS do afiliado (para mensalidades)
+    const subscriptionsResponse = await fetch(
+      `${process.env.ASAAS_BASE_URL}/subscriptions?externalReference=${afiliadoId}`,
+      {
+        headers: {
+          "access_token": process.env.ASAAS_API_KEY!
+        }
+      }
+    );
+
+    const subscriptionsData = subscriptionsResponse.ok ? await subscriptionsResponse.json() : { data: [] };
+    const subscriptions: AsaasSubscription[] = subscriptionsData.data || [];
+
+    // Assinaturas ATIVAS (3% do valor total)
+    const assinaturasAtivas = subscriptions.filter(s => s.status === 'ACTIVE');
+    const valorMensalidades = assinaturasAtivas.reduce((sum: number, s: AsaasSubscription) => sum + s.value, 0);
+    const mensalidadesAReceber = valorMensalidades * 0.03; // 3% de comissão
+
+    // 4️⃣ Calcular TOTAL A RECEBER
+    const totalAReceber = pagamentosAReceber + mensalidadesAReceber;
+
+    const dashboardData = {
+      afiliado_id: afiliadoId,
+      total_clientes: totalClientes,
+      pagamentos_a_receber: pagamentosAReceber,
+      mensalidades_a_receber: mensalidadesAReceber,
+      total_a_receber: totalAReceber,
+      
+      // Dados detalhados para debug
+      detalhes: {
+        clientes: totalClientes,
+        pagamentos_confirmados: payments.filter(p => p.status === 'RECEIVED' || p.status === 'CONFIRMED').length,
+        assinaturas_ativas: assinaturasAtivas.length,
+        valor_total_mensalidades: valorMensalidades
+      }
+    };
+
+    console.log("📈 Dashboard simplificado:", dashboardData);
 
     return NextResponse.json({
       success: true,
-      data: metrics,
-      summary: {
-        totalPayments: payments.length,
-        totalSubscriptions: subscriptions.length,
-        totalCustomers: customers.length
-      }
+      data: dashboardData
     });
 
   } catch (error: any) {
-    console.error("❌ Erro ao buscar dados do dashboard:", error);
+    console.error("❌ Erro no dashboard simplificado:", error);
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message,
-        details: error.response?.data || error
+        error: error.message
       },
       { status: 500 }
     );
   }
-}
-
-// Função para calcular métricas
-function calculateMetrics(payments: any[], subscriptions: any[], customers: any[], afiliadoId: string) {
-  // Pagamentos confirmados (RECEIVED, CONFIRMED)
-  const confirmedPayments = payments.filter(p => 
-    p.status === 'RECEIVED' || p.status === 'CONFIRMED'
-  );
-  
-  const totalPagamentos = confirmedPayments.reduce((sum, p) => sum + p.value, 0);
-
-  // Assinaturas ativas
-  const activeSubscriptions = subscriptions.filter(s => 
-    s.status === 'ACTIVE'
-  );
-  
-  const totalAssinaturas = activeSubscriptions.reduce((sum, s) => sum + s.value, 0);
-
-  // Clientes únicos (baseado nos payments)
-  const uniqueCustomers = [...new Set(payments.map(p => p.customer))];
-
-  return {
-    afiliado_id: afiliadoId,
-    total_clientes: uniqueCustomers.length,
-    total_assinaturas: totalAssinaturas,
-    comissao_assinaturas: totalAssinaturas * 0.03, // 3% de comissão
-    total_pagamentos: totalPagamentos,
-    comissao_pagamentos: totalPagamentos * 0.03, // 3% de comissão
-    total_geral: totalAssinaturas + totalPagamentos,
-    comissao_total: (totalAssinaturas + totalPagamentos) * 0.03,
-    
-    // Métricas detalhadas
-    metrics: {
-      payments: {
-        total: payments.length,
-        confirmed: confirmedPayments.length,
-        pending: payments.filter(p => p.status === 'PENDING').length,
-        overdue: payments.filter(p => p.status === 'OVERDUE').length,
-        totalValue: totalPagamentos
-      },
-      subscriptions: {
-        total: subscriptions.length,
-        active: activeSubscriptions.length,
-        inactive: subscriptions.filter(s => s.status !== 'ACTIVE').length,
-        totalValue: totalAssinaturas
-      },
-      customers: {
-        total: customers.length,
-        uniqueFromPayments: uniqueCustomers.length
-      }
-    }
-  };
 }

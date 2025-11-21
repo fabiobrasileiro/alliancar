@@ -90,7 +90,7 @@ export default function DashboardPage() {
         <div className="bg-background p-6">
           <div className="max-w-7xl mx-auto">
             <GoalsProgressAfiliado 
-              totalPlacas={0} // Você pode ajustar isso conforme sua lógica
+              totalPlacas={20} 
             />
           </div>
         </div>
