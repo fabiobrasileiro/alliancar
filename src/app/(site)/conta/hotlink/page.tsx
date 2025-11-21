@@ -59,7 +59,6 @@ export default function Powerlinks() {
     setCopying(linkId);
     try {
       await navigator.clipboard.writeText(text);
-      // Using toast instead of alert for better UX
       alert("Link copiado com sucesso!");
     } catch (error) {
       alert("Erro ao copiar link");

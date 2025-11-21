@@ -277,7 +277,6 @@ export default function Saques() {
   const totalSacado = dashboard?.total_sacado || 0;
   const comissaoTotal = dashboard?.comissao_assinaturas || 0;
 
- 
   return (
     <SidebarLayout>
       <div className="p-6 max-w-6xl ">

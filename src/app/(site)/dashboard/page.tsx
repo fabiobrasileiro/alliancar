@@ -85,16 +85,7 @@ export default function DashboardPage() {
         perfilData={perfilData} 
       />
       
-      {/* Meta de Placas (se não for super_admin) */}
-      {!perfilData?.super_admin && (
-        <div className="bg-background p-6">
-          <div className="max-w-7xl mx-auto">
-            <GoalsProgressAfiliado 
-              totalPlacas={20} 
-            />
-          </div>
-        </div>
-      )}
+   
     </>
   );
 }

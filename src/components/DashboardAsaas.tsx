@@ -166,7 +166,7 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
                 {perfilData?.super_admin ? 'Dashboard Geral' : `Bem-vindo, ${perfilData?.nome_completo ?? 'Afiliado'}`}
               </h1>
               <p className="text-gray-400 mt-2">
-                Dados em tempo real da API Asaas
+                Dados em tempo real
                 {lastUpdated && (
                   <span className="text-gray-500 text-sm ml-2">
                     (Atualizado: {lastUpdated.toLocaleTimeString('pt-BR')})
@@ -176,9 +176,9 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
             </div>
             
             <div className="flex items-center gap-4">
-              <div className="bg-green-900/20 border border-green-500 rounded-lg px-3 py-1">
+              {/* <div className="bg-green-900/20 border border-green-500 rounded-lg px-3 py-1">
                 <span className="text-green-400 text-sm font-medium">✅ Conectado ao Asaas</span>
-              </div>
+              </div> */}
               
               <button
                 onClick={fetchDashboardData}
@@ -223,7 +223,7 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
           </div>
         )}
 
-        {/* Informações Detalhadas */}
+        {/* Informações Detalhadas
         <div className="bg-bg border border-gray-700 rounded-xl p-6">
           <h3 className="text-lg font-semibold text-white mb-4">📊 Detalhes da Conexão</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
@@ -246,7 +246,7 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
           </div>
         </div>
 
-        {/* Legenda */}
+        {/* Legenda 
         <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500 rounded-lg">
           <h4 className="text-blue-400 font-semibold mb-2">💡 Como funciona:</h4>
           <ul className="text-blue-300 text-sm space-y-1">
@@ -255,7 +255,7 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
             <li>• <strong>Mensalidades a Receber</strong>: 3% do valor total das assinaturas ativas</li>
             <li>• <strong>Total a Receber</strong>: Soma de Pagamentos + Mensalidades disponíveis</li>
           </ul>
-        </div>
+        </div> */}
       </div>
     </div>
   );

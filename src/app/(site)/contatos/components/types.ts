@@ -25,3 +25,22 @@ export const ORIGEM_LEAD_OPTIONS = [
   "Presencial",
   "Site",
 ] as const;
+export interface Contato {
+  id: string;
+  name: string;
+  email: string;
+  telefone: string;
+  estado: string;
+  city_name: string;
+  created_at: string;
+  observacoes?: string;
+  mobile_phone?: string;
+}
+
+export interface Filtros {
+  name: string;
+  email: string;
+  telefone: string;
+  estado: string;
+  city_name: string;
+}

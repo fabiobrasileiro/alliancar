@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import SidebarLayout from "@/components/SidebarLayoute";
-
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from 'next/navigation';
 
@@ -24,6 +23,7 @@ interface Afiliado {
   meta: number
   super_admin: boolean
 }
+
 interface DadosPix {
   id: string
   afiliado_id: string
@@ -47,7 +47,6 @@ export default function PerfilAfiliado() {
   const router = useRouter()
   const supabase = createClient();
 
-
   const [afiliado, setAfiliado] = useState<Afiliado | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -58,95 +57,96 @@ export default function PerfilAfiliado() {
   const [uploading, setUploading] = useState(false)
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  console.log('📁 Iniciando upload...', e.target.files)
+    console.log('📁 Iniciando upload...', e.target.files)
 
-  if (!e.target.files) {
-    console.log('❌ Nenhum arquivo selecionado')
-    return
-  }
-
-  if (!e.target.files[0]) {
-    console.log('❌ Arquivo na posição 0 não existe')
-    return
-  }
-
-  if (!afiliado) {
-    console.log('❌ Afiliado não carregado')
-    return
-  }
-
-  const file = e.target.files[0]
-  console.log('📄 Arquivo selecionado:', file.name, file.size, file.type)
-
-  // Validações
-  if (file.size > 5 * 1024 * 1024) {
-    console.log('❌ Arquivo muito grande')
-    setError('Arquivo muito grande. Máximo 5MB.')
-    return
-  }
-
-  setUploading(true)
-  setError('')
-
-  try {
-    // Nome único para o arquivo
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${afiliado.id}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const filePath = `avatars/${fileName}`
-
-    console.log('🔄 Fazendo upload para:', filePath)
-
-    // Fazer upload para o Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('avatars') // nome do bucket
-      .upload(filePath, file)
-
-    console.log('📤 Resultado do upload:', { data, error })
-
-    if (error) {
-      console.log('❌ Erro no upload:', error)
-      throw error
+    if (!e.target.files) {
+      console.log('❌ Nenhum arquivo selecionado')
+      return
     }
 
-    // Pegar URL pública do arquivo
-    const { data: urlData } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(filePath)
-
-    console.log('🔗 URL pública:', urlData)
-
-    // Atualizar o formulário com a nova URL
-    setFormData(prev => ({
-      ...prev,
-      foto_perfil_url: urlData.publicUrl
-    }))
-
-    setMessage('Foto enviada com sucesso!')
-    console.log('✅ Foto enviada com sucesso!')
-
-    // Salvar automaticamente no perfil
-    const { error: updateError } = await supabase
-      .from('afiliados')
-      .update({
-        foto_perfil_url: urlData.publicUrl,
-        atualizado_em: new Date().toISOString()
-      })
-      .eq('id', afiliado.id)
-
-    if (updateError) {
-      console.log('❌ Erro ao salvar no banco:', updateError)
-      throw updateError
+    if (!e.target.files[0]) {
+      console.log('❌ Arquivo na posição 0 não existe')
+      return
     }
 
-    console.log('💾 Foto salva no banco com sucesso!')
+    if (!afiliado) {
+      console.log('❌ Afiliado não carregado')
+      return
+    }
 
-  } catch (error) {
-    console.error('💥 Erro completo:', error)
-    setError('Erro ao fazer upload da foto: ' + error)
-  } finally {
-    setUploading(false)
+    const file = e.target.files[0]
+    console.log('📄 Arquivo selecionado:', file.name, file.size, file.type)
+
+    // Validações
+    if (file.size > 5 * 1024 * 1024) {
+      console.log('❌ Arquivo muito grande')
+      setError('Arquivo muito grande. Máximo 5MB.')
+      return
+    }
+
+    setUploading(true)
+    setError('')
+
+    try {
+      // Nome único para o arquivo
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${afiliado.id}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `avatars/${fileName}`
+
+      console.log('🔄 Fazendo upload para:', filePath)
+
+      // Fazer upload para o Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('avatars') // nome do bucket
+        .upload(filePath, file)
+
+      console.log('📤 Resultado do upload:', { data, error })
+
+      if (error) {
+        console.log('❌ Erro no upload:', error)
+        throw error
+      }
+
+      // Pegar URL pública do arquivo
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      console.log('🔗 URL pública:', urlData)
+
+      // Atualizar o formulário com a nova URL
+      setFormData(prev => ({
+        ...prev,
+        foto_perfil_url: urlData.publicUrl
+      }))
+
+      setMessage('Foto enviada com sucesso!')
+      console.log('✅ Foto enviada com sucesso!')
+
+      // Salvar automaticamente no perfil
+      const { error: updateError } = await supabase
+        .from('afiliados')
+        .update({
+          foto_perfil_url: urlData.publicUrl,
+          atualizado_em: new Date().toISOString()
+        })
+        .eq('id', afiliado.id)
+
+      if (updateError) {
+        console.log('❌ Erro ao salvar no banco:', updateError)
+        throw updateError
+      }
+
+      console.log('💾 Foto salva no banco com sucesso!')
+
+    } catch (error) {
+      console.error('💥 Erro completo:', error)
+      setError('Erro ao fazer upload da foto: ' + error)
+    } finally {
+      setUploading(false)
+    }
   }
-}
+
   // Função para deletar foto (opcional)
   const deletarFoto = async () => {
     if (!afiliado || !formData.foto_perfil_url) return
@@ -189,7 +189,6 @@ export default function PerfilAfiliado() {
     }
   }
 
-
   // Estado do formulário principal
   const [formData, setFormData] = useState({
     nome_completo: '',
@@ -218,6 +217,7 @@ export default function PerfilAfiliado() {
     accountDigit: '',
     bankAccountType: 'CONTA_CORRENTE'
   })
+
   const buscarDadosBancarios = async () => {
     if (!afiliado) return
 
@@ -317,7 +317,7 @@ export default function PerfilAfiliado() {
   useEffect(() => {
     carregarPerfil()
     buscarDadosPix()
-  }, )
+  }, [])
 
   const carregarPerfil = async () => {
     try {
@@ -582,7 +582,6 @@ export default function PerfilAfiliado() {
               </button>
             </div>
 
-            {/* Dados PIX */}
             {/* Dados Bancários e PIX */}
             <div className="bg-bg rounded-lg border  p-6">
               <h3 className="text-xl font-semibold mb-4">Dados Bancários e PIX</h3>
@@ -914,27 +913,11 @@ export default function PerfilAfiliado() {
                     Formatos: JPG, PNG, GIF (Máx: 5MB)
                   </p>
                 </div>
-
-                {/* {formData.foto_perfil_url && (
-                  <div className="space-y-2">
-                    <label htmlFor="foto_perfil_url" className="block text-sm font-medium text-white">
-                      URL da Foto
-                    </label>
-                    <input
-                      type="url"
-                      id="foto_perfil_url"
-                      value={formData.foto_perfil_url}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-md text-sm"
-                      placeholder="https://exemplo.com/foto.jpg"
-                    />
-                  </div>
-                )} */}
               </div>
             </div>
           </div>
         </div>
       </div>
-    </ SidebarLayout>
+    </SidebarLayout>
   )
 }

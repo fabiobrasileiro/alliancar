@@ -296,7 +296,7 @@ export default function MinhasVendas() {
           </div>
         )}
 
-        {/* Resto do código permanece igual (filtros, tabela de vendas, etc.) */}
+        {/* Filtros */}
         <Card className="p-4 mb-6 bg-bg">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-white">
             <div>
@@ -337,7 +337,7 @@ export default function MinhasVendas() {
           </div>
         </Card>
 
-        {/* totais das vendas */}
+        {/* Totais das vendas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="p-4 text-center bg-bg">
             <div className="text-sm text-white">Valor Total Vendas</div>
@@ -363,6 +363,47 @@ export default function MinhasVendas() {
           </Card>
         </div>
 
+        {/* Tabela de Vendas */}
+        <Card className="bg-bg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-white">Data</TableHead>
+                <TableHead className="text-white">Placa</TableHead>
+                <TableHead className="text-white">Valor</TableHead>
+                <TableHead className="text-white">Tipo</TableHead>
+                <TableHead className="text-white">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {vendas.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-white py-4">
+                    {loading ? "Carregando..." : "Nenhuma venda encontrada"}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                vendas.map((venda) => (
+                  <TableRow key={venda.id}>
+                    <TableCell className="text-white">{formatarData(venda.data_criacao)}</TableCell>
+                    <TableCell className="text-white">{venda.placa_veiculo}</TableCell>
+                    <TableCell className="text-white">{formatarMoeda(venda.valor_adesao)}</TableCell>
+                    <TableCell className="text-white">{venda.tipo}</TableCell>
+                    <TableCell className="text-white">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        venda.status === 'pago' ? 'bg-green-100 text-green-800' :
+                        venda.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {venda.status}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
 
         {error && (
           <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
