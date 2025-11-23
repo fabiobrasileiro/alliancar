@@ -101,7 +101,7 @@ export default function Navbar() {
     { name: "Dashboard", href: "/dashboard", current: false },
     // { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
-    { name: "Financeiro", href: "/conta", current: false },
+    { name: "Financeiro", href: "/conta/saque", current: false },
     { name: "Atividades", href: "/atividades", current: false },
     { name: "Relatórios", href: "/relatorios", current: false },
     { name: "Política e privacidade", href: "/politica", current: false },
@@ -115,7 +115,7 @@ export default function Navbar() {
     // { name: "Vendas", href: "/vendas", current: false },
     { name: "Contatos", href: "/contatos", current: false },
     { name: "Atividades", href: "/atividades", current: false },
-    { name: "Financeiro", href: "/conta", current: false },
+    { name: "Financeiro", href: "/conta/saque", current: false },
     { name: "Política e privacidade", href: "/politica", current: false },
     // { name: "Minha Conta", href: "/conta", current: false },
   ];
@@ -239,7 +239,7 @@ export default function Navbar() {
                   <MenuItem>
 
                     <Link
-                      href="/conta"
+                      href="/conta/saqueconta"
                       className=" px-4 py-2 text-sm text-a1 data-focus:bg-white/5 data-focus:outline-hidden flex items-center gap-1"
                     >
                       <User size={14} />
@@ -291,7 +291,7 @@ export default function Navbar() {
               <Button
                 variant="default"
                 className="mr-4 flex md:hidden"
-                onClick={() => copyToClipboard("formulariolp")}
+                onClick={() => copyToClipboard("b2ac8368-ae6d-418b-b032-1c11d159fd23")}
               >
                 <CopyIcon className="mr-2 h-4 w-4" /> LP Link
               </Button>

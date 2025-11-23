@@ -223,39 +223,7 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
           </div>
         )}
 
-        {/* Informações Detalhadas
-        <div className="bg-bg border border-gray-700 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">📊 Detalhes da Conexão</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-            <div>
-              <p className="text-gray-400">Afiliado ID</p>
-              <p className="text-white font-mono text-xs">{afiliadoId}</p>
-            </div>
-            <div>
-              <p className="text-gray-400">Clientes Cadastrados</p>
-              <p className="text-white">{dashboardData.detalhes.clientes}</p>
-            </div>
-            <div>
-              <p className="text-gray-400">Assinaturas Ativas</p>
-              <p className="text-white">{dashboardData.detalhes.assinaturas_ativas}</p>
-            </div>
-            <div>
-              <p className="text-gray-400">Pagamentos Confirmados</p>
-              <p className="text-white">{dashboardData.detalhes.pagamentos_confirmados}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Legenda 
-        <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500 rounded-lg">
-          <h4 className="text-blue-400 font-semibold mb-2">💡 Como funciona:</h4>
-          <ul className="text-blue-300 text-sm space-y-1">
-            <li>• <strong>Clientes</strong>: Quantidade de clientes únicos cadastrados no Asaas com seu externalReference</li>
-            <li>• <strong>Pagamentos a Receber</strong>: Soma de todos os pagamentos confirmados (RECEIVED/CONFIRMED)</li>
-            <li>• <strong>Mensalidades a Receber</strong>: 3% do valor total das assinaturas ativas</li>
-            <li>• <strong>Total a Receber</strong>: Soma de Pagamentos + Mensalidades disponíveis</li>
-          </ul>
-        </div> */}
+       
       </div>
     </div>
   );
