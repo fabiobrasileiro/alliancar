@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -13,16 +14,30 @@ import {
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/context/UserContext";
+import { Badge } from "@/components/ui/badge";
+import { Wallet, CreditCard, History, ArrowDownCircle, CheckCircle, Clock, XCircle } from "lucide-react";
+import { toast } from "sonner";
 
+// Interface atualizada com os novos campos da API
 interface DashboardData {
   afiliado_id: string;
   total_clientes: number;
-  total_assinaturas: number;
-  total_pagamentos: number;
-  porcentagem_comissao: number;
-  comissao_assinaturas: number;
+  pagamentos_a_receber: number;
+  mensalidades_a_receber: number;
+  total_bruto: number;
   total_sacado: number;
+  total_pendente_saque: number;
   total_a_receber: number;
+  total_acumulado: number;
+  detalhes: {
+    clientes: number;
+    pagamentos_confirmados: number;
+    assinaturas_ativas: number;
+    valor_total_mensalidades: number;
+    total_saques: number;
+    saques_pagos: number;
+    saques_pendentes: number;
+  };
 }
 
 interface BankData {
@@ -57,7 +72,7 @@ export default function Saques() {
   const [metodo, setMetodo] = useState("PIX");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  
+
   const supabase = createClient();
   const { user } = useUser();
 
@@ -70,56 +85,47 @@ export default function Saques() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      console.log("🔍 Buscando dados do afiliado...");
 
-      // Busca dados do afiliado
       const { data: afiliado, error: afiliadoError } = await supabase
         .from("afiliados")
         .select("id")
         .eq("auth_id", user?.id)
         .single();
 
-      if (afiliadoError) {
-        console.error("❌ Erro ao buscar afiliado:", afiliadoError);
+      if (afiliadoError || !afiliado) {
+        toast.error("Erro ao carregar dados do afiliado");
         return;
       }
 
-      if (!afiliado) {
-        console.log("❌ Afiliado não encontrado");
-        return;
+      // Buscar dados da API do dashboard
+      const response = await fetch(`/api/dashboard?afiliadoId=${afiliado.id}`);
+      
+      if (!response.ok) {
+        throw new Error('Erro ao buscar dados do dashboard');
       }
 
-      console.log("✅ Afiliado encontrado:", afiliado.id);
-
-      // Busca dashboard do afiliado
-      const { data: dashboardData, error: dashboardError } = await supabase
-        .from("afiliado_dashboard")
-        .select("*")
-        .eq("afiliado_id", afiliado.id)
-        .single();
-
-      if (dashboardError) {
-        console.error("❌ Erro ao buscar dashboard:", dashboardError);
+      const dashboardResponse = await response.json();
+      
+      if (dashboardResponse.success) {
+        setDashboard(dashboardResponse.data);
       } else {
-        console.log("✅ Dashboard encontrado:", dashboardData);
-        setDashboard(dashboardData);
+        throw new Error(dashboardResponse.error || 'Erro ao carregar dados');
       }
 
-      // Busca dados bancários
+      // Buscar dados bancários
       const { data: bankData, error: bankError } = await supabase
         .from("afiliado_bank_data")
         .select("*")
         .eq("afiliado_id", afiliado.id)
         .single();
 
-      if (bankError) {
+      if (bankError && bankError.code !== 'PGRST116') { // PGRST116 = no rows
         console.error("❌ Erro ao buscar dados bancários:", bankError);
       } else {
-        console.log("✅ Dados bancários encontrados:", bankData);
         setBankData(bankData);
       }
 
-      // Busca histórico de saques
+      // Buscar histórico de saques
       const { data: saquesData, error: saquesError } = await supabase
         .from("saques")
         .select("*")
@@ -129,59 +135,51 @@ export default function Saques() {
       if (saquesError) {
         console.error("❌ Erro ao buscar saques:", saquesError);
       } else {
-        console.log("✅ Saques encontrados:", saquesData?.length || 0);
         setSaques(saquesData || []);
       }
 
     } catch (error) {
-      console.error("💥 Erro inesperado:", error);
+      console.error("💥 Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSaque = async () => {
-    console.log("🔄 Iniciando solicitação de saque...");
-    
-    if (!dashboard) {
-      console.log("❌ Dashboard não carregado");
-      alert("Dados não carregados. Tente novamente.");
+    if (!dashboard || !bankData) {
+      toast.error("Dados não carregados. Tente novamente.");
       return;
     }
 
     if (!valorSaque) {
-      console.log("❌ Valor não informado");
-      alert("Digite o valor do saque");
-      return;
-    }
-
-    if (!bankData) {
-      console.log("❌ Dados bancários não encontrados");
-      alert("Dados bancários não cadastrados");
+      toast.error("Digite o valor do saque");
       return;
     }
 
     const valor = parseFloat(valorSaque);
     const saldoDisponivel = dashboard.total_a_receber;
 
-    console.log(`💰 Valor: R$ ${valor}, Saldo: R$ ${saldoDisponivel}`);
-
     if (valor > saldoDisponivel) {
-      console.log("❌ Saldo insuficiente");
-      alert("Saldo insuficiente para o saque");
+      toast.error("Saldo insuficiente para o saque");
       return;
     }
 
     if (valor < 10) {
-      console.log("❌ Valor abaixo do mínimo");
-      alert("Valor mínimo para saque é R$ 10,00");
+      toast.error("Valor mínimo para saque é R$ 10,00");
+      return;
+    }
+
+    // Verificar se já existe saque pendente
+    const saquesPendentes = saques.filter(s => s.status === 'pendente');
+    if (saquesPendentes.length > 0) {
+      toast.error("Você já tem um saque pendente. Aguarde o processamento.");
       return;
     }
 
     try {
       setSubmitting(true);
 
-      // Prepara dados do banco para salvar
       const dadosBanco = {
         chave_pix: bankData.pix_address_key,
         tipo_chave: bankData.pix_address_key_type,
@@ -192,10 +190,7 @@ export default function Saques() {
         tipo_conta: bankData.bankAccountType
       };
 
-      console.log("📝 Inserindo saque na tabela...");
-
-      // Insere o saque
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("saques")
         .insert([
           {
@@ -206,26 +201,17 @@ export default function Saques() {
             status: "pendente",
             observacao: "Saque solicitado pelo afiliado"
           }
-        ])
-        .select();
+        ]);
 
-      if (error) {
-        console.error("❌ Erro ao inserir saque:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log("✅ Saque inserido com sucesso:", data);
-
-      alert("Saque solicitado com sucesso!");
+      toast.success("Saque solicitado com sucesso!");
       setValorSaque("");
-      
-      // Recarrega os dados para atualizar o saldo e histórico
-      console.log("🔄 Recarregando dados...");
       await fetchData();
-      
+
     } catch (error) {
-      console.error("💥 Erro ao solicitar saque:", error);
-      alert("Erro ao solicitar saque. Tente novamente.");
+      console.error("Erro ao solicitar saque:", error);
+      toast.error("Erro ao solicitar saque");
     } finally {
       setSubmitting(false);
     }
@@ -247,73 +233,165 @@ export default function Saques() {
     });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
       case 'pago':
-        return 'text-green-600 bg-green-100';
+        return {
+          color: 'bg-green-500/20 text-green-300 border-green-500/30',
+          icon: CheckCircle,
+          text: 'Pago'
+        };
       case 'pendente':
-        return 'text-yellow-600 bg-yellow-100';
+        return {
+          color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+          icon: Clock,
+          text: 'Pendente'
+        };
       case 'cancelado':
-        return 'text-red-600 bg-red-100';
+        return {
+          color: 'bg-red-500/20 text-red-300 border-red-500/30',
+          icon: XCircle,
+          text: 'Cancelado'
+        };
       default:
-        return 'text-white bg-gray-100';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pago':
-        return 'Pago';
-      case 'pendente':
-        return 'Pendente';
-      case 'cancelado':
-        return 'Cancelado';
-      default:
-        return status;
+        return {
+          color: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+          icon: Clock,
+          text: status
+        };
     }
   };
 
   const saldoDisponivel = dashboard?.total_a_receber || 0;
   const totalSacado = dashboard?.total_sacado || 0;
-  const comissaoTotal = dashboard?.comissao_assinaturas || 0;
+  const totalAcumulado = dashboard?.total_acumulado || 0;
+  const totalPendenteSaque = dashboard?.total_pendente_saque || 0;
+
+   if (loading) {
+  //   return (
+  //     <SidebarLayout>
+  //       <div className="p-6 space-y-6">
+  //         <div className="animate-pulse">
+  //           <div className="h-8 bg-gray-700 rounded w-1/4 mb-2"></div>
+  //           <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+  //         </div>
+  //         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+  //           {[1, 2, 3, 4].map(i => (
+  //             <div key={i} className="bg-gray-800/50 rounded-lg p-6 animate-pulse">
+  //               <div className="h-6 bg-gray-700 rounded w-1/2 mb-2"></div>
+  //               <div className="h-8 bg-gray-700 rounded w-3/4"></div>
+  //             </div>
+  //           ))}
+  //         </div>
+  //       </div>
+  //     </SidebarLayout>
+  //   );
+   }
 
   return (
     <SidebarLayout>
-      <div className="p-6 max-w-6xl ">
-        <h2 className="text-2xl font-semibold mb-6">Solicitar Saque</h2>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-500/10 rounded-lg">
+              <Wallet className="w-6 h-6 text-green-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">Solicitar Saque</h1>
+              <p className="text-gray-400">
+                Gerencie seus saques e acompanhe o histórico
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="p-4 text-center">
-            <div className="text-sm text-white">Comissão</div>
-            <div className="text-lg font-bold text-blue-600">
-              {formatarMoeda(comissaoTotal)}
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="bg-blue-500/10 border-blue-500/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <CreditCard className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-blue-300">Comissão Total</p>
+                  <p className="text-2xl font-bold text-white">
+                    {formatarMoeda(totalAcumulado)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
           </Card>
-          
-          <Card className="p-4 text-center">
-            <div className="text-sm text-white">Total Sacado</div>
-            <div className="text-lg font-bold text-orange-600">
-              {formatarMoeda(totalSacado)}
-            </div>
+
+          <Card className="bg-orange-500/10 border-orange-500/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-500/20 rounded-lg">
+                  <History className="w-5 h-5 text-orange-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-orange-300">Total Sacado</p>
+                  <p className="text-2xl font-bold text-white">
+                    {formatarMoeda(totalSacado)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
           </Card>
-          
-          <Card className="p-4 text-center bg-bg">
-            <div className="text-sm text-white">Saldo Disponível</div>
-            <div className="text-xl font-bold text-green-600">
-              {formatarMoeda(saldoDisponivel)}
-            </div>
+
+          <Card className="bg-purple-500/10 border-purple-500/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/20 rounded-lg">
+                  <Clock className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-purple-300">Saques Pendentes</p>
+                  <p className="text-2xl font-bold text-white">
+                    {formatarMoeda(totalPendenteSaque)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-green-500/10 border-green-500/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/20 rounded-lg">
+                  <Wallet className="w-5 h-5 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-green-300">Saldo Disponível</p>
+                  <p className="text-2xl font-bold text-white">
+                    {formatarMoeda(saldoDisponivel)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Formulário de Saque */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Solicitar Novo Saque</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-white">Valor do Saque</label>
+          <Card className="bg-gray-800/50 border-gray-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <ArrowDownCircle className="w-5 h-5" />
+                Solicitar Novo Saque
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                Preencha os dados para solicitar seu saque
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 px-5 pb-5">
+              <div className="space-y-2">
+                <Label htmlFor="valorSaque" className="text-white">
+                  Valor do Saque
+                </Label>
                 <Input
+                  id="valorSaque"
                   type="number"
                   placeholder="Digite o valor"
                   value={valorSaque}
@@ -321,103 +399,138 @@ export default function Saques() {
                   min="10"
                   max={saldoDisponivel}
                   step="0.01"
+                  className="bg-gray-700/50 border-gray-600 text-white"
                 />
-                <div className="text-xs text-white mt-1 text-white">
+                <p className="text-xs text-gray-400">
                   Valor mínimo: R$ 10,00 • Disponível: {formatarMoeda(saldoDisponivel)}
-                </div>
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2 text-white">Método de Pagamento</label>
-                <Select value={metodo} onValueChange={setMetodo} >
-                  <SelectTrigger className="border">
+              <div className="space-y-2">
+                <Label htmlFor="metodo" className="text-white">
+                  Método de Pagamento
+                </Label>
+                <Select value={metodo} onValueChange={setMetodo}>
+                  <SelectTrigger className="bg-gray-700/50 border-gray-600 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PIX" className="text-white">PIX</SelectItem>
-                    <SelectItem value="TED" className="text-white">TED</SelectItem>
+                    <SelectItem value="PIX">PIX</SelectItem>
+                    <SelectItem value="TED">TED</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Informações Bancárias */}
-              {bankData && (
-                <div className="p-4 bg-bg rounded-lg">
-                  <h3 className="font-medium mb-2">Dados Cadastrados</h3>
-                  <div className="text-sm space-y-1">
-                    <div><strong>Nome:</strong> {bankData.ownerName}</div>
-                    <div><strong>CPF/CNPJ:</strong> {bankData.cpfCnpj}</div>
-                    <div><strong>Chave PIX:</strong> {bankData.pix_address_key}</div>
-                    {bankData.agency && (
-                      <div><strong>Agência/Conta:</strong> {bankData.agency} / {bankData.account}-{bankData.accountDigit}</div>
-                    )}
-                  </div>
-                </div>
+              {bankData ? (
+                <Card className="bg-green-500/10 border-green-500/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-green-400 font-medium">Dados bancários cadastrados</span>
+                    </div>
+                    <div className="text-sm text-green-300 space-y-1">
+                      <div><strong>Nome:</strong> {bankData.ownerName}</div>
+                      <div><strong>CPF/CNPJ:</strong> {bankData.cpfCnpj}</div>
+                      <div><strong>Chave PIX:</strong> {bankData.pix_address_key}</div>
+                      {bankData.agency && (
+                        <div><strong>Agência/Conta:</strong> {bankData.agency} / {bankData.account}-{bankData.accountDigit}</div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="bg-yellow-500/10 border-yellow-500/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-yellow-400" />
+                      <span className="text-yellow-400 text-sm">
+                        Dados bancários não cadastrados. Configure em Meu Perfil.
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
-              <Button 
+              <Button
                 onClick={handleSaque}
-                disabled={!valorSaque || parseFloat(valorSaque) > saldoDisponivel || submitting || parseFloat(valorSaque) < 10}
-                className="w-full"
+                disabled={!valorSaque || parseFloat(valorSaque) > saldoDisponivel || submitting || parseFloat(valorSaque) < 10 || !bankData}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                size="lg"
               >
-                {submitting ? "Processando..." : "Solicitar Saque"}
+                {submitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processando...
+                  </>
+                ) : (
+                  "Solicitar Saque"
+                )}
               </Button>
-            </div>
+            </CardContent>
           </Card>
 
           {/* Histórico de Saques */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Histórico de Saques</h3>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {saques.length === 0 ? (
-                <div className="text-center text-white py-8">
-                  Nenhum saque realizado ainda
-                </div>
-              ) : (
-                saques.map((saque) => (
-                  <div key={saque.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="font-semibold">
-                          {formatarMoeda(saque.valor)}
-                        </div>
-                        <div className="text-sm text-white">
-                          {saque.metodo} • {formatarData(saque.criado_em)}
-                        </div>
-                      </div>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(saque.status)}`}>
-                        {getStatusText(saque.status)}
-                      </span>
-                    </div>
-                    
-                    {saque.observacao && (
-                      <div className="text-sm text-white mt-2">
-                        {saque.observacao}
-                      </div>
-                    )}
-
-                    {saque.processado_em && (
-                      <div className="text-xs text-white mt-1 text-white">
-                        Processado em: {formatarData(saque.processado_em)}
-                      </div>
-                    )}
+          <Card className="bg-gray-800/50 border-gray-700 px-5 pb-3">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <History className="w-5 h-5" />
+                Histórico de Saques
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                Acompanhe o status dos seus saques
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {saques.length === 0 ? (
+                  <div className="text-center py-8">
+                    <History className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                    <p className="text-gray-400">Nenhum saque realizado ainda</p>
                   </div>
-                ))
-              )}
-            </div>
+                ) : (
+                  saques.map((saque) => {
+                    const statusConfig = getStatusConfig(saque.status);
+                    const StatusIcon = statusConfig.icon;
+
+                    return (
+                      <div key={saque.id} className="border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition-colors">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <div className="font-semibold text-white text-lg">
+                              {formatarMoeda(saque.valor)}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              {saque.metodo} • {formatarData(saque.criado_em)}
+                            </div>
+                          </div>
+                          <Badge className={statusConfig.color}>
+                            <StatusIcon className="w-3 h-3 mr-1" />
+                            {statusConfig.text}
+                          </Badge>
+                        </div>
+
+                        {saque.observacao && (
+                          <div className="text-sm text-gray-300 mt-2 p-2 bg-gray-700/50 rounded">
+                            {saque.observacao}
+                          </div>
+                        )}
+
+                        {saque.processado_em && (
+                          <div className="text-xs text-gray-400 mt-2">
+                            Processado em: {formatarData(saque.processado_em)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </CardContent>
           </Card>
         </div>
 
-        {/* Informações Adicionais */}
-        <Card className="p-6 mt-6">
-          <h3 className="font-medium mb-4">Informações Importantes</h3>
-          <ul className="text-sm space-y-2 text-white">
-            <li>• Saques são processados em até 2 dias úteis</li>
-            <li>• O valor solicitado será deduzido automaticamente do seu saldo</li>
-            <li>• Você será notificado quando o saque for processado</li>
-            <li>• Certifique-se de que seus dados bancários estão corretos</li>
-          </ul>
-        </Card>
+      
       </div>
     </SidebarLayout>
   );

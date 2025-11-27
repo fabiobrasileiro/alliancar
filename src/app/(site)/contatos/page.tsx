@@ -416,7 +416,7 @@ export default function ContatosPage() {
         {contatosFiltrados.length === 0 && !loading && (
           <div className="text-center py-8 text-gray-400">
             {contatos.length === 0 
-              ? "Nenhum cliente encontrado no Asaas com seu externalReference"
+              ? "Nenhum cliente encontrado"
               : "Nenhum cliente corresponde aos filtros aplicados"
             }
           </div>
