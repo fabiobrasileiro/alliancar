@@ -11,17 +11,14 @@ import PaymentStep from "./steps/PaymentStep";
 import OrderSummary from "./OrderSummary";
 import PlanSummary from "./PlanSummary";
 import { FormState, InsurancePlan, OrderValues } from "./steps/types";
+import PaymentResult from "./PaymentResult";
+import ThankYouPage from "./ThankYouPage";
 
 const optionalServices = [
     { id: "assistencia_24h", name: "Assistência 24H", price: 32.10 },
     { id: "danos_terceiros", name: "Danos a Terceiros", price: 43.10 },
     { id: "vidros", name: "Vidros", price: 25.00 },
 ];
-interface PixData {
-    qrCode: string;
-    payload: string;
-    expirationDate: string;
-}
 
 export default function MultiStepForm() {
     const { afiliadoId } = useParams<{ afiliadoId?: string }>();
@@ -32,7 +29,9 @@ export default function MultiStepForm() {
     const [discount, setDiscount] = useState(0);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [planoEncontrado, setPlanoEncontrado] = useState<InsurancePlan | null>(null);
-    const [pixData, setPixData] = useState<PixData | null>(null);
+    const [showPaymentResult, setShowPaymentResult] = useState(false);
+    const [showThankYou, setShowThankYou] = useState(false);
+
 
     const calculateOrderValues = (): OrderValues => {
         const servicesTotal = optionalServices
@@ -68,7 +67,7 @@ export default function MultiStepForm() {
         postalCode: "",
         value: "0",
         externalReference: afiliadoId,
-        paymentMethod: "", // ← IMPORTANTE: Iniciar vazio
+        paymentMethod: "",
         description: `Seguro Auto - ${planoEncontrado?.category_name || 'Plano'}`,
         creditCard: {
             holderName: "",
@@ -116,7 +115,6 @@ export default function MultiStepForm() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
 
-        // Se for um campo do cartão de crédito (creditCard.field)
         if (name.startsWith('creditCard.')) {
             const fieldName = name.replace('creditCard.', '');
             setForm(prev => ({
@@ -127,7 +125,6 @@ export default function MultiStepForm() {
                 }
             }));
         }
-        // Se for um campo do vehicleInfo
         else if (name.startsWith('vehicleInfo.')) {
             const fieldName = name.replace('vehicleInfo.', '');
             setForm(prev => ({
@@ -138,7 +135,6 @@ export default function MultiStepForm() {
                 }
             }));
         }
-        // Campos normais
         else {
             setForm(prev => ({
                 ...prev,
@@ -146,7 +142,6 @@ export default function MultiStepForm() {
             }));
         }
     };
-
 
     const handlePersonalDataChange = (name: string, value: string) => {
         setForm(prev => ({
@@ -156,7 +151,7 @@ export default function MultiStepForm() {
     };
 
     const handleCreditCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        handleChange(e); // Reutiliza a lógica do handleChange principal
+        handleChange(e);
     };
 
     const handleVehicleInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -192,160 +187,181 @@ export default function MultiStepForm() {
         if (step > 1) setStep(prev => prev - 1);
     };
 
-    // No handleSubmit do MultiStepForm, adicione:
+    const handleBackToPayment = () => {
+        setShowPaymentResult(false);
+        setResult(null);
+    };
+
     async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    
-    if (!form.paymentMethod) {
-        alert("Por favor, selecione um método de pagamento");
-        return;
-    }
+        e.preventDefault();
 
-    // Validações específicas para cartão de crédito
-    if (form.paymentMethod === "CREDIT_CARD") {
-        if (!form.creditCard.holderName?.trim() || 
-            !form.creditCard.number?.trim() || 
-            !form.creditCard.expiryMonth?.trim() || 
-            !form.creditCard.expiryYear?.trim() || 
-            !form.creditCard.ccv?.trim()) {
-            alert("Por favor, preencha todos os dados do cartão de crédito");
+        if (!form.paymentMethod) {
+            alert("Por favor, selecione um método de pagamento");
             return;
         }
 
-        // Validação básica do número do cartão
-        const cleanCardNumber = form.creditCard.number.replace(/\s/g, '');
-        if (cleanCardNumber.length < 13) {
-            alert("Número do cartão inválido");
-            return;
+        // Validações específicas para cartão de crédito
+        if (form.paymentMethod === "CREDIT_CARD") {
+            if (!form.creditCard.holderName?.trim() ||
+                !form.creditCard.number?.trim() ||
+                !form.creditCard.expiryMonth?.trim() ||
+                !form.creditCard.expiryYear?.trim() ||
+                !form.creditCard.ccv?.trim()) {
+                alert("Por favor, preencha todos os dados do cartão de crédito");
+                return;
+            }
+
+            const cleanCardNumber = form.creditCard.number.replace(/\s/g, '');
+            if (cleanCardNumber.length < 13) {
+                alert("Número do cartão inválido");
+                return;
+            }
+
+            if (form.creditCard.ccv.length < 3) {
+                alert("CVV inválido");
+                return;
+            }
         }
 
-        // Validação do CVV
-        if (form.creditCard.ccv.length < 3) {
-            alert("CVV inválido");
-            return;
-        }
-    }
+        setLoading(true);
 
-    setLoading(true);
+        try {
+            const finalValue = orderValues.total - discount;
 
-    try {
-        const finalValue = orderValues.total - discount;
-
-        console.log("🔄 Enviando dados para API...", {
-            paymentMethod: form.paymentMethod,
-            finalValue: finalValue
-        });
-
-        const res = await fetch("/api/checkout", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                // Dados pessoais
-                name: form.name,
-                email: form.email,
-                whatsApp: form.whatsApp,
-                cpfCnpj: form.cpfCnpj,
-
-                // Endereço
-                street: form.street,
-                addressNumber: form.addressNumber,
-                complement: form.complement,
-                province: form.province,
-                postalCode: form.postalCode,
-
-                // Identificação
-                externalReference: form.externalReference,
-                description: form.description,
+            console.log("🔄 Enviando dados para API...", {
                 paymentMethod: form.paymentMethod,
+                finalValue: finalValue
+            });
 
-                // Valores
-                finalValue: finalValue,
-                discount: discount,
+            const res = await fetch("/api/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    // Dados pessoais
+                    name: form.name,
+                    email: form.email,
+                    whatsApp: form.whatsApp,
+                    cpfCnpj: form.cpfCnpj,
 
-                // Plano e serviços
-                plano: planoEncontrado,
-                selectedServices: selectedServices,
-                servicesTotal: orderValues.services,
+                    // Endereço
+                    street: form.street,
+                    addressNumber: form.addressNumber,
+                    complement: form.complement,
+                    province: form.province,
+                    postalCode: form.postalCode,
 
-                // Veículo
-                vehicleInfo: form.vehicleInfo,
+                    // Identificação
+                    externalReference: form.externalReference,
+                    description: form.description,
+                    paymentMethod: form.paymentMethod,
 
-                // Dados do cartão (apenas para crédito)
-                creditCard: form.paymentMethod === "CREDIT_CARD" ? {
-                    holderName: form.creditCard.holderName,
-                    number: form.creditCard.number,
-                    expiryMonth: form.creditCard.expiryMonth,
-                    expiryYear: form.creditCard.expiryYear,
-                    ccv: form.creditCard.ccv
-                } : null
-            }),
-        });
+                    // Valores
+                    finalValue: finalValue,
+                    discount: discount,
 
-        const data = await res.json();
-        console.log("📨 Resposta completa da API:", data);
+                    // Plano e serviços
+                    plano: planoEncontrado,
+                    selectedServices: selectedServices,
+                    servicesTotal: orderValues.services,
 
-        setResult(data);
+                    // Veículo
+                    vehicleInfo: form.vehicleInfo,
 
-        if (data.success) {
-            // Tratamento diferente para cada método
-            if (form.paymentMethod === "PIX") {
-                
-                console.log("🔍 Verificando dados PIX:", {
-                    hasQrCode: !!data.pixQrCode,
-                    hasPayload: !!data.pixPayload,
-                    hasInvoiceUrl: !!data.invoiceUrl,
-                    payment: data.payment
-                });
+                    // Dados do cartão (apenas para crédito)
+                    creditCard: form.paymentMethod === "CREDIT_CARD" ? {
+                        holderName: form.creditCard.holderName,
+                        number: form.creditCard.number,
+                        expiryMonth: form.creditCard.expiryMonth,
+                        expiryYear: form.creditCard.expiryYear,
+                        ccv: form.creditCard.ccv
+                    } : null
+                }),
+            });
 
-                if (data.pixQrCode) {
-                    // Mostrar modal com QR Code PIX
-                    setPixData({
-                        qrCode: data.pixQrCode,
-                        payload: data.pixPayload,
-                        expirationDate: data.pixExpirationDate
-                    });
-                    console.log("✅ Modal PIX aberto com QR Code");
+            const data = await res.json();
+            console.log("📨 Resposta completa da API:", data);
 
-                } else if (data.invoiceUrl) {
-                    // Fallback: redirecionar para invoice que contém o PIX
-                    console.log("🔀 Fallback: redirecionando para invoice URL");
-                    window.open(data.invoiceUrl, '_blank');
-                    alert("Pagamento PIX criado! Você será redirecionado para a página de pagamento.");
+            setResult(data);
+            setShowPaymentResult(true);
+
+            if (data.success) {
+                // Verifica se o pagamento foi confirmado (especialmente para cartão)
+                const isPaymentConfirmed =
+                    data.payment?.status === 'CONFIRMED' ||
+                    data.payment?.status === 'RECEIVED' ||
+                    form.paymentMethod === 'PIX' || // PIX considera como confirmado já que o usuário vai pagar
+                    form.paymentMethod === 'BOLETO'; // Boleto também considera como "confirmado" na criação
+
+                if (isPaymentConfirmed) {
+                    console.log("✅ Pagamento confirmado, mostrando página de agradecimento");
+                    setShowThankYou(true);
                 } else {
-                    console.error("❌ Dados PIX insuficientes:", data);
-                    alert("Pagamento PIX criado, mas não foi possível gerar o QR Code. Entre em contato com o suporte.");
-                }
-            } else if (form.paymentMethod === "BOLETO" && data.bankSlipUrl) {
-                // Abrir boleto em nova aba
-                window.open(data.bankSlipUrl, '_blank');
-                alert("Boleto gerado com sucesso! Verifique sua caixa de entrada.");
-            } else if (form.paymentMethod === "CREDIT_CARD") {
-                if (data.invoiceUrl) {
-                    // Redirecionar para página da fatura
-                    window.location.href = data.invoiceUrl;
-                } else if (data.status === "CONFIRMED") {
-                    alert("Pagamento com cartão confirmado com sucesso!");
-                } else {
-                    alert("Pagamento com cartão processado! Aguarde a confirmação.");
+                    console.log("📋 Pagamento criado, mostrando instruções");
+                    setShowPaymentResult(true);
                 }
             } else {
-                alert("Pagamento processado com sucesso!");
+                console.error("❌ Erro na API:", data);
+                setShowPaymentResult(true);
             }
-        } else {
-            console.error("❌ Erro na API:", data);
-            alert("Erro no processamento: " + (data.error || data.message || "Tente novamente"));
-        }
 
-    } catch (err: any) {
-        console.error("❌ Erro no checkout:", err);
-        setResult({ success: false, message: "Erro ao processar checkout" });
-        alert("Erro ao processar o pagamento. Tente novamente.");
-    } finally {
-        setLoading(false);
+        } catch (err: any) {
+            console.error("❌ Erro no checkout:", err);
+            setResult({
+                success: false,
+                message: "Erro ao processar checkout",
+                error: err.message
+            });
+            setShowPaymentResult(true);
+        } finally {
+            setLoading(false);
+        }
     }
-}
 
     const totalWithDiscount = orderValues.total - discount;
+
+    // Se temos resultado e devemos mostrar a tela de resultado
+    if (showPaymentResult && result) {
+        return (
+            <PaymentResult
+                result={result}
+                paymentMethod={form.paymentMethod}
+                onBack={handleBackToPayment}
+                orderValues={orderValues}
+                plano={planoEncontrado}
+            />
+        );
+    }
+
+    // Adicione a função para redirecionar:
+    const handleRedirectToHome = () => {
+        // Você pode redirecionar para a página inicial ou fazer o que precisar
+        window.location.href = '/'; // ou a URL que você quiser
+    };
+
+    // Adicione a função para reiniciar o formulário:
+    const handleResetForm = () => {
+        setShowThankYou(false);
+        setShowPaymentResult(false);
+        setResult(null);
+        setStep(1);
+        // Limpar outros estados se necessário
+    };
+
+    if (showThankYou && result?.success) {
+        return (
+            <ThankYouPage
+                paymentData={{
+                    paymentId: result.payment?.id || result.paymentId,
+                    paymentMethod: form.paymentMethod,
+                    invoiceUrl: result.invoiceUrl,
+                    status: result.payment?.status || 'CONFIRMED'
+                }}
+                orderValues={orderValues}
+                plano={planoEncontrado}
+                onRedirect={handleRedirectToHome}
+            />
+        );
+    }
 
     return (
         <div className="max-w-6xl mx-auto p-6 my-14 bg-gray-900 shadow-lg rounded-lg">
@@ -402,6 +418,7 @@ export default function MultiStepForm() {
                                 onSubmit={handleSubmit}
                                 loading={loading}
                                 plano={planoEncontrado}
+                                paymentResult={result} // Passa o resultado para o PaymentStep
                             />
                         )}
                     </form>
@@ -435,12 +452,6 @@ export default function MultiStepForm() {
                     )
                 )}
             </div>
-
-            {result && !result.success && (
-                <div className="mt-6 p-4 bg-red-100 border border-red-400 rounded text-red-700">
-                    <strong>Erro:</strong> {result.message}
-                </div>
-            )}
         </div>
     );
 }

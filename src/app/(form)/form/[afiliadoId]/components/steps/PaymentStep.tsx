@@ -1,4 +1,6 @@
+// steps/PaymentStep.tsx
 import { FormState, InsurancePlan } from "./types";
+import PixPaymentDisplay from "../PixPaymentDisplay";
 
 interface PaymentStepProps {
     form: FormState;
@@ -7,9 +9,10 @@ interface PaymentStepProps {
     onSubmit: (e: React.FormEvent) => void;
     loading: boolean;
     plano: InsurancePlan | null;
+    paymentResult?: any;
 }
 
-export default function PaymentStep({ form, onChange, onBack, onSubmit, loading, plano }: PaymentStepProps) {
+export default function PaymentStep({ form, onChange, onBack, onSubmit, loading, plano, paymentResult }: PaymentStepProps) {
     const handlePaymentMethodChange = (method: string) => {
         const event = {
             target: {
@@ -21,8 +24,7 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading,
     };
 
     const handleCreditCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        onChange(e); // Envia o evento original para o onChange do MultiStepForm
+        onChange(e);
     };
 
     const isFormValid = form.paymentMethod;
@@ -49,12 +51,6 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading,
                             <span>R$ {plano?.adesao?.toFixed(2) || '0,00'}</span>
                         </div>
                     </div>
-                </div>
-
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                    <p className="text-blue-800 text-sm text-center">
-                        💡 Este é o valor da sua adesão. O valor da mensalidade será cobrado 30 dias após o pagamento.
-                    </p>
                 </div>
             </div>
 
@@ -139,7 +135,7 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading,
                     </label>
                 </div>
 
-                {/* Formulário do Cartão de Crédito (aparece apenas quando selecionado) */}
+                {/* Formulário do Cartão de Crédito */}
                 {form.paymentMethod === "CREDIT_CARD" && (
                     <div className="mt-6 p-4 bg-gray-700 rounded-lg border border-gray-500">
                         <h5 className="text-white font-semibold mb-4">Dados do Cartão</h5>
@@ -248,7 +244,6 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading,
     );
 }
 
-// Função auxiliar para mostrar o nome do método de pagamento no botão
 function getPaymentMethodName(method: string): string {
     switch (method) {
         case 'PIX':
