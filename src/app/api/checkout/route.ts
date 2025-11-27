@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { vistoriaService } from "@/lib/vistoria-service";
 
 export async function POST(request: Request) {
     try {
@@ -138,13 +139,40 @@ export async function POST(request: Request) {
             ? `Seguro Auto ${plano.category_name} - ${plano.vehicle_range}${selectedServices.length > 0 ? ` + ${selectedServices.length} serviço(s) opcional(is)` : ''}`
             : `Seguro Auto${selectedServices.length > 0 ? ` + ${selectedServices.length} serviço(s) opcional(is)` : ''}`;
 
-        // 5️⃣ Cria o pagamento baseado no método escolhido
+        // 5️⃣ Configurar SPLITS para os afiliados (7,5% para cada)
+        const splitAfiliados = [
+            {
+                walletId: "44b7be70-b6be-4f34-be9e-b4ad33a10f9d", // Primeiro afiliado
+                fixedValue: 0,
+                percentualValue: 7.5, // 7,5%
+                totalFixedValue: 0
+            },
+            {
+                walletId: "a7732382-3e6b-4ac8-b3b4-6c6ff5653fe7", // Segundo afiliado
+                fixedValue: 0,
+                percentualValue: 7.5, // 7,5%
+                totalFixedValue: 0
+            }
+        ];
+
+        // Calcular o valor restante após os splits (85%)
+        const totalPercentualSplits = splitAfiliados.reduce((sum, split) => sum + split.percentualValue, 0);
+        const remainingPercent = 100 - totalPercentualSplits; // 85%
+
+        console.log("💰 Configurando splits:", {
+            totalPercentualSplits,
+            remainingPercent,
+            splitAfiliados
+        });
+
+        // 6️⃣ Cria o pagamento baseado no método escolhido COM SPLITS
         let paymentPayload: any = {
             customer: customer.id,
             value: parseFloat(finalValue).toFixed(2),
             dueDate: formattedDueDate,
             description: paymentDescription,
             externalReference: externalReference,
+            split: splitAfiliados // Adiciona os splits ao payload
         };
 
         // Configura o payload baseado no método de pagamento
@@ -188,10 +216,10 @@ export async function POST(request: Request) {
                 throw new Error(`Método de pagamento inválido: ${paymentMethod}`);
         }
 
-        console.log("🔄 Criando pagamento:", { 
+        console.log("🔄 Criando pagamento com splits:", { 
             method: paymentMethod, 
             value: paymentPayload.value,
-            payload: paymentPayload
+            splits: paymentPayload.split
         });
 
         const paymentRes = await fetch(`${process.env.ASAAS_BASE_URL}/payments`, {
@@ -214,7 +242,7 @@ export async function POST(request: Request) {
 
         console.log("✅ Pagamento criado:", payment.id, payment.status);
 
-        // 6️⃣ Para PIX: Buscar informações completas do PIX
+        // 7️⃣ Para PIX: Buscar informações completas do PIX
         let pixQrCode = null;
         let pixPayload = null;
         let pixExpirationDate = null;
@@ -251,7 +279,7 @@ export async function POST(request: Request) {
             }
         }
 
-        // 7️⃣ Cria a assinatura (apenas mensalidade do plano) - APENAS para cartão
+        // 8️⃣ Cria a assinatura (apenas mensalidade do plano) - APENAS para cartão COM SPLITS
         let subscription = null;
         if (paymentMethod === 'CREDIT_CARD' && plano?.monthly_payment && plano.monthly_payment > 0) {
             const nextDueDate = new Date();
@@ -259,6 +287,22 @@ export async function POST(request: Request) {
             const formattedNextDueDate = nextDueDate.toISOString().split('T')[0];
 
             const subscriptionValue = plano.monthly_payment;
+
+            // Configurar splits também para a assinatura
+            const subscriptionSplitAfiliados = [
+                {
+                    walletId: "44b7be70-b6be-4f34-be9e-b4ad33a10f9d", // Primeiro afiliado
+                    fixedValue: 0,
+                    percentualValue: 7.5, // 7,5%
+                    totalFixedValue: 0
+                },
+                {
+                    walletId: "a7732382-3e6b-4ac8-b3b4-6c6ff5653fe7", // Segundo afiliado
+                    fixedValue: 0,
+                    percentualValue: 7.5, // 7,5%
+                    totalFixedValue: 0
+                }
+            ];
 
             const subscriptionPayload: any = {
                 billingType: 'CREDIT_CARD',
@@ -268,8 +312,14 @@ export async function POST(request: Request) {
                 nextDueDate: formattedNextDueDate,
                 description: `Mensalidade Seguro Auto - ${plano.category_name}`,
                 externalReference: externalReference,
-                creditCardToken: creditCardToken
+                creditCardToken: creditCardToken,
+                split: subscriptionSplitAfiliados // Splits para assinatura também
             };
+
+            console.log("🔄 Criando assinatura com splits:", {
+                value: subscriptionValue,
+                splits: subscriptionSplitAfiliados
+            });
 
             const subscriptionRes = await fetch(`${process.env.ASAAS_BASE_URL}/subscriptions`, {
                 method: "POST",
@@ -286,16 +336,69 @@ export async function POST(request: Request) {
                 console.warn("⚠️ Erro ao criar assinatura:", subscription);
                 subscription = null;
             } else {
-                console.log("✅ Assinatura criada:", subscription.id);
+                console.log("✅ Assinatura criada com splits:", subscription.id);
             }
         }
 
-        // 8️⃣ Prepara resposta baseada no método de pagamento
+        // 9️⃣ PREPARAR DADOS PARA VISTORIA
+        console.log("📋 Preparando dados para vistoria...");
+        
+        const customerData = {
+            name,
+            email,
+            telefone: whatsApp,
+            cidade: province,
+            endereco: {
+                street,
+                numero: addressNumber,
+                complemento: complement,
+                cidade: province,
+                estado: "SP" // Você pode extrair do CEP se necessário
+            }
+        };
+
+        const vehicleData = {
+            placa: vehicleInfo?.placa || "",
+            marca: vehicleInfo?.marca || "",
+            modelo: vehicleInfo?.modelo || "",
+            anoFabricacao: vehicleInfo?.anoFabricacao || "",
+            anoModelo: vehicleInfo?.anoModelo || "",
+            cor: vehicleInfo?.cor || "",
+            chassi: vehicleInfo?.chassi || ""
+        };
+
+        // Criar dados da vistoria
+        const vistoriaData = await vistoriaService.criarDadosVistoria(
+            vehicleData.placa,
+            customerData,
+            vehicleData,
+            { payment, subscription }
+        );
+
+        // Enviar para sistema de vistoria
+        const vistoriaResponse = await vistoriaService.enviarParaVistoria(vistoriaData);
+
+        // 🔟 Calcular valores dos splits para exibir no resumo
+        const paymentValue = parseFloat(finalValue);
+        const splitValues = splitAfiliados.map(split => ({
+            walletId: split.walletId,
+            percentual: split.percentualValue,
+            valor: (paymentValue * split.percentualValue) / 100
+        }));
+
+        // 🔄 Prepara resposta baseada no método de pagamento
         let responseData: any = {
             success: true,
             customer: customer,
             payment: payment,
             subscription: subscription,
+            vistoria: vistoriaResponse, // Inclui dados da vistoria na resposta
+            splits: {
+                afiliados: splitValues,
+                totalPercentual: totalPercentualSplits,
+                remainingPercentual: remainingPercent,
+                valorTotal: paymentValue
+            },
             summary: {
                 plano: plano?.category_name,
                 adesao: plano?.adesao || 0,
@@ -311,10 +414,10 @@ export async function POST(request: Request) {
         switch (paymentMethod) {
             case 'PIX':
                 responseData.pixQrCode = pixQrCode;
-                responseData.pixPayload = pixPayload || payment.id; // Fallback para ID do pagamento
+                responseData.pixPayload = pixPayload || payment.id;
                 responseData.pixExpirationDate = pixExpirationDate || payment.dueDate;
                 responseData.invoiceUrl = payment.invoiceUrl;
-                responseData.paymentId = payment.id; // Para debug
+                responseData.paymentId = payment.id;
                 break;
 
             case 'BOLETO':
@@ -331,11 +434,10 @@ export async function POST(request: Request) {
                 break;
         }
 
-        console.log("🎉 Checkout finalizado:", {
+        console.log("🎉 Checkout finalizado com vistoria:", {
             method: paymentMethod,
-            hasPixQrCode: !!responseData.pixQrCode,
-            hasPixPayload: !!responseData.pixPayload,
-            invoiceUrl: responseData.invoiceUrl
+            vistoriaUrl: vistoriaResponse.vistoriaUrl,
+            hasPixQrCode: !!responseData.pixQrCode
         });
 
         return NextResponse.json(responseData);

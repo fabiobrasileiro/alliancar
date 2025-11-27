@@ -405,7 +405,7 @@ export default function MinhasVendas() {
           </Table>
         </Card>
 
-        {error && (
+        {error && ( 
           <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
             Erro: {error}
           </div>
