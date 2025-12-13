@@ -119,7 +119,8 @@ export default function ThankYouPage({ paymentData, orderValues, plano, onRedire
                         <div className="flex items-start">
                             <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
                             <span>Seu seguro estará ativo a partir da confirmação da vistória por meio do aplicativo abaixo</span>
-                            
+                            <Link href="Aplicativo de vistória</a>https://play.google.com/store/apps/details?id=com.movbr.android.vistoria&hl=pt_BR&pli=1" >
+                            Aplicativo de vistória</Link>
                         </div>
                         <div className="flex items-start">
                             <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
