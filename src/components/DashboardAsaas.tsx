@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Users, DollarSign, TrendingUp, CreditCard, Loader2, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, MessageCircle } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, CreditCard, Loader2, RefreshCw, Eye, EyeOff, CheckCircle, XCircle, MessageCircle, UserPlus, Link2, Copy } from 'lucide-react';
 import GoalsProgressAfiliado from '@/app/(site)/dashboard/components/GoalsProgress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 interface DashboardData {
   afiliado_id: string;
@@ -349,6 +350,86 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
         {!perfilData?.super_admin && (
           <div className="mb-8">
             <GoalsProgressAfiliado totalPlacas={dashboardData.total_clientes} />
+          </div>
+        )}
+
+        {/* Links de Cadastro */}
+        {!perfilData?.super_admin && (
+          <div className="mb-8">
+            <div className="bg-bg border border-gray-700 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Link2 className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">Links de Cadastro</h2>
+                  <p className="text-gray-400 text-sm">Compartilhe seus links para cadastrar novos afiliados</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Link de Cadastro de Afiliados */}
+                <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <UserPlus className="w-4 h-4 text-blue-400" />
+                    <h3 className="font-semibold text-white text-sm">Cadastro de Afiliados</h3>
+                  </div>
+                  <p className="text-gray-400 text-xs mb-3">Link para cadastrar novos afiliados</p>
+                  <div className="bg-gray-800 rounded p-2 mb-3">
+                    <p className="text-blue-300 font-mono text-xs break-all">
+                      {typeof window !== 'undefined' ? `${window.location.origin}/afiliacao?referral=${perfilData?.id || ''}` : ''}
+                    </p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const url = typeof window !== 'undefined' ? `${window.location.origin}/afiliacao?referral=${perfilData?.id || ''}` : '';
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        toast.success('Link copiado com sucesso!');
+                      } catch (error) {
+                        toast.error('Erro ao copiar link');
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors"
+                  >
+                    <Copy className="w-4 h-4" />
+                    Copiar Link
+                  </button>
+                </div>
+
+                {/* Link para Gerente (apenas se tiver 9% ou mais) */}
+                {(perfilData?.porcentagem_comissao >= 0.09 || perfilData?.tipo === 'gerente') && (
+                  <div className="bg-gray-900/50 border border-purple-700 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <UserPlus className="w-4 h-4 text-purple-400" />
+                      <h3 className="font-semibold text-white text-sm">Cadastro de Gerente</h3>
+                      <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 text-xs rounded">Gerente</span>
+                    </div>
+                    <p className="text-gray-400 text-xs mb-3">Link para cadastrar novos gerentes</p>
+                    <div className="bg-gray-800 rounded p-2 mb-3">
+                      <p className="text-purple-300 font-mono text-xs break-all">
+                        {typeof window !== 'undefined' ? `${window.location.origin}/afiliacao?referral=${perfilData?.id || ''}&tipo=gerente` : ''}
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const url = typeof window !== 'undefined' ? `${window.location.origin}/afiliacao?referral=${perfilData?.id || ''}&tipo=gerente` : '';
+                        try {
+                          await navigator.clipboard.writeText(url);
+                          toast.success('Link copiado com sucesso!');
+                        } catch (error) {
+                          toast.error('Erro ao copiar link');
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm transition-colors"
+                    >
+                      <Copy className="w-4 h-4" />
+                      Copiar Link
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

@@ -27,6 +27,9 @@ export interface VehicleInfo {
     city: string;
     isTaxiApp: boolean;
     observations: string;
+    category: string; // Categoria do carro (id da vehicle_categories)
+    fipeValue: string; // Valor do carro (FIPE) - vehicle_range
+    privateUse: boolean; // Uso particular
 }
 
 export interface FormState {

@@ -28,6 +28,8 @@ export default function SignupForm() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const referralId = searchParams.get('referral');
+  const tipoParam = searchParams.get('tipo'); // 'gerente' ou null
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -163,11 +165,12 @@ export default function SignupForm() {
           email: formData.email,
           cnpj: cleanCNPJ,
           ativo: true,
-          tipo: 'afiliado',
-          porcentagem_comissao: 0.03,
+          tipo: tipoParam || 'afiliado', // Se vier tipo=gerente, cria como gerente
+          porcentagem_comissao: 0.03, // Inicia com 3%
           valor_adesao: 0.00,
           meta: 2500.00,
-          super_admin: false
+          super_admin: false,
+          referral_id: referralId || null // Salva o referral_id do afiliado que indicou
         })
         .select()
         .single();
