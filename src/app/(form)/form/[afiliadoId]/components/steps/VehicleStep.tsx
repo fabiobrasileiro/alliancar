@@ -211,7 +211,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                     <div className="grid grid-cols-2 gap-2 text-sm">
                         <div><strong>Categoria:</strong> {planoEncontrado.category_name}</div>
                         <div><strong>Faixa:</strong> {planoEncontrado.vehicle_range}</div>
-                        <div><strong>Adesão:</strong> R$ {planoEncontrado.adesao?.toFixed(2)}</div>
+                        <div><strong>Taxa de Ativação:</strong> R$ {planoEncontrado.adesao?.toFixed(2)}</div>
                         <div><strong>Mensalidade:</strong> R$ {planoEncontrado.monthly_payment?.toFixed(2)}</div>
                     </div>
                 </div>

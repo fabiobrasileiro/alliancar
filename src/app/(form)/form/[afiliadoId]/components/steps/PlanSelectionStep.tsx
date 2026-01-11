@@ -161,7 +161,7 @@ export default function PlanSelectionStep({
 
                     <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <p className="text-yellow-800 text-sm">
-                            💡 <strong>Atenção:</strong> O valor da mensalidade será cobrado apenas 30 dias após o pagamento da adesão.
+                            💡 <strong>Atenção:</strong> O valor da mensalidade será cobrado apenas 30 dias após o pagamento da taxa de ativação.
                         </p>
                     </div>
 

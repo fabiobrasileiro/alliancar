@@ -192,15 +192,15 @@ export default function Navbar() {
             <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
               <div className="flex items-center">
                 <Button
-                  variant="second"
-                  className="mr-4 hidden md:flex bg-a1"
+                  variant="default"
+                  className="mr-4 hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   onClick={() => copyToClipboard(afiliadoLink)}
                 >
                   <CopyIcon className="mr-2 h-4 w-4" />Meu Link
                 </Button>
                 <Button
                   variant="default"
-                  className="mr-4 hidden md:flex bg-a1"
+                  className="mr-4 hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   onClick={() => copyToClipboard("formulariolp")}
                 >
                   <CopyIcon className="mr-2 h-4 w-4" /> LP Link
@@ -282,15 +282,15 @@ export default function Navbar() {
             ))}
             <div className="flex flex-col gap-2 w-36 ms-3">
               <Button
-                variant="second"
-                className="mr-4 flex md:hidden"
+                variant="default"
+                className="mr-4 flex md:hidden bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 onClick={() => copyToClipboard(afiliadoLink)}
               >
                 <CopyIcon className="mr-2 h-4 w-4" />Meu Link
               </Button>
               <Button
                 variant="default"
-                className="mr-4 flex md:hidden"
+                className="mr-4 flex md:hidden bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 onClick={() => copyToClipboard("b2ac8368-ae6d-418b-b032-1c11d159fd23")}
               >
                 <CopyIcon className="mr-2 h-4 w-4" /> LP Link

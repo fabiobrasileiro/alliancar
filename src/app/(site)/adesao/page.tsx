@@ -101,7 +101,7 @@ export default function NegociacaoAdesao() {
 
             if (error) throw error;
 
-            setMensagem("Valor de adesão salvo com sucesso!");
+            setMensagem("Valor de taxa de ativação salvo com sucesso!");
 
             // Redireciona após 2 segundos
             setTimeout(() => {
@@ -110,7 +110,7 @@ export default function NegociacaoAdesao() {
 
         } catch (error) {
             console.error("Erro ao salvar:", error);
-            setMensagem("Erro ao salvar o valor de adesão");
+            setMensagem("Erro ao salvar o valor de taxa de ativação");
         } finally {
             setLoading(false);
         }
@@ -122,10 +122,10 @@ export default function NegociacaoAdesao() {
                 {/* Cabeçalho */}
                 <div className="text-center mb-8">
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                        Negociação de Adesão
+                        Negociação de Taxa de Ativação
                     </h1>
                     <p className="text-gray-600">
-                        Escolha o valor que deseja cobrar pela adesão ou digite um valor personalizado
+                        Escolha o valor que deseja cobrar pela taxa de ativação ou digite um valor personalizado
                     </p>
                 </div>
 
@@ -200,7 +200,7 @@ export default function NegociacaoAdesao() {
                             : "bg-blue-600 hover:bg-blue-700"
                         }`}
                 >
-                    {loading ? "Salvando..." : "Salvar Valor de Adesão"}
+                    {loading ? "Salvando..." : "Salvar Valor de Taxa de Ativação"}
                 </button>
 
                 {/* Mensagem */}

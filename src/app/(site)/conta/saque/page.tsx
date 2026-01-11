@@ -454,7 +454,7 @@ export default function Saques() {
 
               <Button
                 onClick={handleSaque}
-                disabled={!valorSaque || parseFloat(valorSaque) > saldoDisponivel || submitting || parseFloat(valorSaque) < 10 || !bankData}
+                disabled={!valorSaque || parseFloat(valorSaque) > saldoDisponivel || submitting || parseFloat(valorSaque) < 10 || !bankData || (dashboard && dashboard.total_clientes < 7)}
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
                 size="lg"
               >

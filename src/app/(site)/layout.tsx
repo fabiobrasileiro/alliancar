@@ -4,6 +4,7 @@ import "./globals.css";
 import NavbarWrapper from "@/components/navbar-wrapper";
 import { UserProvider } from "@/context/UserContext";
 import IdleLogout from "@/components/idle-logout";
+import Footer from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,9 +36,7 @@ export default function RootLayout({
         <UserProvider>
           <IdleLogout />
           <NavbarWrapper>{children}</NavbarWrapper>
-          <footer className="w-full h-15 bg-bg text-white font-bold text-center py-5 mt-35 bottom-0">
-            Direitos autorais © 2025 alliancar. Todos os direitos reservados.
-          </footer>
+          <Footer />
         </UserProvider>
 
 

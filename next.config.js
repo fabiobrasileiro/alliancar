@@ -1,15 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      'cjsorrfgyfdblcvcalcj.supabase.co',
-      'localhost' // para desenvolvimento local
-    ],
-
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'example.com',
+        hostname: 'cjsorrfgyfdblcvcalcj.supabase.co',
         port: '',
         pathname: '/**',
       },
@@ -19,16 +14,20 @@ const nextConfig = {
         port: '',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/**',
+      },
     ],
   },
-  eslint: {
-    // Evita que o build falhe por erros de ESLint (Vercel bot)
-    ignoreDuringBuilds: true,
+  // Configurações de performance para desenvolvimento
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
   },
-  turbopack: {
-    // Ajuda a resolver o aviso de múltiplos lockfiles
-    root: __dirname,
-  },
+  // Otimizações gerais
+  reactStrictMode: true,
 };
 
 module.exports = nextConfig;

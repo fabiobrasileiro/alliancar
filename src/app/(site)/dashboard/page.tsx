@@ -1,24 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useUser } from '@/context/UserContext';
 import { toast } from 'sonner';
-import GoalsProgressAfiliado from './components/GoalsProgress';
 import DashboardAsaas from '@/components/DashboardAsaas';
 
 export default function DashboardPage() {
   const [perfilData, setPerfilData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
-  const supabase = createClient();
+  // Memoizar o cliente supabase para evitar recriações
+  const supabase = useMemo(() => createClient(), []);
+  const fetchingRef = useRef(false);
 
   // 🔹 Carrega perfil do afiliado autenticado
   useEffect(() => {
+    if (!user || fetchingRef.current) return;
+
+    fetchingRef.current = true;
+    setLoading(true);
+
     const fetchPerfil = async () => {
       try {
-        setLoading(true);
-
         const {
           data: { user: authUser },
           error: userError,
@@ -50,11 +54,12 @@ export default function DashboardPage() {
         toast.error('Erro ao carregar perfil');
       } finally {
         setLoading(false);
+        fetchingRef.current = false;
       }
     };
 
     fetchPerfil();
-  }, [supabase]);
+  }, [user?.id, supabase]);
 
   if (loading) {
     return (
