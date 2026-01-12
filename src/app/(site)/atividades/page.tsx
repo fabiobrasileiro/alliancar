@@ -467,7 +467,7 @@ const AtividadesPage: React.FC = () => {
                   });
                   setIsModalOpen(true);
                 }}
-                className="text-sm px-5 h-9 bg-a1 "
+                className="text-sm px-5 h-9 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
               >
                 + Nova Atividade
               </Button>

@@ -26,11 +26,38 @@ interface DashboardAsaasProps {
 }
 
 export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaasProps) {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Função auxiliar para obter dados do cache
+  const getCachedData = (): { data: DashboardData | null; timestamp: number | null } => {
+    if (typeof window === 'undefined') return { data: null, timestamp: null };
+    const cacheKey = `dashboard_cache_${afiliadoId}`;
+    const cacheDataKey = `dashboard_data_${afiliadoId}`;
+    const cacheTime = sessionStorage.getItem(cacheKey);
+    const cacheData = sessionStorage.getItem(cacheDataKey);
+    
+    if (cacheTime && cacheData) {
+      const timestamp = parseInt(cacheTime, 10);
+      const timeDiff = Date.now() - timestamp;
+      if (timeDiff < 60000) { // 60 segundos (staleTime)
+        try {
+          return { data: JSON.parse(cacheData) as DashboardData, timestamp };
+        } catch (e) {
+          console.error('Erro ao parsear cache:', e);
+          return { data: null, timestamp: null };
+        }
+      }
+    }
+    return { data: null, timestamp: null };
+  };
+
+  // Restaura dados do cache no estado inicial usando lazy initialization (padrão React)
+  const cached = getCachedData();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(cached.data);
+  const [loading, setLoading] = useState(!cached.data); // Só mostra loading se não tiver cache
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(
+    cached.timestamp ? new Date(cached.timestamp) : null
+  );
   const [hideFinancialValues, setHideFinancialValues] = useState<boolean>(() => {
     // Carrega do localStorage se existir
     if (typeof window !== 'undefined') {
@@ -42,7 +69,28 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
 
   // Ref para evitar múltiplas chamadas simultâneas
   const fetchingRef = useRef(false);
-  const hasLoadedRef = useRef(false);
+  const hasLoadedRef = useRef(!!cached.data); // Já carregou se tem cache
+  const lastAfiliadoIdRef = useRef<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Função para verificar se já carregou recentemente (cache de 60 segundos - staleTime)
+  const hasRecentCache = (): boolean => {
+    return getCachedData().data !== null;
+  };
+
+  // Reset hasLoaded quando afiliadoId mudar
+  useEffect(() => {
+    if (lastAfiliadoIdRef.current !== null && lastAfiliadoIdRef.current !== afiliadoId) {
+      hasLoadedRef.current = false;
+      setDashboardData(null);
+      setLoading(true);
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(`dashboard_cache_${lastAfiliadoIdRef.current}`);
+        sessionStorage.removeItem(`dashboard_data_${lastAfiliadoIdRef.current}`);
+      }
+    }
+    lastAfiliadoIdRef.current = afiliadoId;
+  }, [afiliadoId]);
 
   // Função para formatar valores monetários - memoizada
   const formatCurrency = useCallback((value: number): string => {
@@ -72,17 +120,38 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
       return;
     }
 
+    // Cancela requisição anterior se existir
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Cria novo AbortController para esta requisição
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    const startTime = Date.now();
     fetchingRef.current = true;
+    
     try {
       // Só seta refreshing se for refresh manual ou já tiver carregado dados antes
       if (isManualRefresh || hasLoadedRef.current) {
         setRefreshing(true);
+      } else {
+        setLoading(true);
       }
       setError(null);
 
       console.log("🔄 Buscando dados do Asaas para:", afiliadoId);
 
-      const response = await fetch(`/api/dashboard?afiliadoId=${afiliadoId}`);
+      const response = await fetch(`/api/dashboard?afiliadoId=${afiliadoId}`, {
+        signal: abortController.signal,
+        cache: 'no-store', // Sempre buscar dados frescos, mas usar nosso cache client-side
+      });
+      
+      // Verifica se foi cancelado
+      if (abortController.signal.aborted) {
+        return;
+      }
       
       if (!response.ok) {
         throw new Error('Erro ao buscar dados do dashboard');
@@ -90,21 +159,45 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
 
       const data = await response.json();
       
+      // Verifica novamente se foi cancelado após o parse
+      if (abortController.signal.aborted) {
+        return;
+      }
+      
       if (data.success) {
+        const duration = Date.now() - startTime;
+        const now = Date.now();
         setDashboardData(data.data);
         setLastUpdated(new Date());
         hasLoadedRef.current = true;
+        // Salva timestamp E dados no sessionStorage para cache (60 segundos)
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(`dashboard_cache_${afiliadoId}`, now.toString());
+          sessionStorage.setItem(`dashboard_data_${afiliadoId}`, JSON.stringify(data.data));
+        }
         console.log("✅ Dados do dashboard carregados:", data.data);
       } else {
         throw new Error(data.error || 'Erro ao carregar dados');
       }
     } catch (err) {
+      // Ignora erros de abort
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
+      const duration = Date.now() - startTime;
       console.error('❌ Erro ao buscar dados:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
-      setLoading(false);
-      setRefreshing(false);
-      fetchingRef.current = false;
+      // Só reseta se não foi cancelado
+      if (!abortController.signal.aborted) {
+        setLoading(false);
+        setRefreshing(false);
+        fetchingRef.current = false;
+      }
+      // Limpa a referência do AbortController
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
     }
   }, [afiliadoId]);
 
@@ -167,8 +260,36 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
   }, [dashboardData, formatCurrency, formatCurrencyWithoutSymbol, hideFinancialValues]);
 
   useEffect(() => {
+    if (!afiliadoId || fetchingRef.current) {
+      return;
+    }
+
+    // Se já tem dados carregados (do cache ou fetch anterior), não precisa fazer fetch novamente
+    if (hasLoadedRef.current && dashboardData) {
+      return;
+    }
+
+    // Se tem cache válido, faz fetch em background (stale-while-revalidate pattern)
+    // Os dados do cache já foram restaurados no estado inicial
+    if (hasRecentCache()) {
+      // Faz fetch em background para atualizar dados sem mostrar loading
+      fetchDashboardData(false);
+      return;
+    }
+
+    // Se não tem cache, faz fetch normal
     fetchDashboardData();
-  }, [fetchDashboardData]);
+
+    // Cleanup: cancela requisição se componente desmontar ou afiliadoId mudar
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      fetchingRef.current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [afiliadoId]); // Apenas afiliadoId como dependência - fetchDashboardData é estável via useCallback
 
   // 🔹 Loading
   if (loading) {

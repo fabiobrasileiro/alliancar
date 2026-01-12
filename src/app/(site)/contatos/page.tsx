@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useUser } from '@/context/UserContext';
 import { createClient } from '@/utils/supabase/client';
 
@@ -96,8 +96,8 @@ export default function ContatosPage() {
     fetchPerfil();
   }, [supabase]);
 
-  // Carregar contatos do Asaas
-  const loadContatos = async () => {
+  // Carregar contatos do Asaas - memoizado com useCallback
+  const loadContatos = useCallback(async () => {
     if (!perfilData?.id) return;
 
     try {
@@ -150,7 +150,7 @@ export default function ContatosPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [perfilData?.id]);
 
   // Função para verificar se um cliente é inadimplente
   const verificarInadimplencia = (customerId: string): boolean => {
@@ -287,7 +287,7 @@ export default function ContatosPage() {
     if (perfilData?.id) {
       loadContatos();
     }
-  }, [perfilData]);
+  }, [loadContatos, perfilData?.id]);
 
   // Origens únicas para o filtro
   const estadosUnicos = [...new Set(contatos.map(c => c.state).filter(Boolean))];

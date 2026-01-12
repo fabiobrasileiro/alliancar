@@ -30,29 +30,28 @@ export default function DashboardPage() {
 
         if (userError || !authUser) {
           toast.error('Usuário não autenticado');
-          return;
-        }
+          // Não fazer return aqui - deixar o finally executar
+        } else {
+          const { data: perfilResponse, error: perfilError } = await supabase
+            .from('afiliados')
+            .select('*')
+            .eq('auth_id', authUser.id)
+            .single();
 
-        const { data: perfilResponse, error: perfilError } = await supabase
-          .from('afiliados')
-          .select('*')
-          .eq('auth_id', authUser.id)
-          .single();
-
-        if (perfilError) {
-          console.error('Erro ao buscar perfil:', perfilError);
-          toast.error('Erro ao buscar perfil');
-          return;
-        }
-
-        if (perfilResponse) {
-          setPerfilData(perfilResponse);
-          console.log("👤 Perfil carregado:", perfilResponse);
+          if (perfilError) {
+            console.error('Erro ao buscar perfil:', perfilError);
+            toast.error('Erro ao buscar perfil');
+            // Não fazer return aqui - deixar o finally executar
+          } else if (perfilResponse) {
+            setPerfilData(perfilResponse);
+            console.log("👤 Perfil carregado:", perfilResponse);
+          }
         }
       } catch (error) {
         console.error('Erro:', error);
         toast.error('Erro ao carregar perfil');
       } finally {
+        // O finally sempre executa, garantindo que o loading seja resetado
         setLoading(false);
         fetchingRef.current = false;
       }
