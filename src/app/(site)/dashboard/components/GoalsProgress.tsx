@@ -69,7 +69,7 @@ export default function GoalsProgressAfiliado({ totalPlacas }: GoalsProgressAfil
           </div>
 
           {/* Informação sobre falta para entrar na próxima fase */}
-          <div className="mt-3 text-white/90 bg-a1 px-6 py-4 rounded-lg">
+          <div className="mt-3 text-white/90 bg-blue-600 px-6 py-4 rounded-lg">
             {proximaFaixa ? (
               faltaParaProxima > 0 ? (
                 <h2 className="text-lg font-semibold">

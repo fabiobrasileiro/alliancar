@@ -12,7 +12,7 @@ export interface ButtonProps
 
 const variantClasses: Record<ButtonVariant, string> = {
   default:
-    "bg-a1 text-white hover:bg-jelly-bean-300 focus-visible:jelly-bean-600 cursor-pointer",
+    "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600 cursor-pointer",
   second:
     "bg-a1 text-white hover:bg-jelly-bean-300 focus-visible:jelly-bean-600 cursor-pointer",
   outline:
