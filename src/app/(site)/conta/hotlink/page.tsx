@@ -80,7 +80,7 @@ export default function Powerlinks() {
   };
 
   // Verifica se o afiliado tem 9% ou mais de comissão (gerente)
-  const isGerente = afiliado?.porcentagem_comissao >= 0.09 || afiliado?.tipo === 'gerente';
+  const isGerente = (afiliado?.porcentagem_comissao ?? 0) >= 0.09 || afiliado?.tipo === 'gerente';
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://alliancar.vercel.app';
 
   const allLinks = [
@@ -173,7 +173,7 @@ export default function Powerlinks() {
               {afiliado && (
                 <div className="flex items-center gap-2 mt-2">
                   <p className="text-sm text-gray-500">
-                    Comissão atual: {(afiliado.porcentagem_comissao * 100).toFixed(1)}%
+                    Comissão atual: {((afiliado.porcentagem_comissao ?? 0) * 100).toFixed(1)}%
                   </p>
                   {isGerente && (
                     <Badge variant="default" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
