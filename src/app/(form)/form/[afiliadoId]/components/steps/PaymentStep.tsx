@@ -41,7 +41,7 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading,
                 
                 <div className="space-y-3">
                     <div className="flex justify-between text-white">
-                        <span>Adesão:</span>
+                        <span>Taxa de Ativação:</span>
                         <span className="font-semibold">R$ {plano?.adesao?.toFixed(2) || '0,00'}</span>
                     </div>
                     

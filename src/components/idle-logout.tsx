@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { usePathname, useRouter } from "next/navigation";
 
 const INACTIVITY_MS = 90 * 60 * 1000; // 1h30
 
 export default function IdleLogout() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const pathname = usePathname();
   const timerIdRef = useRef<number | null>(null);
@@ -60,9 +60,7 @@ export default function IdleLogout() {
       );
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-    // Reativa o timer quando a rota mudar
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [pathname, router, supabase]);
 
   return null;
 }

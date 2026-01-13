@@ -1,24 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { useUser } from '@/context/UserContext';
 import { toast } from 'sonner';
-import GoalsProgressAfiliado from './components/GoalsProgress';
 import DashboardAsaas from '@/components/DashboardAsaas';
 
 export default function DashboardPage() {
   const [perfilData, setPerfilData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
-  const supabase = createClient();
+  // Memoizar o cliente supabase para evitar recriações
+  const supabase = useMemo(() => createClient(), []);
+  const fetchingRef = useRef(false);
 
   // 🔹 Carrega perfil do afiliado autenticado
   useEffect(() => {
+    if (!user || fetchingRef.current) return;
+
+    fetchingRef.current = true;
+    setLoading(true);
+
     const fetchPerfil = async () => {
       try {
-        setLoading(true);
-
         const {
           data: { user: authUser },
           error: userError,
@@ -26,35 +30,35 @@ export default function DashboardPage() {
 
         if (userError || !authUser) {
           toast.error('Usuário não autenticado');
-          return;
-        }
+          // Não fazer return aqui - deixar o finally executar
+        } else {
+          const { data: perfilResponse, error: perfilError } = await supabase
+            .from('afiliados')
+            .select('*')
+            .eq('auth_id', authUser.id)
+            .single();
 
-        const { data: perfilResponse, error: perfilError } = await supabase
-          .from('afiliados')
-          .select('*')
-          .eq('auth_id', authUser.id)
-          .single();
-
-        if (perfilError) {
-          console.error('Erro ao buscar perfil:', perfilError);
-          toast.error('Erro ao buscar perfil');
-          return;
-        }
-
-        if (perfilResponse) {
-          setPerfilData(perfilResponse);
-          console.log("👤 Perfil carregado:", perfilResponse);
+          if (perfilError) {
+            console.error('Erro ao buscar perfil:', perfilError);
+            toast.error('Erro ao buscar perfil');
+            // Não fazer return aqui - deixar o finally executar
+          } else if (perfilResponse) {
+            setPerfilData(perfilResponse);
+            console.log("👤 Perfil carregado:", perfilResponse);
+          }
         }
       } catch (error) {
         console.error('Erro:', error);
         toast.error('Erro ao carregar perfil');
       } finally {
+        // O finally sempre executa, garantindo que o loading seja resetado
         setLoading(false);
+        fetchingRef.current = false;
       }
     };
 
     fetchPerfil();
-  }, [supabase]);
+  }, [user?.id, supabase]);
 
   if (loading) {
     return (

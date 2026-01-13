@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useUser } from '@/context/UserContext';
 import { createClient } from '@/utils/supabase/client';
 
@@ -33,6 +33,7 @@ interface Filtros {
   phone: string;
   state: string;
   cityName: string;
+  statusFinanceiro: "todos" | "adimplente" | "inadimplente";
 }
 
 export default function ContatosPage() {
@@ -41,13 +42,16 @@ export default function ContatosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [perfilData, setPerfilData] = useState<any>(null);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
 
   const [filtros, setFiltros] = useState<Filtros>({
     name: "",
     email: "",
     phone: "",
     state: "",
-    cityName: ""
+    cityName: "",
+    statusFinanceiro: "todos"
   });
 
   const supabase = createClient();
@@ -92,8 +96,8 @@ export default function ContatosPage() {
     fetchPerfil();
   }, [supabase]);
 
-  // Carregar contatos do Asaas
-  const loadContatos = async () => {
+  // Carregar contatos do Asaas - memoizado com useCallback
+  const loadContatos = useCallback(async () => {
     if (!perfilData?.id) return;
 
     try {
@@ -102,20 +106,43 @@ export default function ContatosPage() {
 
       console.log("🔄 Buscando clientes do Asaas para afiliado:", perfilData.id);
 
-      const response = await fetch(`/api/customers?externalReference=${perfilData.id}`);
+      // Buscar customers, payments e subscriptions em paralelo
+      const [customersResponse, paymentsResponse, subscriptionsResponse] = await Promise.all([
+        fetch(`/api/customers?externalReference=${perfilData.id}`),
+        fetch(`/api/payments?externalReference=${perfilData.id}`),
+        fetch(`/api/asaas-data?afiliadoId=${perfilData.id}&tipo=subscriptions`)
+      ]);
       
-      if (!response.ok) {
+      if (!customersResponse.ok) {
         throw new Error('Erro ao buscar clientes do Asaas');
       }
 
-      const data = await response.json();
+      const customersData = await customersResponse.json();
       
-      if (data.success) {
-        setContatos(data.data || []);
-        setContatosFiltrados(data.data || []);
-        console.log(`✅ ${data.data.length} clientes carregados do Asaas`);
+      if (customersData.success) {
+        setContatos(customersData.data || []);
+        setContatosFiltrados(customersData.data || []);
+        console.log(`✅ ${customersData.data.length} clientes carregados do Asaas`);
       } else {
-        throw new Error(data.error || 'Erro ao carregar clientes');
+        throw new Error(customersData.error || 'Erro ao carregar clientes');
+      }
+
+      // Carregar payments
+      if (paymentsResponse.ok) {
+        const paymentsData = await paymentsResponse.json();
+        if (paymentsData.success) {
+          setPayments(paymentsData.payments || []);
+          console.log(`✅ ${paymentsData.payments?.length || 0} pagamentos carregados`);
+        }
+      }
+
+      // Carregar subscriptions
+      if (subscriptionsResponse.ok) {
+        const subscriptionsData = await subscriptionsResponse.json();
+        if (subscriptionsData.success) {
+          setSubscriptions(subscriptionsData.data || []);
+          console.log(`✅ ${subscriptionsData.data?.length || 0} assinaturas carregadas`);
+        }
       }
     } catch (err) {
       console.error('❌ Erro ao carregar contatos:', err);
@@ -123,6 +150,64 @@ export default function ContatosPage() {
     } finally {
       setLoading(false);
     }
+  }, [perfilData?.id]);
+
+  // Função para verificar se um cliente é inadimplente
+  const verificarInadimplencia = (customerId: string): boolean => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    // Verificar pagamentos pendentes/atrasados
+    const pagamentosPendentes = payments.filter(p => {
+      if (p.customer !== customerId) return false;
+      
+      // Status pode vir em uppercase (PENDING, OVERDUE) ou lowercase (pending, overdue)
+      const status = (p.status || '').toUpperCase();
+      const isPendente = status === 'PENDING' || status === 'OVERDUE';
+      
+      if (!isPendente) return false;
+      
+      // Verificar tanto dueDate (camelCase da API) quanto due_date (snake_case do banco)
+      const dueDateStr = p.dueDate || p.due_date;
+      if (dueDateStr) {
+        try {
+          const dueDate = new Date(dueDateStr);
+          if (isNaN(dueDate.getTime())) return false; // Data inválida
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate <= hoje;
+        } catch {
+          return false;
+        }
+      }
+      
+      return false;
+    });
+
+    // Verificar assinaturas ativas com vencimento em atraso
+    const assinaturasAtrasadas = subscriptions.filter(s => {
+      if (s.customer !== customerId) return false;
+      
+      // Status pode vir em uppercase (ACTIVE) ou lowercase (active)
+      const status = (s.status || '').toLowerCase();
+      if (status !== 'active') return false;
+      
+      // Verificar tanto nextDueDate (camelCase da API) quanto next_due_date (snake_case do banco)
+      const nextDueDateStr = s.nextDueDate || s.next_due_date;
+      if (nextDueDateStr) {
+        try {
+          const nextDueDate = new Date(nextDueDateStr);
+          if (isNaN(nextDueDate.getTime())) return false; // Data inválida
+          nextDueDate.setHours(0, 0, 0, 0);
+          return nextDueDate <= hoje;
+        } catch {
+          return false;
+        }
+      }
+      
+      return false;
+    });
+
+    return pagamentosPendentes.length > 0 || assinaturasAtrasadas.length > 0;
   };
 
   // Aplicar filtros
@@ -161,11 +246,21 @@ export default function ContatosPage() {
         );
       }
 
+      // Filtro de status financeiro
+      if (filtros.statusFinanceiro !== "todos") {
+        resultado = resultado.filter(contato => {
+          const isInadimplente = verificarInadimplencia(contato.id);
+          return filtros.statusFinanceiro === "inadimplente" 
+            ? isInadimplente 
+            : !isInadimplente;
+        });
+      }
+
       setContatosFiltrados(resultado);
     };
 
     filtrarContatos();
-  }, [filtros, contatos]);
+  }, [filtros, contatos, payments, subscriptions]);
 
   // Limpar filtros
   const limparFiltros = () => {
@@ -174,7 +269,8 @@ export default function ContatosPage() {
       email: "",
       phone: "",
       state: "",
-      cityName: ""
+      cityName: "",
+      statusFinanceiro: "todos"
     });
   };
 
@@ -191,7 +287,7 @@ export default function ContatosPage() {
     if (perfilData?.id) {
       loadContatos();
     }
-  }, [perfilData]);
+  }, [loadContatos, perfilData?.id]);
 
   // Origens únicas para o filtro
   const estadosUnicos = [...new Set(contatos.map(c => c.state).filter(Boolean))];
@@ -231,7 +327,7 @@ export default function ContatosPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white">Contatos - Asaas</h1>
+          <h1 className="text-3xl font-bold text-white">Leads</h1>
           <p className="mt-2 text-gray-300">
             Clientes cadastrados através do seu link de afiliado
             {perfilData && (
@@ -328,6 +424,19 @@ export default function ContatosPage() {
               {cidadesUnicas.map(cityName => (
                 <option key={cityName} value={cityName} className="bg-gray-700">{cityName}</option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-300 font-medium mb-1">Status Financeiro</label>
+            <select
+              value={filtros.statusFinanceiro}
+              onChange={(e) => handleFiltroChange('statusFinanceiro', e.target.value as "todos" | "adimplente" | "inadimplente")}
+              className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:outline-none focus:border-blue-500"
+            >
+              <option value="todos" className="bg-gray-700">Todos</option>
+              <option value="adimplente" className="bg-gray-700">Adimplente</option>
+              <option value="inadimplente" className="bg-gray-700">Inadimplente</option>
             </select>
           </div>
         </div>

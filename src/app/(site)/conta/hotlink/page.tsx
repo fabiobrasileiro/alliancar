@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/context/UserContext";
-import { Copy, ExternalLink, Download, Link2, QrCode } from "lucide-react";
+import { Copy, ExternalLink, Download, Link2, QrCode, UserPlus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -12,6 +12,8 @@ import { toast } from "sonner";
 interface Afiliado {
   id: string;
   nome_completo: string;
+  porcentagem_comissao: number;
+  tipo: string;
 }
 
 export default function Powerlinks() {
@@ -34,7 +36,7 @@ export default function Powerlinks() {
       setLoading(true);
       const { data: afiliadoData, error } = await supabase
         .from("afiliados")
-        .select("id, nome_completo")
+        .select("id, nome_completo, porcentagem_comissao, tipo")
         .eq("auth_id", user?.id)
         .single();
 
@@ -77,21 +79,49 @@ export default function Powerlinks() {
     toast.success("QR Code baixado com sucesso!");
   };
 
+  // Verifica se o afiliado tem 9% ou mais de comissão (gerente)
+  const isGerente = afiliado?.porcentagem_comissao >= 0.09 || afiliado?.tipo === 'gerente';
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://alliancar.vercel.app';
+
   const allLinks = [
     {
       id: "default",
       nome: "Formulário Landing Page",
-      url: `https://alliancar.vercel.app/formulario/formulariolp`,
-      qrcode_url: generateQRCode(`https://alliancar.vercel.app/formulario/b2ac8368-ae6d-418b-b032-1c11d159fd23`),
+      url: `${baseUrl}/formulario/formulariolp`,
+      qrcode_url: generateQRCode(`${baseUrl}/formulario/formulariolp`),
       description: "Link otimizado para conversão em landing pages"
     },
     {
       id: "afiliado",
       nome: "Formulário Principal",
-      url: `https://alliancar.vercel.app/formulario/${afiliado?.id || ''}`,
-      qrcode_url: afiliado?.id ? generateQRCode(`https://alliancar.vercel.app/formulario/${afiliado.id}`) : undefined,
+      url: `${baseUrl}/formulario/${afiliado?.id || ''}`,
+      qrcode_url: afiliado?.id ? generateQRCode(`${baseUrl}/formulario/${afiliado.id}`) : undefined,
       description: "Seu link personalizado com seu ID único"
     },
+    // Link de cadastro de afiliados (sempre visível para todos)
+    {
+      id: "cadastro-afiliado",
+      nome: "Link de Cadastro de Afiliados",
+      url: `${baseUrl}/afiliacao?referral=${afiliado?.id || ''}`,
+      qrcode_url: afiliado?.id ? generateQRCode(`${baseUrl}/afiliacao?referral=${afiliado.id}`) : undefined,
+      description: "Link para cadastrar novos afiliados (rastreia quem indicou)",
+      icon: UserPlus,
+      badge: "Cadastro",
+      badgeColor: "bg-blue-500/20 text-blue-300 border-blue-500/30"
+    },
+    // Link para gerente (apenas se tiver 9% ou mais de comissão)
+    ...(isGerente ? [
+      {
+        id: "gerente",
+        nome: "Link para Gerente",
+        url: `${baseUrl}/afiliacao?referral=${afiliado?.id || ''}&tipo=gerente`,
+        qrcode_url: afiliado?.id ? generateQRCode(`${baseUrl}/afiliacao?referral=${afiliado.id}&tipo=gerente`) : undefined,
+        description: "Link para cadastrar novos gerentes",
+        icon: UserPlus,
+        badge: "Gerente",
+        badgeColor: "bg-purple-500/20 text-purple-300 border-purple-500/30"
+      }
+    ] : [])
   ];
 
   if (loading) {
@@ -140,6 +170,18 @@ export default function Powerlinks() {
               <p className="text-gray-400">
                 Links personalizados para capturar clientes e receber comissões
               </p>
+              {afiliado && (
+                <div className="flex items-center gap-2 mt-2">
+                  <p className="text-sm text-gray-500">
+                    Comissão atual: {(afiliado.porcentagem_comissao * 100).toFixed(1)}%
+                  </p>
+                  {isGerente && (
+                    <Badge variant="default" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                      Gerente
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -182,7 +224,8 @@ export default function Powerlinks() {
                   <div className="flex-1 space-y-4">
                     <div className="flex items-start justify-between">
                       <div className="space-y-2">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          {(link as any).icon && React.createElement((link as any).icon, { className: "w-5 h-5 text-blue-400" })}
                           <h3 className="font-semibold text-xl text-white">{link.nome}</h3>
                           {link.id === "default" && (
                             <Badge variant="default" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
@@ -192,6 +235,11 @@ export default function Powerlinks() {
                           {link.id === "afiliado" && (
                             <Badge variant="default" className="bg-green-500/20 text-green-300 border-green-500/30">
                               Personalizado
+                            </Badge>
+                          )}
+                          {(link as any).badge && (
+                            <Badge variant="default" className={(link as any).badgeColor || "bg-blue-500/20 text-blue-300 border-blue-500/30"}>
+                              {(link as any).badge}
                             </Badge>
                           )}
                         </div>

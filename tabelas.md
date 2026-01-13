@@ -1,711 +1,1036 @@
-iew_dashboard_afiliado
-Filter columns
-Name	Description	Data Type	Format	Nullable	
-id
-
-No description
-
-uuid	uuid		
-nome_completo
-
-No description
-
-text	text		
-email
-
-No description
-
-text	text		
-numero_placas
-
-No description
-
-integer	int4		
-receita_total
-
-No description
-
-numeric	numeric		
-receita_pendente
-
-No description
-
-numeric	numeric		
-total_clientes
-
-No description
-
-bigint	int8		
-clientes_ativos
-
-No description
-
-bigint	int8		
-comissao_total
-
-No description
-
-numeric	numeric		
-comissao_recebida
-
-No description
-
-numeric	numeric		
-comissao_pendente
-
-No description
-
-numeric	numeric		
-total_conquistas
-
-No description
-
-bigint	int8		
-ranking_atual
-
-No description
-id
-
-No description
-
-uuid	uuid		
-afiliado_id
-
-No description
-
-uuid	uuid		
-cliente_id
-
-No description
-
-uuid	uuid		
-cliente_nome
-
-No description
-
-text	text		
-placa_veiculo
-
-No description
-
-character varying	varchar		
-valor_contrato
-
-No description
-
-numeric	numeric		
-porcentagem_comissao
-
-No description
-
-real	float4		
-valor_comissao
-
-No description
-
-numeric	numeric		
-mes_referencia
-
-No description
-
-date	date		
-status
-
-No description
-
-USER-DEFINED	status_pagamento		
-data_pagamento
-
-No description
-
-date	date		
-data_formatada
-
-No description
-
-text	text		
-valor_formatado
-
-No description
-
-text	text		
-comissao_formatada
-
-No description
-Database Tables
-view_performance_afiliado
-Filter columns
-Name	Description	Data Type	Format	Nullable	
-id
-
-No description
-
-uuid	uuid		
-afiliado_id
-
-No description
-
-uuid	uuid		
-cliente_id
-
-No description
-
-uuid	uuid		
-cliente_nome
-
-No description
-
-text	text		
-placa_veiculo
-
-No description
-
-character varying	varchar		
-valor_contrato
-
-No description
-
-numeric	numeric		
-porcentagem_comissao
-
-No description
-
-real	float4		
-valor_comissao
-
-No description
-
-numeric	numeric		
-mes_referencia
-
-No description
-
-date	date		
-status
-
-No description
-
-USER-DEFINED	status_pagamento		
-data_pagamento
-
-No description
-
-date	date		
-data_formatada
-
-No description
-
-text	text		
-valor_formatado
-
-No description
-
-text	text		
-comissao_formatada
-
-No description
-
-text	text		
-Database Tables
-view_dashboard_afiliado
-Filter columns
-Name	Description	Data Type	Format	Nullable	
-id
-
-No description
-
-uuid	uuid		
-nome_completo
-
-No description
-
-text	text		
-email
-
-No description
-
-text	text		
-numero_placas
-
-No description
-
-integer	int4		
-receita_total
-
-No description
-
-numeric	numeric		
-receita_pendente
-
-No description
-
-numeric	numeric		
-total_clientes
-
-No description
-
-bigint	int8		
-clientes_ativos
-
-No description
-
-bigint	int8		
-comissao_total
-
-No description
-
-numeric	numeric		
-comissao_recebida
-
-No description
-
-numeric	numeric		
-comissao_pendente
-
-No description
-
-numeric	numeric		
-total_conquistas
-
-No description
-
-bigint	int8		
-ranking_atual
-
-No description
-
-integer	int4
-Database Tables
-ranking_afiliados
-Filter columns
-
-New column
-Name	Description	Data Type	Format	Nullable	
-id
-
-No description
-
-uuid	uuid		
-afiliado_id
-
-No description
-
-uuid	uuid		
-mes_referencia
-
-No description
-
-date	date		
-posicao
-
-No description
-
-integer	int4		
-total_vendas
-
-No description
-
-integer	int4		
-total_comissao
-
-No description
-
-numeric	numeric		
-criado_em
-
-No description
-
-timestamp with time zone	timestamptz		
-atualizado_em
-
-No description
-
-timestamp with time zone	timestamptz
-Database Tables
-vw_negociacoes_avaliacoes
-Filter columns
-Name	Description	Data Type	Format	Nullable	
-id
-
-No description
-
-uuid	uuid		
-placa
-
-No description
-
-character varying	varchar		
-ano_modelo
-
-No description
-
-character varying	varchar		
-modelo
-
-No description
-
-character varying	varchar		
-marca
-
-No description
-
-character varying	varchar		
-afiliado_id
-
-No description
-
-uuid	uuid		
-contato_id
-
-No description
-
-uuid	uuid		
-status
-
-No description
-
-USER-DEFINED	status_negociacao		
-valor_negociado
-
-No description
-
-numeric	numeric		
-observacoes
-
-No description
-
-text	text		
-criado_em
-
-No description
-
-timestamp with time zone	timestamptz		
-atualizado_em
-
-No description
-
-timestamp with time zone	timestamptz		
-status_avaliacao
-
-No description
-
-USER-DEFINED	status_pagamento		
-valor_comissao
-
-No description
-
-numeric	numeric		
-aprovado
-
-No description
-
-boolean	bool		
-data_aprovacao
-
-No description
-
-timestamp with time zone	timestamptz
-id
-
-No description
-
-uuid	uuid		
-afiliado_id
-
-No description
-
-uuid	uuid		
-cliente_id
-
-No description
-
-uuid	uuid		
-placa_veiculo
-
-No description
-
-character varying	varchar		
-valor_contrato
-
-No description
-
-numeric	numeric		
-porcentagem_comissao
-
-No description
-
-real	float4		
-valor_comissao
-
-No description
-
-numeric	numeric		
-mes_referencia
-
-No description
-
-date	date		
-status
-
-No description
-
-USER-DEFINED	status_pagamento		
-data_pagamento
-
-No description
-
-date	date		
-criado_em
-
-No description
-
-timestamp with time zone	timestamptz		
-atualizado_em
-
-No description
-
-timestamp with time zone	timestamptz
-id
-
-No description
-
-uuid	uuid		
-afiliado_id
-
-No description
-
-uuid	uuid		
-valor
-
-No description
-
-numeric	numeric		
-descricao
-
-No description
-
-text	text		
-mes_referencia
-
-No description
-
-date	date		
-status
-
-No description
-
-USER-DEFINED	status_pagamento		
-data
-
-No description
-
-date	date		
-criado_em
-
-No description
-
-timestamp with time zone	timestamptz		
-atualizado_em
-
-No description
-
-timestamp with time zone	timestamptz
-Database Tables
-pagamentos
-Filter columns
-
-New column
-Name	Description	Data Type	Format	Nullable	
-id
-
-No description
-
-uuid	uuid		
-afiliado_id
-
-No description
-
-uuid	uuid		
-valor
-
-No description
-
-numeric	numeric		
-descricao
-
-No description
-
-text	text		
-mes_referencia
-
-No description
-
-date	date		
-status
-
-No description
-
-USER-DEFINED	status_pagamento		
-data
-
-No description
-
-date	date		
-criado_em
-
-No description
-
-timestamp with time zone	timestamptz		
-atualizado_em
-
-No description
-
-timestamp with time zone	timestamptz		
-Database Tables
-saques
-Filter columns
-
-New column
-Name	Description	Data Type	Format	Nullable	
-id
-
-No description
-
-uuid	uuid		
-afiliado_id
-
-No description
-
-uuid	uuid		
-valor
-
-No description
-
-numeric	numeric		
-metodo
-
-No description
-
-character varying	varchar		
-dados_banco
-
-No description
-
-jsonb	jsonb		
-status
-
-No description
-
-USER-DEFINED	status_pagamento		
-observacao
-
-No description
-
-text	text		
-criado_em
-
-No description
-
-timestamp with time zone	timestamptz		
-processado_em
-
-No description
-
-timestamp with time zone	timestamptz		
-Database Tables
-metas_afiliados
-Filter columns
-
-New column
-Name	Description	Data Type	Format	Nullable	
-id
-
-No description
-
-uuid	uuid		
-afiliado_id
-
-No description
-
-uuid	uuid		
-mes_referencia
-
-No description
-
-date	date		
-valor_meta
-
-No description
-
-numeric	numeric		
-vendas_meta
-
-No description
-
-integer	int4		
-atingido
-
-No description
-
-boolean	bool		
-criado_em
-
-No description
-
-timestamp with time zone	timestamptz		
-Database Tables
-atividades
-Filter columns
-
-New column
-Name	Description	Data Type	Format	Nullable	
-id
-
-No description
-
-uuid	uuid		
-afiliado_id
-
-No description
-
-uuid	uuid		
-titulo
-
-No description
-
-text	text		
-descricao
-
-No description
-
-text	text		
-prazo
-
-No description
-
-date	date		
-prioridade
-
-No description
-
-USER-DEFINED	prioridade_atividade		
-tipo
-
-No description
-
-USER-DEFINED	tipo_atividade		
-status
-
-No description
-
-USER-DEFINED	status_atividade		
-concluida_em
-
-No description
-
-timestamp with time zone	timestamptz		
-criado_em
-
-No description
-
-timestamp with time zone	timestamptz		
+[
+  {
+    "exportar_completo_json": {
+      "saques": [
+        {
+          "id": "9d33996b-b992-4967-874d-65695f8f60a6",
+          "valor": 200,
+          "metodo": "PIX",
+          "status": "pendente",
+          "criado_em": "2025-11-24T18:56:02.214969+00:00",
+          "observacao": "Saque solicitado pelo afiliado",
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "dados_banco": {
+            "conta": "12354567891234567-1",
+            "agencia": "0001",
+            "cpf_cnpj": "86229406594",
+            "chave_pix": "86229406594",
+            "tipo_chave": "CPF",
+            "tipo_conta": "CONTA_CORRENTE",
+            "nome_titular": "FABIO BRASILEIRO"
+          },
+          "processado_em": null
+        },
+        {
+          "id": "56b74605-156f-491e-b4ef-1cf2eab36567",
+          "valor": 52.43,
+          "metodo": "PIX",
+          "status": "pendente",
+          "criado_em": "2025-11-23T17:14:05.240913+00:00",
+          "observacao": "Saque solicitado pelo afiliado",
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "dados_banco": {
+            "conta": "12354567891234567-1",
+            "agencia": "0001",
+            "cpf_cnpj": "86229406594",
+            "chave_pix": "86229406594",
+            "tipo_chave": "CPF",
+            "tipo_conta": "CONTA_CORRENTE",
+            "nome_titular": "FABIO BRASILEIRO"
+          },
+          "processado_em": null
+        }
+      ],
+      "hotlinks": [],
+      "payments": [
+        {
+          "id": "pay_efm5tgz97l62ldt1",
+          "split": [
+            {
+              "id": "0ac6b20d-917c-4f8f-bbbf-d4a7b20f67e9",
+              "status": "AWAITING_CREDIT",
+              "walletId": "a7732382-3e6b-4ac8-b3b4-6c6ff5653fe7",
+              "fixedValue": null,
+              "totalValue": 268.3,
+              "description": null,
+              "percentualValue": 50,
+              "externalReference": null,
+              "cancellationReason": null
+            }
+          ],
+          "value": 548,
+          "escrow": null,
+          "status": "confirmed",
+          "deleted": false,
+          "refunds": null,
+          "customer": "cus_000007188558",
+          "due_date": "2025-11-06",
+          "fine_type": "FIXED",
+          "net_value": 536.61,
+          "created_at": "2025-11-03T22:04:38.480892+00:00",
+          "fine_value": 0,
+          "updated_at": "2025-11-03T22:04:38.376+00:00",
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "anticipable": false,
+          "anticipated": false,
+          "credit_date": "2025-12-05T00:00:00+00:00",
+          "description": "Seguro Auto ESPECIAL_II - R$ 20.000,00 - R$ 30.000,00",
+          "invoice_url": "https://sandbox.asaas.com/i/efm5tgz97l62ldt1",
+          "billing_type": "CREDIT_CARD",
+          "nosso_numero": null,
+          "payment_date": null,
+          "payment_link": null,
+          "subscription": null,
+          "bank_slip_url": null,
+          "discount_type": "FIXED",
+          "interest_type": "PERCENTAGE",
+          "confirmed_date": "2025-11-03T00:00:00+00:00",
+          "discount_value": 0,
+          "interest_value": null,
+          "invoice_number": "11841972",
+          "original_value": null,
+          "postal_service": false,
+          "credit_card_ccv": null,
+          "pix_transaction": null,
+          "checkout_session": null,
+          "credit_card_brand": "VISA",
+          "credit_card_token": "87087e43-e182-4ac0-aa8e-6ee349269cbc",
+          "original_due_date": "2025-11-06",
+          "credit_card_number": "4305",
+          "external_reference": "01469469-986a-4295-9543-fbf9adf06ada",
+          "installment_number": null,
+          "client_payment_date": "2025-11-03",
+          "discount_limit_date": null,
+          "estimated_credit_date": "2025-12-05T00:00:00+00:00",
+          "interest_value_payment": 0,
+          "credit_card_expiry_year": null,
+          "credit_card_holder_name": null,
+          "transaction_receipt_url": "https://sandbox.asaas.com/comprovantes/4073488254603417",
+          "credit_card_expiry_month": null,
+          "credit_card_holder_email": null,
+          "last_invoice_viewed_date": null,
+          "last_bank_slip_viewed_date": null,
+          "discount_due_date_limit_days": 0
+        }
+      ],
+      "afiliados": [
+        {
+          "id": "ca70d710-506b-47d7-bc93-c39c91aae07a",
+          "cnpj": "58169785000100",
+          "meta": 2500,
+          "tipo": "afiliado",
+          "ativo": true,
+          "email": "obraboguns@gmail.com",
+          "auth_id": "350e8276-2d85-454c-9d3e-6e2b68512af8",
+          "telefone": null,
+          "criado_em": "2025-10-31T23:56:24.932588+00:00",
+          "super_admin": false,
+          "valor_adesao": 0,
+          "atualizado_em": "2025-10-31T23:56:24.932588+00:00",
+          "nome_completo": "EVERSON LUIZ CARVALHO DE SOUZA",
+          "foto_perfil_url": null,
+          "porcentagem_comissao": 0.03
+        },
+        {
+          "id": "bf2f6b7f-ac5e-4cfb-86c5-725b2f7202e5",
+          "cnpj": "44557715000115",
+          "meta": 2500,
+          "tipo": "afiliado",
+          "ativo": true,
+          "email": "michael.brasil28@gmail.com",
+          "auth_id": "0a6cb0a7-58f2-41f6-9d0e-f6971275ae6d",
+          "telefone": null,
+          "criado_em": "2025-11-01T00:11:38.184283+00:00",
+          "super_admin": false,
+          "valor_adesao": 0,
+          "atualizado_em": "2025-11-01T00:11:38.184283+00:00",
+          "nome_completo": "Michael Santos Santana ",
+          "foto_perfil_url": null,
+          "porcentagem_comissao": 0.03
+        },
+        {
+          "id": "bb22b9ad-91d4-48cf-9ff5-97b058076cac",
+          "cnpj": "59338192000193",
+          "meta": 2500,
+          "tipo": "afiliado",
+          "ativo": true,
+          "email": "omarcelaraujo@gmail.com",
+          "auth_id": "9d3eac43-aabc-4f93-b237-5186fff7d98d",
+          "telefone": null,
+          "criado_em": "2025-11-05T19:50:05.269926+00:00",
+          "super_admin": false,
+          "valor_adesao": 0,
+          "atualizado_em": "2025-11-05T19:50:05.269926+00:00",
+          "nome_completo": "Marcel Araújo",
+          "foto_perfil_url": null,
+          "porcentagem_comissao": 0.03
+        },
+        {
+          "id": "b2ac8368-ae6d-418b-b032-1c11d159fd23",
+          "cnpj": "33681332000138",
+          "meta": 2500,
+          "tipo": "admin",
+          "ativo": true,
+          "email": "nivaldo20barbosa@hotmail.com",
+          "auth_id": "c72ec275-5080-48d7-8031-150a408eefbc",
+          "telefone": null,
+          "criado_em": "2025-10-31T00:40:18.180901+00:00",
+          "super_admin": false,
+          "valor_adesao": 0,
+          "atualizado_em": "2025-10-31T00:40:18.180901+00:00",
+          "nome_completo": "Nivaldo Barbosa nascimento ",
+          "foto_perfil_url": null,
+          "porcentagem_comissao": 0.03
+        },
+        {
+          "id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "cnpj": "15616546546546",
+          "meta": 2500,
+          "tipo": "fernando",
+          "ativo": true,
+          "email": "brasileirowinner@gmail.com",
+          "auth_id": "d20c27dc-e40c-48d0-abe6-c3b0c4530e77",
+          "telefone": null,
+          "criado_em": "2025-10-30T22:56:46.780485+00:00",
+          "super_admin": false,
+          "valor_adesao": 0,
+          "atualizado_em": "2025-10-30T22:56:46.780485+00:00",
+          "nome_completo": "Fábio Brasileiro",
+          "foto_perfil_url": null,
+          "porcentagem_comissao": 0.03
+        }
+      ],
+      "customers": [
+        {
+          "id": "cus_000007188558",
+          "city": 9058,
+          "name": "fabiobrasileiro07",
+          "email": "fabiobrasileiro07@gmail.com",
+          "phone": "71981418710",
+          "address": "alameda",
+          "country": "Brasil",
+          "deleted": false,
+          "cpf_cnpj": "86229406594",
+          "province": "nb",
+          "city_name": "Salvador",
+          "complement": "bl9",
+          "created_at": "2025-11-03T22:03:32.393113+00:00",
+          "group_name": "customers",
+          "updated_at": "2025-11-03T22:04:39.033+00:00",
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "postal_code": "41350190",
+          "mobile_phone": "71981418710",
+          "observations": null,
+          "address_number": "112",
+          "additional_emails": "fabiobrasileiro07@gmail.com",
+          "state_inscription": null,
+          "external_reference": "01469469-986a-4295-9543-fbf9adf06ada",
+          "municipal_inscription": null,
+          "notification_disabled": false
+        },
+        {
+          "id": "cus_000007195434",
+          "city": 9058,
+          "name": "Marcel Araújo Costa",
+          "email": "omarcelaraujo@gmail.com",
+          "phone": "999999999999999999",
+          "address": "Rua Radialista Armando Oliveira",
+          "country": "Brasil",
+          "deleted": false,
+          "cpf_cnpj": "05333530505",
+          "province": "BA",
+          "city_name": "Salvador",
+          "complement": "Casa 8A portão preto",
+          "created_at": "2025-11-05T20:26:49.122843+00:00",
+          "group_name": "customers",
+          "updated_at": "2025-11-05T20:26:49.021+00:00",
+          "afiliado_id": "bb22b9ad-91d4-48cf-9ff5-97b058076cac",
+          "postal_code": "41339128",
+          "mobile_phone": "999999999999999",
+          "observations": null,
+          "address_number": "8",
+          "additional_emails": "omarcelaraujo@gmail.com",
+          "state_inscription": null,
+          "external_reference": "bb22b9ad-91d4-48cf-9ff5-97b058076cac",
+          "municipal_inscription": null,
+          "notification_disabled": false
+        }
+      ],
+      "atividades": [
+        {
+          "id": "4408e707-0b44-41e4-9772-5279d283b292",
+          "tipo": "Ligar",
+          "prazo": "2025-11-18",
+          "status": "concluida",
+          "titulo": "fdsasdfsdf",
+          "criado_em": "2025-11-18T20:29:40.301207+00:00",
+          "descricao": "dsfadsf",
+          "prioridade": "Normal",
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "concluida_em": "2025-12-16T19:10:39.136+00:00"
+        },
+        {
+          "id": "9c5195ed-726b-4300-b317-625003b029e2",
+          "tipo": "Ligar",
+          "prazo": "2025-12-16",
+          "status": "pendente",
+          "titulo": "ATIVIDADE",
+          "criado_em": "2025-12-16T19:10:50.331016+00:00",
+          "descricao": "",
+          "prioridade": "Normal",
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "concluida_em": null
+        }
+      ],
+      "documentos": [],
+      "negociacoes": [],
+      "subscriptions": [
+        {
+          "id": "sub_bo0o8t40adb1j1ki",
+          "cycle": "MONTHLY",
+          "split": null,
+          "value": 148,
+          "status": "active",
+          "deleted": false,
+          "customer": "cus_000007188558",
+          "end_date": null,
+          "fine_type": "FIXED",
+          "created_at": "2025-11-03T22:03:31.843203+00:00",
+          "fine_value": 0,
+          "updated_at": "2025-11-03T22:03:31.694+00:00",
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "description": "Mensalidade Seguro Auto - ESPECIAL_II",
+          "billing_type": "CREDIT_CARD",
+          "max_payments": null,
+          "payment_link": null,
+          "interest_type": "PERCENTAGE",
+          "next_due_date": "2026-01-03",
+          "interest_value": 0,
+          "credit_card_ccv": null,
+          "checkout_session": null,
+          "credit_card_brand": "null",
+          "credit_card_token": null,
+          "credit_card_number": null,
+          "external_reference": "01469469-986a-4295-9543-fbf9adf06ada",
+          "credit_card_expiry_year": null,
+          "credit_card_holder_name": null,
+          "credit_card_expiry_month": null,
+          "send_payment_by_postal_service": false
+        },
+        {
+          "id": "sub_l14grcuhucgmcs4r",
+          "cycle": "MONTHLY",
+          "split": null,
+          "value": 108,
+          "status": "active",
+          "deleted": false,
+          "customer": "cus_000007195434",
+          "end_date": null,
+          "fine_type": "FIXED",
+          "created_at": "2025-11-05T20:26:48.650193+00:00",
+          "fine_value": 0,
+          "updated_at": "2025-11-05T20:26:48.001+00:00",
+          "afiliado_id": "bb22b9ad-91d4-48cf-9ff5-97b058076cac",
+          "description": "Mensalidade Seguro Auto - ENTRADA",
+          "billing_type": "CREDIT_CARD",
+          "max_payments": null,
+          "payment_link": null,
+          "interest_type": "PERCENTAGE",
+          "next_due_date": "2026-01-05",
+          "interest_value": 0,
+          "credit_card_ccv": null,
+          "checkout_session": null,
+          "credit_card_brand": "null",
+          "credit_card_token": null,
+          "credit_card_number": null,
+          "external_reference": "bb22b9ad-91d4-48cf-9ff5-97b058076cac",
+          "credit_card_expiry_year": null,
+          "credit_card_holder_name": null,
+          "credit_card_expiry_month": null,
+          "send_payment_by_postal_service": false
+        }
+      ],
+      "insurance_plans": [
+        {
+          "id": "17c4e139-a99b-493e-8aac-71d988dbc071",
+          "adesao": 250,
+          "vehicles": [
+            "GOL",
+            "PRISMA",
+            "UNO",
+            "SIENA",
+            "NOVO UNO",
+            "CLIO",
+            "CELTA",
+            "CORSA",
+            "PALIO WEEKEND",
+            "CLASSIC",
+            "PALIO",
+            "PARATI",
+            "VOYAGE",
+            "KWID",
+            "FOX ATÉ 2015"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ENTRADA",
+          "percentual_70": 0.7,
+          "vehicle_range": "ATÉ R$ 20.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 108,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "ad8c7ca7-be04-42b7-aa0d-427b546f60f5",
+          "adesao": 250,
+          "vehicles": [
+            "UNO",
+            "SIENA",
+            "NOVO UNO",
+            "CLIO"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ENTRADA",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 20.000,00 - R$ 30.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 118,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "6f02c473-fb06-4022-b812-bac2cb93efc1",
+          "adesao": 400,
+          "vehicles": [
+            "CELTA",
+            "CORSA",
+            "PALIO WEEKEND",
+            "CLASSIC",
+            "PALIO"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ENTRADA",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 30.000,00 - R$ 40.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 178,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "582de104-437b-4328-98c6-d11df2cf829f",
+          "adesao": 400,
+          "vehicles": [
+            "PARATI",
+            "VOYAGE",
+            "KWID",
+            "FOX ATÉ 2015"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ENTRADA",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 40.000,00 - R$ 50.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 228,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "140425d5-50a3-43d7-b16b-de868715ac79",
+          "adesao": 400,
+          "vehicles": [
+            "PUNTO",
+            "PRISMA"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ENTRADA",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 50.000,00 - R$ 60.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 248,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "05c5b399-8398-4690-9ace-c6938930d59c",
+          "adesao": 250,
+          "vehicles": [],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_I",
+          "percentual_70": 0.7,
+          "vehicle_range": "ATÉ R$ 20.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 118,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "aed0e80b-0e7e-4491-9996-89a553bee891",
+          "adesao": 250,
+          "vehicles": [
+            "KA",
+            "FIESTA",
+            "POLO",
+            "FOX 2015"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_I",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 20.000,00 - R$ 30.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 128,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "ff576652-ebe5-49db-a4ad-1e0cf67715b0",
+          "adesao": 400,
+          "vehicles": [
+            "AGILE",
+            "LOGAN"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_I",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 40.000,00 - R$ 50.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 238,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "85ba753c-722e-419a-9989-473adfc25d1a",
+          "adesao": 400,
+          "vehicles": [
+            "MERIVA",
+            "STILO",
+            "GRAND SIENA",
+            "IDEA"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_I",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 50.000,00 - R$ 60.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 268,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "d51ec710-5b67-45fc-92b3-85932c9cfbac",
+          "adesao": 400,
+          "vehicles": [
+            "206",
+            "207",
+            "208",
+            "ECOSPORT",
+            "SANDERO",
+            "MOBI",
+            "HB20"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_I",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 60.000,00 - R$ 70.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 308,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "87f058bc-7b1b-4aa3-b8e4-6d31f93e5cb8",
+          "adesao": 400,
+          "vehicles": [
+            "VERSA",
+            "MARCH",
+            "ARGO",
+            "CRONOS",
+            "ETIOS"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_I",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 70.000,00 - R$ 80.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 338,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "3377e5ad-ffe4-471a-a801-819e68465d8a",
+          "adesao": 400,
+          "vehicles": [],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_I",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 80.000,00 - R$ 90.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 368,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "99dc5be8-8ad7-4f4b-a451-87f6d1795051",
+          "adesao": 400,
+          "vehicles": [],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_I",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 80.000,00 - R$ 100.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 398,
+          "participation_min": "7% / 1.400,00"
+        },
+        {
+          "id": "d579d27d-5cd8-4a5d-9369-792a05dbdc2e",
+          "adesao": 250,
+          "vehicles": [],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_II",
+          "percentual_70": 0.7,
+          "vehicle_range": "ATÉ R$ 20.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 138,
+          "participation_min": "7% / 1.600,00"
+        },
+        {
+          "id": "d05a95c4-11b9-48c5-9851-8e8842b2d9b2",
+          "adesao": 250,
+          "vehicles": [
+            "CIVIC",
+            "FIT",
+            "COROLLA",
+            "FIELDER"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_II",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 20.000,00 - R$ 30.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 148,
+          "participation_min": "7% / 1.600,00"
+        },
+        {
+          "id": "255385ed-594a-4114-864c-4cca0046d7dc",
+          "adesao": 400,
+          "vehicles": [
+            "307",
+            "308",
+            "3008",
+            "C3",
+            "C4",
+            "PICASSO",
+            "CRUZE"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_II",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 30.000,00 - R$ 40.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 218,
+          "participation_min": "7% / 1.600,00"
+        },
+        {
+          "id": "c988bddb-343c-46a4-b82c-191682939443",
+          "adesao": 400,
+          "vehicles": [
+            "TIIDA",
+            "MEGANÉ",
+            "A3",
+            "LINEA"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_II",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 40.000,00 - R$ 50.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 258,
+          "participation_min": "7% / 1.600,00"
+        },
+        {
+          "id": "49fad4bc-dfc1-4ff2-a9a1-c74a329e115b",
+          "adesao": 400,
+          "vehicles": [
+            "BRAVO",
+            "FOCUS",
+            "NEW ECOSPORT"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_II",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 50.000,00 - R$ 60.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 288,
+          "participation_min": "7% / 1.600,00"
+        },
+        {
+          "id": "234c5c0d-2243-4575-9bd4-0d1840376d71",
+          "adesao": 400,
+          "vehicles": [
+            "GOLF",
+            "BEETLE",
+            "BORA",
+            "JETTA",
+            "IX35"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_II",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 60.000,00 - R$ 70.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 318,
+          "participation_min": "7% / 1.600,00"
+        },
+        {
+          "id": "798ecb1d-f9ba-428f-9564-cf15ad51ffd6",
+          "adesao": 400,
+          "vehicles": [
+            "VIRTUS",
+            "I30",
+            "T-CROSS",
+            "PULSE",
+            "YARIS",
+            "HR-V",
+            "CITY"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_II",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 70.000,00 - R$ 80.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 348,
+          "participation_min": "7% / 1.600,00"
+        },
+        {
+          "id": "a90d4ce0-7447-48d0-b002-3987b73ee82a",
+          "adesao": 400,
+          "vehicles": [
+            "SENTRA",
+            "TRACKER",
+            "CAPTUR",
+            "CRETA",
+            "DUSTER"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_II",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 80.000,00 - R$ 90.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 368,
+          "participation_min": "7% / 1.600,00"
+        },
+        {
+          "id": "4f086129-680c-48cc-837f-956a022a2bd0",
+          "adesao": 400,
+          "vehicles": [
+            "NIVUS",
+            "TIGGO 2"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_II",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 90.000,00 - R$ 100.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 398,
+          "participation_min": "7% / 1.600,00"
+        },
+        {
+          "id": "cdd6094e-5c4b-4b3e-b9af-786ff9ea965c",
+          "adesao": 400,
+          "vehicles": [],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "UTILITARIO",
+          "percentual_70": 0.7,
+          "vehicle_range": "ATÉ R$ 20.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 168,
+          "participation_min": "8% / 1.600,00"
+        },
+        {
+          "id": "3b6d518f-6b12-4d49-b3d5-1b1b313ca67b",
+          "adesao": 400,
+          "vehicles": [
+            "TORO",
+            "SAVEIRO",
+            "KOMBI",
+            "RANGER"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "UTILITARIO",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 20.000,00 - R$ 30.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 178,
+          "participation_min": "8% / 1.600,00"
+        },
+        {
+          "id": "7c86c57a-4286-4fff-b3bd-ccce297d3e11",
+          "adesao": 400,
+          "vehicles": [
+            "CURRIER",
+            "MONTANA",
+            "SPIN",
+            "ZAFIRA",
+            "FIORINO"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "UTILITARIO",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 30.000,00 - R$ 40.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 218,
+          "participation_min": "8% / 1.600,00"
+        },
+        {
+          "id": "8c14e656-ede5-4de5-bfdc-8b96a8d4cafd",
+          "adesao": 400,
+          "vehicles": [
+            "DOBLÔ",
+            "STRADA",
+            "S10",
+            "LIVINA",
+            "HOOGAR"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "UTILITARIO",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 40.000,00 - R$ 50.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 258,
+          "participation_min": "8% / 1.600,00"
+        },
+        {
+          "id": "ae5da439-ec27-4634-806f-cb37a8054924",
+          "adesao": 400,
+          "vehicles": [
+            "FRONTIER",
+            "L200",
+            "OROCH",
+            "HILUX"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "UTILITARIO",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 50.000,00 - R$ 60.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 288,
+          "participation_min": "8% / 1.600,00"
+        },
+        {
+          "id": "3bca4d29-8d6e-4761-9388-7198b10857a2",
+          "adesao": 400,
+          "vehicles": [],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "UTILITARIO",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 60.000,00 - R$ 70.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 318,
+          "participation_min": "8% / 1.600,00"
+        },
+        {
+          "id": "a62dedca-db6c-46b1-a1ef-379f7cd8982c",
+          "adesao": 400,
+          "vehicles": [],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "UTILITARIO",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 70.000,00 - R$ 80.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 348,
+          "participation_min": "8% / 1.600,00"
+        },
+        {
+          "id": "cc1cfd47-08e9-4be4-8440-3eebe4a570a4",
+          "adesao": 400,
+          "vehicles": [],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "UTILITARIO",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 80.000,00 - R$ 90.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 368,
+          "participation_min": "8% / 1.600,00"
+        },
+        {
+          "id": "5d370701-2528-4a93-b4e7-68d8b1b04396",
+          "adesao": 400,
+          "vehicles": [],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "UTILITARIO",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 90.000,00 - R$ 100.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 398,
+          "participation_min": "8% / 1.600,00"
+        },
+        {
+          "id": "04acd861-91c6-44be-954c-367e08893f7f",
+          "adesao": 400,
+          "vehicles": [
+            "COLBALT",
+            "CROSSFOX",
+            "ÔNIX",
+            "VECTRA"
+          ],
+          "created_at": "2025-10-30T18:39:39.477275+00:00",
+          "category_name": "ESPECIAL_I",
+          "percentual_70": 0.7,
+          "vehicle_range": "R$ 30.000,00 - R$ 40.000,00",
+          "percentual_7_5": 0.075,
+          "monthly_payment": 198,
+          "participation_min": "7% / 1.400,00"
+        }
+      ],
+      "afiliado_ranking": [
+        {
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "total_clientes": 1,
+          "pontuacao_total": 696,
+          "total_pagamentos": 548,
+          "total_assinaturas": 148
+        },
+        {
+          "afiliado_id": "bb22b9ad-91d4-48cf-9ff5-97b058076cac",
+          "total_clientes": 1,
+          "pontuacao_total": 108,
+          "total_pagamentos": 0,
+          "total_assinaturas": 108
+        }
+      ],
+      "afiliado_bank_data": [
+        {
+          "id": "7f85d2da-df4e-47ef-94ca-0359800e1301",
+          "agency": "0001",
+          "account": "12354567891234567",
+          "cpfCnpj": "86229406594",
+          "ownerName": "FABIO BRASILEIRO",
+          "created_at": "2025-11-03T22:10:44.840891+00:00",
+          "updated_at": "2025-11-27T17:29:33.275478+00:00",
+          "accountName": "",
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "description": "",
+          "accountDigit": "1",
+          "operation_type": "PIX",
+          "ownerBirthDate": "",
+          "bankAccountType": "CONTA_CORRENTE",
+          "pix_address_key": "86229406594",
+          "pix_address_key_type": "CPF"
+        }
+      ],
+      "afiliado_dashboard": [
+        {
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "total_sacado": 252.43,
+          "total_clientes": 1,
+          "total_a_receber": 300,
+          "total_pagamentos": 548,
+          "total_assinaturas": 148,
+          "comissao_assinaturas": 4.43,
+          "porcentagem_comissao": 0.03
+        },
+        {
+          "afiliado_id": "bb22b9ad-91d4-48cf-9ff5-97b058076cac",
+          "total_sacado": 0,
+          "total_clientes": 1,
+          "total_a_receber": 3.23,
+          "total_pagamentos": 0,
+          "total_assinaturas": 108,
+          "comissao_assinaturas": 3.23,
+          "porcentagem_comissao": 0.03
+        }
+      ],
+      "vehicle_categories": [
+        {
+          "id": "9adf167c-b5e9-42c6-a62a-f2ada911a516",
+          "name": "VEICULO DE ENTRADA",
+          "created_at": "2025-10-28T19:15:47.550849+00:00",
+          "description": "Veículos de entrada"
+        },
+        {
+          "id": "a4994290-7571-4b2a-bdcb-cc474dfa2e34",
+          "name": "VEICULO ESPECIAL I",
+          "created_at": "2025-10-28T19:15:47.550849+00:00",
+          "description": "Veículos especiais categoria I"
+        },
+        {
+          "id": "81015d25-2413-44ed-a811-be8c252b87d9",
+          "name": "VEICULO ESPECIAL II",
+          "created_at": "2025-10-28T19:15:47.550849+00:00",
+          "description": "Veículos especiais categoria II"
+        },
+        {
+          "id": "78d5a551-c2ef-4fec-9488-1f420d514691",
+          "name": "VEICULO UTILITÁRIO",
+          "created_at": "2025-10-28T19:15:47.550849+00:00",
+          "description": "Veículos utilitários"
+        }
+      ],
+      "financeiro_dashboard": [
+        {
+          "ativo": true,
+          "email": "obraboguns@gmail.com",
+          "afiliado_id": "ca70d710-506b-47d7-bc93-c39c91aae07a",
+          "nome_completo": "EVERSON LUIZ CARVALHO DE SOUZA",
+          "comissao_total": 0,
+          "total_clientes": 0,
+          "total_pagamentos": 0,
+          "valor_pagamentos": 0,
+          "total_assinaturas": 0,
+          "valor_assinaturas": 0,
+          "comissao_pagamentos": 0,
+          "comissao_assinaturas": 0,
+          "porcentagem_comissao": 0.03
+        },
+        {
+          "ativo": true,
+          "email": "brasileirowinner@gmail.com",
+          "afiliado_id": "01469469-986a-4295-9543-fbf9adf06ada",
+          "nome_completo": "Fábio Brasileiro",
+          "comissao_total": 20.8799995332956,
+          "total_clientes": 1,
+          "total_pagamentos": 1,
+          "valor_pagamentos": 548,
+          "total_assinaturas": 1,
+          "valor_assinaturas": 148,
+          "comissao_pagamentos": 16.4399996325374,
+          "comissao_assinaturas": 4.43999990075827,
+          "porcentagem_comissao": 0.03
+        },
+        {
+          "ativo": true,
+          "email": "omarcelaraujo@gmail.com",
+          "afiliado_id": "bb22b9ad-91d4-48cf-9ff5-97b058076cac",
+          "nome_completo": "Marcel Araújo",
+          "comissao_total": 3.23999992758036,
+          "total_clientes": 1,
+          "total_pagamentos": 0,
+          "valor_pagamentos": 0,
+          "total_assinaturas": 1,
+          "valor_assinaturas": 108,
+          "comissao_pagamentos": 0,
+          "comissao_assinaturas": 3.23999992758036,
+          "porcentagem_comissao": 0.03
+        },
+        {
+          "ativo": true,
+          "email": "michael.brasil28@gmail.com",
+          "afiliado_id": "bf2f6b7f-ac5e-4cfb-86c5-725b2f7202e5",
+          "nome_completo": "Michael Santos Santana ",
+          "comissao_total": 0,
+          "total_clientes": 0,
+          "total_pagamentos": 0,
+          "valor_pagamentos": 0,
+          "total_assinaturas": 0,
+          "valor_assinaturas": 0,
+          "comissao_pagamentos": 0,
+          "comissao_assinaturas": 0,
+          "porcentagem_comissao": 0.03
+        },
+        {
+          "ativo": true,
+          "email": "nivaldo20barbosa@hotmail.com",
+          "afiliado_id": "b2ac8368-ae6d-418b-b032-1c11d159fd23",
+          "nome_completo": "Nivaldo Barbosa nascimento ",
+          "comissao_total": 0,
+          "total_clientes": 0,
+          "total_pagamentos": 0,
+          "valor_pagamentos": 0,
+          "total_assinaturas": 0,
+          "valor_assinaturas": 0,
+          "comissao_pagamentos": 0,
+          "comissao_assinaturas": 0,
+          "porcentagem_comissao": 0.03
+        }
+      ]
+    }
+  }
+]

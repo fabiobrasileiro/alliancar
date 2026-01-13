@@ -34,7 +34,7 @@ export default function OrderSummary({
 
             <div className="space-y-3 mb-4">
                 <div className="flex justify-between text-white">
-                    <span>Adesão:</span>
+                    <span>Taxa de Ativação:</span>
                     <span>R$ {orderValues.membership.toFixed(2)}</span>
                 </div>
                 

@@ -182,6 +182,9 @@ export default function MinhasVendas() {
 
   const fetchDashboardData = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
       const response = await fetch(`/api/dashboard?afiliadoId=${afiliadoSelecionado}`);
       
       if (!response.ok) {
@@ -198,6 +201,9 @@ export default function MinhasVendas() {
     } catch (error) {
       console.error("Erro ao buscar dashboard:", error);
       setError("Erro ao carregar dados financeiros");
+    } finally {
+      // Garantir que o loading seja sempre resetado
+      setLoading(false);
     }
   };
 

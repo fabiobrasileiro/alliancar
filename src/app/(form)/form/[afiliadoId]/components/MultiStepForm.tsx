@@ -95,7 +95,10 @@ export default function MultiStepForm() {
             state: "",
             city: "",
             isTaxiApp: false,
-            observations: ""
+            observations: "",
+            category: "",
+            fipeValue: "",
+            privateUse: true
         }
     });
 

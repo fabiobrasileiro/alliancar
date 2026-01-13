@@ -1,5 +1,5 @@
 // hooks/useRelatorios.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { relatoriosService } from "@/lib/supabase";
 import { useUser } from "@/context/UserContext";
 
@@ -51,7 +51,7 @@ export function useRelatorios() {
   const [error, setError] = useState<string | null>(null);
   const { perfil } = useUser();
 
-  const loadReportData = async (filters?: ReportFilters) => {
+  const loadReportData = useCallback(async (filters?: ReportFilters) => {
     try {
       setLoading(true);
       setError(null);
@@ -142,7 +142,7 @@ export function useRelatorios() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [perfil?.id]);
 
   const exportToCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) return;
@@ -174,8 +174,10 @@ export function useRelatorios() {
   };
 
   useEffect(() => {
-    loadReportData();
-  }, [perfil?.id]);
+    if (perfil?.id) {
+      loadReportData();
+    }
+  }, [loadReportData, perfil?.id]);
 
   return {
     summary,

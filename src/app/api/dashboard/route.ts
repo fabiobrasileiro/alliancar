@@ -160,9 +160,18 @@ export async function GET(request: Request) {
       totalDisponivel: dashboardData.total_a_receber
     });
 
+    // Adiciona headers de cache para otimização
+    // Cache no cliente por 60 segundos (staleTime)
+    // Mas permite revalidação imediata se necessário
     return NextResponse.json({
       success: true,
       data: dashboardData
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=120',
+        'CDN-Cache-Control': 'max-age=60',
+        'Vercel-CDN-Cache-Control': 'max-age=60'
+      }
     });
 
   } catch (error: any) {
