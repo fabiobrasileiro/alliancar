@@ -361,47 +361,31 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
                   </span>
                 )}
               </p>
+              
+              {/* Botão Ocultar Valores abaixo do texto "Dados em tempo real" - responsivo */}
+              <div className="mt-4">
+                <button
+                  onClick={toggleVisibility}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                  title={hideFinancialValues ? 'Mostrar valores' : 'Ocultar valores'}
+                  aria-label={hideFinancialValues ? 'Mostrar valores' : 'Ocultar valores'}
+                >
+                  {hideFinancialValues ? (
+                    <>
+                      <EyeOff className="w-4 h-4" />
+                      <span className="text-sm">Mostrar Valores</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4" />
+                      <span className="text-sm">Ocultar Valores</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
             
             <div className="flex items-center gap-4">
-              {/* Botão de Suporte */}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors">
-                    <MessageCircle className="w-4 h-4" />
-                    <span className="text-sm">Suporte</span>
-                  </button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Suporte</DialogTitle>
-                    <DialogDescription className="text-gray-300 mt-2">
-                      Fale com um suporte tem alguma dúvida?
-                    </DialogDescription>
-                  </DialogHeader>
-                </DialogContent>
-              </Dialog>
-
-              {/* Botão para ocultar/mostrar valores financeiros */}
-              <button
-                onClick={toggleVisibility}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
-                title={hideFinancialValues ? 'Mostrar valores' : 'Ocultar valores'}
-                aria-label={hideFinancialValues ? 'Mostrar valores' : 'Ocultar valores'}
-              >
-                {hideFinancialValues ? (
-                  <>
-                    <EyeOff className="w-4 h-4" />
-                    <span className="text-sm">Mostrar Valores</span>
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    <span className="text-sm">Ocultar Valores</span>
-                  </>
-                )}
-              </button>
-              
               {/* Botão de Status Ativo/Inativo */}
               {dashboardData && (
                 <button
