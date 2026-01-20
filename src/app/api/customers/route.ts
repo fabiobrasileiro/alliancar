@@ -12,9 +12,8 @@ export async function GET(request: Request) {
       );
     }
 
-    console.log("🔍 Buscando clientes do Asaas para:", externalReference);
-
-    const url = `https://api-sandbox.asaas.com/v3/customers?externalReference=${externalReference}`;
+    const baseUrl = process.env.ASAAS_BASE_URL || "https://api.asaas.com/v3";
+    const url = `${baseUrl}/customers?externalReference=${externalReference}`;
     
     const response = await fetch(url, {
       method: 'GET',
@@ -32,12 +31,16 @@ export async function GET(request: Request) {
 
     const data = await response.json();
     
-    console.log(`✅ ${data.data?.length || 0} clientes encontrados`);
-
     return NextResponse.json({
       success: true,
       data: data.data || [],
       total: data.totalCount || 0
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=120',
+        'CDN-Cache-Control': 'max-age=60',
+        'Vercel-CDN-Cache-Control': 'max-age=60'
+      }
     });
 
   } catch (error: any) {

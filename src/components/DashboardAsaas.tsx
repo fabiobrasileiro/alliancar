@@ -144,8 +144,7 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
       console.log("🔄 Buscando dados do Asaas para:", afiliadoId);
 
       const response = await fetch(`/api/dashboard?afiliadoId=${afiliadoId}`, {
-        signal: abortController.signal,
-        cache: 'no-store', // Sempre buscar dados frescos, mas usar nosso cache client-side
+        signal: abortController.signal
       });
       
       // Verifica se foi cancelado

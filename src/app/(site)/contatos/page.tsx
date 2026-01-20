@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useUser } from '@/context/UserContext';
 import { createClient } from '@/utils/supabase/client';
 
@@ -40,6 +40,7 @@ export default function ContatosPage() {
   const [contatos, setContatos] = useState<AsaasCustomer[]>([]);
   const [contatosFiltrados, setContatosFiltrados] = useState<AsaasCustomer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [perfilData, setPerfilData] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
@@ -55,7 +56,42 @@ export default function ContatosPage() {
   });
 
   const supabase = createClient();
-  const { user } = useUser();
+  const fetchingRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const hasLoadedRef = useRef(false);
+
+  const CACHE_TTL_MS = 60000;
+
+  const getCachedData = (afiliadoId: string) => {
+    if (typeof window === "undefined") return null;
+    const cacheKey = `contatos_cache_${afiliadoId}`;
+    const dataKey = `contatos_data_${afiliadoId}`;
+    const cacheTime = sessionStorage.getItem(cacheKey);
+    const cacheData = sessionStorage.getItem(dataKey);
+
+    if (!cacheTime || !cacheData) return null;
+
+    try {
+      const timestamp = parseInt(cacheTime, 10);
+      const timeDiff = Date.now() - timestamp;
+      const data = JSON.parse(cacheData) as {
+        contatos: AsaasCustomer[];
+        payments: any[];
+        subscriptions: any[];
+      };
+      return { data, isFresh: timeDiff < CACHE_TTL_MS };
+    } catch {
+      return null;
+    }
+  };
+
+  const saveCachedData = (afiliadoId: string, data: { contatos: AsaasCustomer[]; payments: any[]; subscriptions: any[] }) => {
+    if (typeof window === "undefined") return;
+    const cacheKey = `contatos_cache_${afiliadoId}`;
+    const dataKey = `contatos_data_${afiliadoId}`;
+    sessionStorage.setItem(cacheKey, Date.now().toString());
+    sessionStorage.setItem(dataKey, JSON.stringify(data));
+  };
 
   // Carregar perfil do afiliado
   useEffect(() => {
@@ -97,21 +133,33 @@ export default function ContatosPage() {
   }, [supabase]);
 
   // Carregar contatos do Asaas - memoizado com useCallback
-  const loadContatos = useCallback(async () => {
+  const loadContatos = useCallback(async (isBackground = false) => {
     if (!perfilData?.id) return;
+    if (fetchingRef.current) return;
 
     try {
-      setLoading(true);
+      fetchingRef.current = true;
+      if (isBackground || hasLoadedRef.current) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
 
-      console.log("🔄 Buscando clientes do Asaas para afiliado:", perfilData.id);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
 
       // Buscar customers, payments e subscriptions em paralelo
       const [customersResponse, paymentsResponse, subscriptionsResponse] = await Promise.all([
-        fetch(`/api/customers?externalReference=${perfilData.id}`),
-        fetch(`/api/payments?externalReference=${perfilData.id}`),
-        fetch(`/api/asaas-data?afiliadoId=${perfilData.id}&tipo=subscriptions`)
+        fetch(`/api/customers?externalReference=${perfilData.id}`, { signal: abortController.signal }),
+        fetch(`/api/payments?externalReference=${perfilData.id}`, { signal: abortController.signal }),
+        fetch(`/api/asaas-data?afiliadoId=${perfilData.id}&tipo=subscriptions`, { signal: abortController.signal })
       ]);
+      
+      if (abortController.signal.aborted) return;
       
       if (!customersResponse.ok) {
         throw new Error('Erro ao buscar clientes do Asaas');
@@ -122,17 +170,20 @@ export default function ContatosPage() {
       if (customersData.success) {
         setContatos(customersData.data || []);
         setContatosFiltrados(customersData.data || []);
-        console.log(`✅ ${customersData.data.length} clientes carregados do Asaas`);
+        hasLoadedRef.current = true;
       } else {
         throw new Error(customersData.error || 'Erro ao carregar clientes');
       }
+
+      let loadedPayments: any[] = [];
+      let loadedSubscriptions: any[] = [];
 
       // Carregar payments
       if (paymentsResponse.ok) {
         const paymentsData = await paymentsResponse.json();
         if (paymentsData.success) {
-          setPayments(paymentsData.payments || []);
-          console.log(`✅ ${paymentsData.payments?.length || 0} pagamentos carregados`);
+          loadedPayments = paymentsData.payments || [];
+          setPayments(loadedPayments);
         }
       }
 
@@ -140,15 +191,22 @@ export default function ContatosPage() {
       if (subscriptionsResponse.ok) {
         const subscriptionsData = await subscriptionsResponse.json();
         if (subscriptionsData.success) {
-          setSubscriptions(subscriptionsData.data || []);
-          console.log(`✅ ${subscriptionsData.data?.length || 0} assinaturas carregadas`);
+          loadedSubscriptions = subscriptionsData.data || [];
+          setSubscriptions(loadedSubscriptions);
         }
       }
+
+      saveCachedData(perfilData.id, {
+        contatos: customersData.data || [],
+        payments: loadedPayments,
+        subscriptions: loadedSubscriptions
+      });
     } catch (err) {
-      console.error('❌ Erro ao carregar contatos:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      fetchingRef.current = false;
     }
   }, [perfilData?.id]);
 
@@ -284,9 +342,29 @@ export default function ContatosPage() {
 
   // Carregar contatos quando o perfil estiver disponível
   useEffect(() => {
-    if (perfilData?.id) {
-      loadContatos();
+    if (!perfilData?.id) return;
+
+    const cached = getCachedData(perfilData.id);
+    if (cached?.data) {
+      setContatos(cached.data.contatos || []);
+      setContatosFiltrados(cached.data.contatos || []);
+      setPayments(cached.data.payments || []);
+      setSubscriptions(cached.data.subscriptions || []);
+      setLoading(false);
+      setError(null);
+      hasLoadedRef.current = true;
+      loadContatos(true);
+    } else {
+      loadContatos(false);
     }
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      fetchingRef.current = false;
+    };
   }, [loadContatos, perfilData?.id]);
 
   // Origens únicas para o filtro
@@ -312,7 +390,7 @@ export default function ContatosPage() {
           <h3 className="text-red-400 text-xl font-semibold mb-2">Erro ao carregar contatos</h3>
           <p className="text-red-300 mb-4">{error}</p>
           <button 
-            onClick={loadContatos}
+            onClick={() => loadContatos(false)}
             className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
           >
             Tentar Novamente
@@ -337,7 +415,8 @@ export default function ContatosPage() {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={loadContatos}
+            onClick={() => loadContatos(false)}
+            disabled={loading || refreshing}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
             🔄 Atualizar
