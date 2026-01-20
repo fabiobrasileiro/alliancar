@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import ProgressSteps from "./ProgressSteps";
 import PersonalDataStep from "./steps/PersonalDataStep";
 import AddressStep from "./steps/AddressStep";
@@ -22,6 +22,8 @@ const optionalServices = [
 
 export default function MultiStepForm() {
     const { afiliadoId } = useParams<{ afiliadoId?: string }>();
+    const searchParams = useSearchParams();
+
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
     const [step, setStep] = useState(1);
@@ -29,20 +31,34 @@ export default function MultiStepForm() {
     const [discount, setDiscount] = useState(0);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [planoEncontrado, setPlanoEncontrado] = useState<InsurancePlan | null>(null);
+    const [customMembership, setCustomMembership] = useState<number | null>(null);
     const [showPaymentResult, setShowPaymentResult] = useState(false);
     const [showThankYou, setShowThankYou] = useState(false);
 
+
+    useEffect(() => {
+        // Lê o parâmetro ?adesao= da URL (links personalizados)
+        const adesaoParam = searchParams.get("adesao");
+        if (adesaoParam) {
+            const limpo = adesaoParam.replace(",", ".").replace(/[^\d\.]/g, "");
+            const parsed = parseFloat(limpo);
+            if (Number.isFinite(parsed) && parsed > 0) {
+                setCustomMembership(parsed);
+            }
+        }
+    }, [searchParams]);
 
     const calculateOrderValues = (): OrderValues => {
         const servicesTotal = optionalServices
             .filter(service => selectedServices.includes(service.id))
             .reduce((total, service) => total + service.price, 0);
 
-        const subtotal = (planoEncontrado?.adesao || 0) + servicesTotal;
+        const membershipValue = (customMembership ?? planoEncontrado?.adesao) || 0;
+        const subtotal = membershipValue + servicesTotal;
 
         return {
             monthly: planoEncontrado?.monthly_payment || 0,
-            membership: planoEncontrado?.adesao || 0,
+            membership: membershipValue,
             services: servicesTotal,
             subtotal: subtotal,
             total: subtotal
@@ -53,7 +69,7 @@ export default function MultiStepForm() {
 
     useEffect(() => {
         setOrderValues(calculateOrderValues());
-    }, [planoEncontrado, selectedServices]);
+    }, [planoEncontrado, selectedServices, customMembership]);
 
     const [form, setForm] = useState<FormState>({
         name: "",

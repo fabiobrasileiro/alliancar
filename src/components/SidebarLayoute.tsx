@@ -35,6 +35,12 @@ const sidebarLayout = ({ children }: { children: ReactNode }) => {
       icon: <LinkIcon className="h-4 w-4" />,
       href: "/conta/hotlink",
     },
+    {
+      id: "links-personalizados",
+      label: "Links personalizados",
+      icon: <LinkIcon className="h-4 w-4" />,
+      href: "/conta/links-personalizados",
+    },
   ];
 
   return (

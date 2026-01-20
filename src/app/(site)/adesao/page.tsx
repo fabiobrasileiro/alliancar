@@ -79,25 +79,40 @@ export default function NegociacaoAdesao() {
             }
 
             let valorFinal: number;
-            let planoNome: string;
 
             if (planoSelecionado) {
                 const plano = planos.find(p => p.id === planoSelecionado);
                 valorFinal = plano!.valor;
-                planoNome = plano!.nome;
             } else {
                 valorFinal = parseFloat(valorPersonalizado.replace(',', '.'));
-                planoNome = "Personalizado";
             }
 
-            // Salva no Supabase
+            if (!Number.isFinite(valorFinal) || valorFinal <= 0) {
+                setMensagem("Digite um valor válido para a taxa de ativação");
+                return;
+            }
+
+            // Busca o afiliado pelo auth_id do usuário logado
+            const { data: afiliado, error: afiliadoError } = await supabase
+                .from("afiliados")
+                .select("id")
+                .eq("auth_id", user.id)
+                .single();
+
+            if (afiliadoError || !afiliado) {
+                console.error("Erro ao localizar afiliado:", afiliadoError);
+                setMensagem("Não foi possível localizar seu cadastro de afiliado");
+                return;
+            }
+
+            // Salva o valor de adesão na tabela afiliados
             const { error } = await supabase
-                .from('preco_adesao')
-                .insert({
-                    afiliado_id: user.id,
-                    valor: valorFinal,
-                    plano: planoNome
-                });
+                .from("afiliados")
+                .update({
+                    valor_adesao: valorFinal,
+                    atualizado_em: new Date().toISOString(),
+                })
+                .eq("id", afiliado.id);
 
             if (error) throw error;
 
