@@ -44,10 +44,50 @@ export async function GET(request: Request) {
     const supabase = createClient();
 
     // 1️⃣ Buscar SAQUES do afiliado (para deduzir do total)
-    const { data: saquesData, error: saquesError } = await supabase
+    const saquesPromise = supabase
       .from('saques')
       .select('id, valor, status')
       .eq('afiliado_id', afiliadoId);
+
+    // 2️⃣ Buscar dados do Asaas em paralelo
+    const customersPromise = fetch(
+      `${process.env.ASAAS_BASE_URL}/customers?externalReference=${afiliadoId}`,
+      {
+        headers: {
+          "access_token": process.env.ASAAS_API_KEY!
+        }
+      }
+    );
+
+    const paymentsPromise = fetch(
+      `${process.env.ASAAS_BASE_URL}/payments?externalReference=${afiliadoId}`,
+      {
+        headers: {
+          "access_token": process.env.ASAAS_API_KEY!
+        }
+      }
+    );
+
+    const subscriptionsPromise = fetch(
+      `${process.env.ASAAS_BASE_URL}/subscriptions?externalReference=${afiliadoId}`,
+      {
+        headers: {
+          "access_token": process.env.ASAAS_API_KEY!
+        }
+      }
+    );
+
+    const [
+      { data: saquesData, error: saquesError },
+      customersResponse,
+      paymentsResponse,
+      subscriptionsResponse
+    ] = await Promise.all([
+      saquesPromise,
+      customersPromise,
+      paymentsPromise,
+      subscriptionsPromise
+    ]);
 
     if (saquesError) {
       console.error('❌ Erro ao buscar saques:', saquesError);
@@ -67,29 +107,9 @@ export async function GET(request: Request) {
 
     console.log(`💰 Saques: Total sacado: R$ ${totalSacado}, Pendentes: R$ ${totalPendenteSaque}`);
 
-    // 2️⃣ Buscar CLIENTES do afiliado (para placas)
-    const customersResponse = await fetch(
-      `${process.env.ASAAS_BASE_URL}/customers?externalReference=${afiliadoId}`,
-      {
-        headers: {
-          "access_token": process.env.ASAAS_API_KEY!
-        }
-      }
-    );
-
     const customersData = customersResponse.ok ? await customersResponse.json() : { data: [] };
     const customers: AsaasCustomer[] = customersData.data || [];
     const totalClientes = customers.length;
-
-    // 3️⃣ Buscar PAGAMENTOS do afiliado (para pagamentos a receber)
-    const paymentsResponse = await fetch(
-      `${process.env.ASAAS_BASE_URL}/payments?externalReference=${afiliadoId}`,
-      {
-        headers: {
-          "access_token": process.env.ASAAS_API_KEY!
-        }
-      }
-    );
 
     const paymentsData = paymentsResponse.ok ? await paymentsResponse.json() : { data: [] };
     const payments: AsaasPayment[] = paymentsData.data || [];
@@ -98,16 +118,6 @@ export async function GET(request: Request) {
     const pagamentosAReceber = payments
       .filter(p => p.status === 'RECEIVED' || p.status === 'CONFIRMED')
       .reduce((sum: number, p: AsaasPayment) => sum + p.value, 0);
-
-    // 4️⃣ Buscar ASSINATURAS do afiliado (para mensalidades)
-    const subscriptionsResponse = await fetch(
-      `${process.env.ASAAS_BASE_URL}/subscriptions?externalReference=${afiliadoId}`,
-      {
-        headers: {
-          "access_token": process.env.ASAAS_API_KEY!
-        }
-      }
-    );
 
     const subscriptionsData = subscriptionsResponse.ok ? await subscriptionsResponse.json() : { data: [] };
     const subscriptions: AsaasSubscription[] = subscriptionsData.data || [];

@@ -13,8 +13,9 @@ export async function GET(request: Request) {
     }
 
     // Buscar pagamentos do Asaas
+    const baseUrl = process.env.ASAAS_BASE_URL || "https://api.asaas.com/v3";
     const asaasResponse = await fetch(
-      `${process.env.ASAAS_BASE_URL}/payments?externalReference=${externalReference}`,
+      `${baseUrl}/payments?externalReference=${externalReference}`,
       {
         method: "GET",
         headers: {
@@ -59,6 +60,12 @@ export async function GET(request: Request) {
       payments: payments,
       total: payments.length,
       totalValue: payments.reduce((sum: number, payment: any) => sum + payment.value, 0)
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=120',
+        'CDN-Cache-Control': 'max-age=60',
+        'Vercel-CDN-Cache-Control': 'max-age=60'
+      }
     });
 
   } catch (error: any) {

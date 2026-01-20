@@ -15,11 +15,12 @@ export async function GET(request: Request) {
 
     console.log(`📊 Buscando ${tipo} para afiliado:`, afiliadoId);
 
+    const baseUrl = process.env.ASAAS_BASE_URL || "https://api.asaas.com/v3";
     let endpoint = '';
     if (tipo === 'payments') {
-      endpoint = `${process.env.ASAAS_BASE_URL}/payments?externalReference=${afiliadoId}`;
+      endpoint = `${baseUrl}/payments?externalReference=${afiliadoId}`;
     } else if (tipo === 'subscriptions') {
-      endpoint = `${process.env.ASAAS_BASE_URL}/subscriptions?externalReference=${afiliadoId}`;
+      endpoint = `${baseUrl}/subscriptions?externalReference=${afiliadoId}`;
     } else {
       return NextResponse.json(
         { success: false, error: "Tipo inválido" },
@@ -42,6 +43,12 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       data: data.data || []
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=120',
+        'CDN-Cache-Control': 'max-age=60',
+        'Vercel-CDN-Cache-Control': 'max-age=60'
+      }
     });
 
   } catch (error: any) {
