@@ -352,10 +352,16 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
               <h1 className="text-3xl font-bold text-white">
                 {perfilData?.super_admin ? 'Dashboard Geral' : `Bem-vindo, ${perfilData?.nome_completo ?? 'Afiliado'}`}
               </h1>
-              <p className="text-gray-400 mt-2">
+              <p className="text-gray-400 mt-2 flex items-center gap-2">
                 Dados em tempo real
-                {lastUpdated && (
-                  <span className="text-gray-500 text-sm ml-2">
+                {refreshing && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 animate-pulse">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Atualizando...
+                  </span>
+                )}
+                {lastUpdated && !refreshing && (
+                  <span className="text-gray-500 text-sm">
                     (Atualizado: {lastUpdated.toLocaleTimeString('pt-BR')})
                   </span>
                 )}

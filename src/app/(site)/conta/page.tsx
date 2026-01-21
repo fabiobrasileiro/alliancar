@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -22,7 +22,7 @@ import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { Badge } from "@/components/ui/badge";
-import { Users, TrendingUp, DollarSign, Package, Filter, Calendar, RefreshCw } from "lucide-react";
+import { Users, TrendingUp, DollarSign, Package, Filter, Calendar, RefreshCw, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
@@ -69,9 +69,11 @@ interface AfiliadoInfo {
 
 export default function MinhasVendas() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [allVendas, setAllVendas] = useState<Venda[]>([]);
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [afiliados, setAfiliados] = useState<AfiliadoInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [loadingVendas, setLoadingVendas] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filtroDataInicio, setFiltroDataInicio] = useState("");
@@ -83,6 +85,62 @@ export default function MinhasVendas() {
   
   const supabase = createClient();
   const { user } = useUser();
+  const fetchingDashboardRef = useRef(false);
+  const fetchingVendasRef = useRef(false);
+  const vendasAbortRef = useRef<AbortController | null>(null);
+  const CACHE_TTL_MS = 60000;
+
+  const getCachedDashboard = (afiliadoId: string) => {
+    if (typeof window === "undefined") return null;
+    const cacheKey = `conta_dashboard_cache_${afiliadoId}`;
+    const dataKey = `conta_dashboard_data_${afiliadoId}`;
+    const cacheTime = sessionStorage.getItem(cacheKey);
+    const cacheData = sessionStorage.getItem(dataKey);
+
+    if (!cacheTime || !cacheData) return null;
+    try {
+      const timestamp = parseInt(cacheTime, 10);
+      const isFresh = Date.now() - timestamp < CACHE_TTL_MS;
+      const data = JSON.parse(cacheData) as DashboardData;
+      return { data, isFresh };
+    } catch {
+      return null;
+    }
+  };
+
+  const saveCachedDashboard = (afiliadoId: string, data: DashboardData) => {
+    if (typeof window === "undefined") return;
+    const cacheKey = `conta_dashboard_cache_${afiliadoId}`;
+    const dataKey = `conta_dashboard_data_${afiliadoId}`;
+    sessionStorage.setItem(cacheKey, Date.now().toString());
+    sessionStorage.setItem(dataKey, JSON.stringify(data));
+  };
+
+  const getCachedVendas = (afiliadoId: string) => {
+    if (typeof window === "undefined") return null;
+    const cacheKey = `conta_vendas_cache_${afiliadoId}`;
+    const dataKey = `conta_vendas_data_${afiliadoId}`;
+    const cacheTime = sessionStorage.getItem(cacheKey);
+    const cacheData = sessionStorage.getItem(dataKey);
+
+    if (!cacheTime || !cacheData) return null;
+    try {
+      const timestamp = parseInt(cacheTime, 10);
+      const isFresh = Date.now() - timestamp < CACHE_TTL_MS;
+      const data = JSON.parse(cacheData) as Venda[];
+      return { data, isFresh };
+    } catch {
+      return null;
+    }
+  };
+
+  const saveCachedVendas = (afiliadoId: string, data: Venda[]) => {
+    if (typeof window === "undefined") return;
+    const cacheKey = `conta_vendas_cache_${afiliadoId}`;
+    const dataKey = `conta_vendas_data_${afiliadoId}`;
+    sessionStorage.setItem(cacheKey, Date.now().toString());
+    sessionStorage.setItem(dataKey, JSON.stringify(data));
+  };
 
   // Mapear status do Asaas para português - AGORA DEFINIDAS CORRETAMENTE
   const mapPaymentStatus = (status: string) => {
@@ -121,10 +179,10 @@ export default function MinhasVendas() {
 
   useEffect(() => {
     if (user && afiliadoSelecionado) {
-      fetchDashboardData();
-      fetchVendas();
+      fetchDashboardData(false);
+      fetchVendas(false);
     }
-  }, [user, afiliadoSelecionado, filtroDataInicio, filtroDataFim, filtroStatus, filtroTipo]);
+  }, [user, afiliadoSelecionado]);
 
   const checkAdmin = async () => {
     try {
@@ -180,10 +238,25 @@ export default function MinhasVendas() {
     }
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (isBackground: boolean) => {
+    if (fetchingDashboardRef.current) return;
     try {
-      setLoading(true);
+      fetchingDashboardRef.current = true;
+      if (isBackground) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
+
+      const cached = getCachedDashboard(afiliadoSelecionado);
+      if (cached?.data) {
+        setDashboard(cached.data);
+        if (cached.isFresh && !isBackground) {
+          setLoading(false);
+          return;
+        }
+      }
       
       const response = await fetch(`/api/dashboard?afiliadoId=${afiliadoSelecionado}`);
       
@@ -195,6 +268,7 @@ export default function MinhasVendas() {
       
       if (dashboardResponse.success) {
         setDashboard(dashboardResponse.data);
+        saveCachedDashboard(afiliadoSelecionado, dashboardResponse.data);
       } else {
         throw new Error(dashboardResponse.error || 'Erro ao carregar dados');
       }
@@ -204,21 +278,75 @@ export default function MinhasVendas() {
     } finally {
       // Garantir que o loading seja sempre resetado
       setLoading(false);
+      setRefreshing(false);
+      fetchingDashboardRef.current = false;
     }
   };
 
-  const fetchVendas = async () => {
+  const applyFilters = (base: Venda[]) => {
+    let vendasFiltradas = base;
+
+    if (filtroDataInicio) {
+      vendasFiltradas = vendasFiltradas.filter(venda =>
+        new Date(venda.data_criacao) >= new Date(filtroDataInicio)
+      );
+    }
+
+    if (filtroDataFim) {
+      vendasFiltradas = vendasFiltradas.filter(venda =>
+        new Date(venda.data_criacao) <= new Date(filtroDataFim + 'T23:59:59')
+      );
+    }
+
+    if (filtroStatus && filtroStatus !== "todos") {
+      vendasFiltradas = vendasFiltradas.filter(venda =>
+        venda.status.toLowerCase() === filtroStatus.toLowerCase()
+      );
+    }
+
+    if (filtroTipo && filtroTipo !== "todos") {
+      vendasFiltradas = vendasFiltradas.filter(venda => venda.tipo === filtroTipo);
+    }
+
+    return vendasFiltradas;
+  };
+
+  useEffect(() => {
+    setVendas(applyFilters(allVendas));
+  }, [allVendas, filtroDataInicio, filtroDataFim, filtroStatus, filtroTipo]);
+
+  const fetchVendas = async (isBackground: boolean) => {
     if (!afiliadoSelecionado) return;
+    if (fetchingVendasRef.current) return;
 
     try {
-      setLoadingVendas(true);
+      fetchingVendasRef.current = true;
+      if (isBackground) {
+        setRefreshing(true);
+      } else {
+        setLoadingVendas(true);
+      }
       setError(null);
 
-      console.log("🔄 Buscando vendas para afiliado:", afiliadoSelecionado);
+      const cached = getCachedVendas(afiliadoSelecionado);
+      if (cached?.data) {
+        setAllVendas(cached.data);
+        if (cached.isFresh && !isBackground) {
+          setLoadingVendas(false);
+          return;
+        }
+      }
+
+      if (vendasAbortRef.current) {
+        vendasAbortRef.current.abort();
+      }
+      const abortController = new AbortController();
+      vendasAbortRef.current = abortController;
 
       // Buscar pagamentos do Asaas
       const paymentsResponse = await fetch(
-        `/api/asaas-proxy?endpoint=payments&externalReference=${afiliadoSelecionado}`
+        `/api/asaas-proxy?endpoint=payments&externalReference=${afiliadoSelecionado}`,
+        { signal: abortController.signal }
       );
 
       if (!paymentsResponse.ok) {
@@ -232,7 +360,8 @@ export default function MinhasVendas() {
 
       // Buscar assinaturas do Asaas
       const subscriptionsResponse = await fetch(
-        `/api/asaas-proxy?endpoint=subscriptions&externalReference=${afiliadoSelecionado}`
+        `/api/asaas-proxy?endpoint=subscriptions&externalReference=${afiliadoSelecionado}`,
+        { signal: abortController.signal }
       );
 
       if (!subscriptionsResponse.ok) {
@@ -277,33 +406,8 @@ export default function MinhasVendas() {
 
       console.log("💰 Total de vendas combinadas:", todasVendas.length);
 
-      // Aplicar filtros
-      let vendasFiltradas = todasVendas;
-
-      if (filtroDataInicio) {
-        vendasFiltradas = vendasFiltradas.filter(venda => 
-          new Date(venda.data_criacao) >= new Date(filtroDataInicio)
-        );
-      }
-
-      if (filtroDataFim) {
-        vendasFiltradas = vendasFiltradas.filter(venda => 
-          new Date(venda.data_criacao) <= new Date(filtroDataFim + 'T23:59:59')
-        );
-      }
-
-      if (filtroStatus && filtroStatus !== "todos") {
-        vendasFiltradas = vendasFiltradas.filter(venda => 
-          venda.status.toLowerCase() === filtroStatus.toLowerCase()
-        );
-      }
-
-      if (filtroTipo && filtroTipo !== "todos") {
-        vendasFiltradas = vendasFiltradas.filter(venda => venda.tipo === filtroTipo);
-      }
-
-      setVendas(vendasFiltradas);
-      console.log("✅ Vendas carregadas com sucesso:", vendasFiltradas.length);
+      setAllVendas(todasVendas);
+      saveCachedVendas(afiliadoSelecionado, todasVendas);
 
     } catch (err: any) {
       console.error("❌ Erro ao buscar vendas:", err);
@@ -312,6 +416,8 @@ export default function MinhasVendas() {
     } finally {
       setLoadingVendas(false);
       setLoading(false);
+      setRefreshing(false);
+      fetchingVendasRef.current = false;
     }
   };
 
@@ -375,8 +481,8 @@ export default function MinhasVendas() {
   };
 
   const handleRefresh = () => {
-    fetchDashboardData();
-    fetchVendas();
+    fetchDashboardData(false);
+    fetchVendas(false);
     toast.success("Dados atualizados com sucesso!");
   };
 
@@ -412,8 +518,14 @@ export default function MinhasVendas() {
                 <TrendingUp className="w-6 h-6 text-purple-400" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white">
+                <h1 className="text-3xl font-bold text-white flex items-center gap-2">
                   {isAdmin ? "Dashboard Financeiro" : "Minhas Vendas"}
+                  {refreshing && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 animate-pulse">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Atualizando...
+                    </span>
+                  )}
                 </h1>
                 <p className="text-gray-400">
                   {isAdmin ? "Visão geral de todos os afiliados" : "Acompanhe suas vendas e comissões"}
@@ -651,7 +763,7 @@ export default function MinhasVendas() {
               </div>
               <div className="flex items-end">
                 <Button 
-                  onClick={fetchVendas} 
+                  onClick={() => setVendas(applyFilters(allVendas))} 
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   Aplicar Filtros
