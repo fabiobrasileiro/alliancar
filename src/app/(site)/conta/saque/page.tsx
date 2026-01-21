@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/context/UserContext";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, CreditCard, History, ArrowDownCircle, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Wallet, CreditCard, History, ArrowDownCircle, CheckCircle, Clock, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 // Interface atualizada com os novos campos da API
@@ -71,20 +71,85 @@ export default function Saques() {
   const [valorSaque, setValorSaque] = useState("");
   const [metodo, setMetodo] = useState("PIX");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const supabase = createClient();
   const { user } = useUser();
+  const fetchingRef = useRef(false);
+  const CACHE_TTL_MS = 60000;
+
+  const getCachedSaqueData = (authId: string) => {
+    if (typeof window === "undefined") return null;
+    const cacheKey = `saque_cache_${authId}`;
+    const dataKey = `saque_data_${authId}`;
+    const cacheTime = sessionStorage.getItem(cacheKey);
+    const cacheData = sessionStorage.getItem(dataKey);
+
+    if (!cacheTime || !cacheData) return null;
+    try {
+      const timestamp = parseInt(cacheTime, 10);
+      const isFresh = Date.now() - timestamp < CACHE_TTL_MS;
+      const data = JSON.parse(cacheData) as {
+        afiliadoId: string;
+        dashboard: DashboardData | null;
+        bankData: BankData | null;
+        saques: Saque[];
+      };
+      return { data, isFresh };
+    } catch {
+      return null;
+    }
+  };
+
+  const saveCachedSaqueData = (
+    authId: string,
+    afiliadoId: string,
+    dashboardData: DashboardData | null,
+    bank: BankData | null,
+    saquesData: Saque[]
+  ) => {
+    if (typeof window === "undefined") return;
+    const cacheKey = `saque_cache_${authId}`;
+    const dataKey = `saque_data_${authId}`;
+    sessionStorage.setItem(cacheKey, Date.now().toString());
+    sessionStorage.setItem(
+      dataKey,
+      JSON.stringify({
+        afiliadoId,
+        dashboard: dashboardData,
+        bankData: bank,
+        saques: saquesData
+      })
+    );
+  };
 
   useEffect(() => {
     if (user) {
-      fetchData();
+      fetchData(false);
     }
   }, [user]);
 
-  const fetchData = async () => {
+  const fetchData = async (isBackground: boolean) => {
+    if (fetchingRef.current) return;
     try {
-      setLoading(true);
+      fetchingRef.current = true;
+      if (isBackground) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      const cached = user?.id ? getCachedSaqueData(user.id) : null;
+      if (cached?.data) {
+        setDashboard(cached.data.dashboard);
+        setBankData(cached.data.bankData);
+        setSaques(cached.data.saques || []);
+        setLoading(false);
+        if (cached.isFresh && !isBackground) {
+          return;
+        }
+      }
 
       const { data: afiliado, error: afiliadoError } = await supabase
         .from("afiliados")
@@ -106,8 +171,10 @@ export default function Saques() {
 
       const dashboardResponse = await response.json();
       
+      let dashboardData: DashboardData | null = null;
       if (dashboardResponse.success) {
-        setDashboard(dashboardResponse.data);
+        dashboardData = dashboardResponse.data;
+        setDashboard(dashboardData);
       } else {
         throw new Error(dashboardResponse.error || 'Erro ao carregar dados');
       }
@@ -119,10 +186,12 @@ export default function Saques() {
         .eq("afiliado_id", afiliado.id)
         .single();
 
+      let bankDataResult: BankData | null = null;
       if (bankError && bankError.code !== 'PGRST116') { // PGRST116 = no rows
         console.error("❌ Erro ao buscar dados bancários:", bankError);
       } else {
-        setBankData(bankData);
+        bankDataResult = bankData;
+        setBankData(bankDataResult);
       }
 
       // Buscar histórico de saques
@@ -132,10 +201,16 @@ export default function Saques() {
         .eq("afiliado_id", afiliado.id)
         .order("criado_em", { ascending: false });
 
+      let saquesResult: Saque[] = [];
       if (saquesError) {
         console.error("❌ Erro ao buscar saques:", saquesError);
       } else {
-        setSaques(saquesData || []);
+        saquesResult = saquesData || [];
+        setSaques(saquesResult);
+      }
+
+      if (user?.id) {
+        saveCachedSaqueData(user.id, afiliado.id, dashboardData, bankDataResult, saquesResult);
       }
 
     } catch (error) {
@@ -143,6 +218,8 @@ export default function Saques() {
       toast.error("Erro ao carregar dados");
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      fetchingRef.current = false;
     }
   };
 
@@ -207,7 +284,7 @@ export default function Saques() {
 
       toast.success("Saque solicitado com sucesso!");
       setValorSaque("");
-      await fetchData();
+      await fetchData(false);
 
     } catch (error) {
       console.error("Erro ao solicitar saque:", error);
@@ -298,7 +375,15 @@ export default function Saques() {
               <Wallet className="w-6 h-6 text-green-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">Solicitar Saque</h1>
+              <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+                Solicitar Saque
+                {refreshing && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 animate-pulse">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Atualizando...
+                  </span>
+                )}
+              </h1>
               <p className="text-gray-400">
                 Gerencie seus saques e acompanhe o histórico
               </p>

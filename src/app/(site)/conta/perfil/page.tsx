@@ -1,9 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from 'next/navigation';
-import { User, Mail, Phone, CreditCard, Settings, Camera, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, Mail, Phone, CreditCard, Settings, Camera, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +55,7 @@ export default function PerfilAfiliado() {
 
   const [afiliado, setAfiliado] = useState<Afiliado | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [dadosBancarios, setDadosBancarios] = useState<DadosPix | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -86,18 +87,107 @@ export default function PerfilAfiliado() {
     bankAccountType: 'CONTA_CORRENTE'
   })
 
+  const fetchingRef = useRef(false)
+  const CACHE_TTL_MS = 60000
+
+  const applyAfiliadoData = (data: Afiliado) => {
+    setAfiliado(data)
+    setFormData({
+      nome_completo: data.nome_completo || '',
+      email: data.email || '',
+      cpf_cnpj: data.cpf_cnpj || '',
+      telefone: data.telefone || '',
+      foto_perfil_url: data.foto_perfil_url || '',
+      porcentagem_comissao: data.porcentagem_comissao || 0.03,
+      valor_adesao: data.valor_adesao || 0,
+      meta: data.meta || 2500,
+      ativo: data.ativo ?? true
+    })
+  }
+
+  const applyBankData = (data: DadosPix | null) => {
+    setDadosBancarios(data || null)
+    if (data) {
+      setFormPix({
+        pix_address_key: data.pix_address_key || '',
+        operation_type: data.operation_type || 'PIX',
+        pix_address_key_type: data.pix_address_key_type || 'EMAIL',
+        description: data.description || '',
+        accountName: data.accountName || '',
+        ownerName: data.ownerName || '',
+        ownerBirthDate: data.ownerBirthDate || '',
+        cpfCnpj: data.cpfCnpj || '',
+        agency: data.agency || '',
+        account: data.account || '',
+        accountDigit: data.accountDigit || '',
+        bankAccountType: data.bankAccountType || 'CONTA_CORRENTE'
+      })
+    }
+  }
+
+  const getCachedPerfil = (authId: string) => {
+    if (typeof window === 'undefined') return null
+    const cacheKey = `perfil_cache_${authId}`
+    const dataKey = `perfil_data_${authId}`
+    const bankKey = `perfil_bank_${authId}`
+    const cacheTime = sessionStorage.getItem(cacheKey)
+    const cachedData = sessionStorage.getItem(dataKey)
+    const cachedBank = sessionStorage.getItem(bankKey)
+
+    if (!cacheTime || !cachedData) return null
+
+    try {
+      const timestamp = parseInt(cacheTime, 10)
+      const isFresh = Date.now() - timestamp < CACHE_TTL_MS
+      const afiliadoData = JSON.parse(cachedData) as Afiliado
+      const bankData = cachedBank ? (JSON.parse(cachedBank) as DadosPix) : null
+      return { afiliado: afiliadoData, bank: bankData, isFresh }
+    } catch {
+      return null
+    }
+  }
+
+  const saveCachedPerfil = (authId: string, data: Afiliado, bank: DadosPix | null) => {
+    if (typeof window === 'undefined') return
+    const cacheKey = `perfil_cache_${authId}`
+    const dataKey = `perfil_data_${authId}`
+    const bankKey = `perfil_bank_${authId}`
+    sessionStorage.setItem(cacheKey, Date.now().toString())
+    sessionStorage.setItem(dataKey, JSON.stringify(data))
+    if (bank) {
+      sessionStorage.setItem(bankKey, JSON.stringify(bank))
+    } else {
+      sessionStorage.removeItem(bankKey)
+    }
+  }
+
   // Carregar dados do perfil
   useEffect(() => {
-    carregarPerfil();
+    carregarPerfil(false);
   }, []);
 
-  const carregarPerfil = async () => {
+  const carregarPerfil = async (isBackground: boolean) => {
+    if (fetchingRef.current) return
     try {
+      fetchingRef.current = true
+      if (isBackground) {
+        setRefreshing(true)
+      }
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
         router.push('/login')
         return
+      }
+
+      const cached = getCachedPerfil(user.id)
+      if (cached?.afiliado) {
+        applyAfiliadoData(cached.afiliado)
+        applyBankData(cached.bank)
+        setLoading(false)
+        if (cached.isFresh && !isBackground) {
+          return
+        }
       }
 
       const { data, error } = await supabase
@@ -108,26 +198,18 @@ export default function PerfilAfiliado() {
 
       if (error) throw error
 
-      setAfiliado(data)
-      setFormData({
-        nome_completo: data.nome_completo || '',
-        email: data.email || '',
-        cpf_cnpj: data.cpf_cnpj || '',
-        telefone: data.telefone || '',
-        foto_perfil_url: data.foto_perfil_url || '',
-        porcentagem_comissao: data.porcentagem_comissao || 0.03,
-        valor_adesao: data.valor_adesao || 0,
-        meta: data.meta || 2500,
-        ativo: data.ativo ?? true
-      })
+      applyAfiliadoData(data)
 
       // Buscar dados bancários
-      buscarDadosBancarios(data.id)
+      const bankData = await buscarDadosBancarios(data.id)
+      saveCachedPerfil(user.id, data, bankData)
     } catch (error) {
       console.error('Erro ao carregar perfil:', error)
       toast.error('Erro ao carregar perfil')
     } finally {
       setLoading(false)
+      setRefreshing(false)
+      fetchingRef.current = false
     }
   }
 
@@ -143,26 +225,11 @@ export default function PerfilAfiliado() {
         throw error
       }
 
-      setDadosBancarios(data || null)
-
-      if (data) {
-        setFormPix({
-          pix_address_key: data.pix_address_key || '',
-          operation_type: data.operation_type || 'PIX',
-          pix_address_key_type: data.pix_address_key_type || 'EMAIL',
-          description: data.description || '',
-          accountName: data.accountName || '',
-          ownerName: data.ownerName || '',
-          ownerBirthDate: data.ownerBirthDate || '',
-          cpfCnpj: data.cpfCnpj || '',
-          agency: data.agency || '',
-          account: data.account || '',
-          accountDigit: data.accountDigit || '',
-          bankAccountType: data.bankAccountType || 'CONTA_CORRENTE'
-        })
-      }
+      applyBankData(data || null)
+      return data || null
     } catch (error) {
       console.error('Erro ao buscar dados bancários:', error)
+      return null
     }
   }
 
@@ -370,7 +437,15 @@ export default function PerfilAfiliado() {
               <User className="w-6 h-6 text-purple-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">Meu Perfil</h1>
+              <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+                Meu Perfil
+                {refreshing && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 animate-pulse">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Atualizando...
+                  </span>
+                )}
+              </h1>
               <p className="text-gray-400">
                 Gerencie suas informações pessoais e configurações da conta
               </p>

@@ -1,10 +1,10 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import SidebarLayout from "@/components/SidebarLayoute";
 import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/context/UserContext";
-import { Copy, ExternalLink, Download, Link2, QrCode, UserPlus } from "lucide-react";
+import { Copy, ExternalLink, Download, Link2, QrCode, UserPlus, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -19,21 +19,66 @@ interface Afiliado {
 export default function Powerlinks() {
   const [afiliado, setAfiliado] = useState<Afiliado | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [copying, setCopying] = useState<string | null>(null);
   const supabase = createClient();
   const { user } = useUser();
+  const fetchingRef = useRef(false);
+  const CACHE_TTL_MS = 60000;
 
   useEffect(() => {
     if (user?.id) {
-      fetchAfiliadoData();
+      const cached = getCachedAfiliado(user.id);
+      if (cached?.afiliado) {
+        setAfiliado(cached.afiliado);
+        setLoading(false);
+        if (!cached.isFresh) {
+          fetchAfiliadoData(true);
+        }
+      } else {
+        fetchAfiliadoData(false);
+      }
     } else {
       setLoading(false);
     }
   }, [user]);
 
-  const fetchAfiliadoData = async () => {
+  const getCachedAfiliado = (authId: string) => {
+    if (typeof window === "undefined") return null;
+    const cacheKey = `hotlinks_cache_${authId}`;
+    const dataKey = `hotlinks_data_${authId}`;
+    const cacheTime = sessionStorage.getItem(cacheKey);
+    const cachedData = sessionStorage.getItem(dataKey);
+
+    if (!cacheTime || !cachedData) return null;
+
     try {
-      setLoading(true);
+      const timestamp = parseInt(cacheTime, 10);
+      const isFresh = Date.now() - timestamp < CACHE_TTL_MS;
+      const afiliadoData = JSON.parse(cachedData) as Afiliado;
+      return { afiliado: afiliadoData, isFresh };
+    } catch {
+      return null;
+    }
+  };
+
+  const saveCachedAfiliado = (authId: string, data: Afiliado) => {
+    if (typeof window === "undefined") return;
+    const cacheKey = `hotlinks_cache_${authId}`;
+    const dataKey = `hotlinks_data_${authId}`;
+    sessionStorage.setItem(cacheKey, Date.now().toString());
+    sessionStorage.setItem(dataKey, JSON.stringify(data));
+  };
+
+  const fetchAfiliadoData = async (isBackground: boolean) => {
+    if (fetchingRef.current) return;
+    try {
+      fetchingRef.current = true;
+      if (isBackground) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       const { data: afiliadoData, error } = await supabase
         .from("afiliados")
         .select("id, nome_completo, porcentagem_comissao, tipo")
@@ -46,10 +91,15 @@ export default function Powerlinks() {
       }
 
       setAfiliado(afiliadoData);
+      if (user?.id) {
+        saveCachedAfiliado(user.id, afiliadoData);
+      }
     } catch (error) {
       console.error("Erro ao buscar dados do afiliado:", error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
+      fetchingRef.current = false;
     }
   };
 
@@ -166,7 +216,15 @@ export default function Powerlinks() {
               <Link2 className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">Power Links</h1>
+              <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+                Power Links
+                {refreshing && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 animate-pulse">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Atualizando...
+                  </span>
+                )}
+              </h1>
               <p className="text-gray-400">
                 Links personalizados para capturar clientes e receber comissões
               </p>

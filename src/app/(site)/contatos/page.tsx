@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useUser } from '@/context/UserContext';
 import { createClient } from '@/utils/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 // Tipos baseados na API do Asaas
 interface AsaasCustomer {
@@ -405,7 +406,15 @@ export default function ContatosPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white">Leads</h1>
+          <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+            Leads
+            {refreshing && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 animate-pulse">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Atualizando...
+              </span>
+            )}
+          </h1>
           <p className="mt-2 text-gray-300">
             Clientes cadastrados através do seu link de afiliado
             {perfilData && (
