@@ -208,7 +208,7 @@ export default function Powerlinks() {
 
   return (
     <SidebarLayout>
-      <div className="p-6 space-y-8">
+      <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 pb-8 sm:pb-12">
         {/* Header */}
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -251,8 +251,8 @@ export default function Powerlinks() {
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* QR Code Section */}
-                  <div className="flex-shrink-0 flex flex-col items-center gap-4">
-                    <div className="w-40 h-40 bg-white rounded-xl p-4 shadow-lg">
+                  <div className="flex-shrink-0 flex flex-col items-center gap-4 w-full sm:w-auto">
+                    <div className="w-32 h-32 sm:w-40 sm:h-40 bg-white rounded-xl p-3 sm:p-4 shadow-lg mx-auto sm:mx-0">
                       {link.qrcode_url ? (
                         <img
                           src={link.qrcode_url}
@@ -261,7 +261,7 @@ export default function Powerlinks() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <QrCode className="w-12 h-12" />
+                          <QrCode className="w-10 h-10 sm:w-12 sm:h-12" />
                         </div>
                       )}
                     </div>
@@ -270,73 +270,75 @@ export default function Powerlinks() {
                         variant="outline"
                         size="sm"
                         onClick={() => downloadQRCode(link.qrcode_url!, link.nome)}
-                        className="flex items-center gap-2 border-gray-600 hover:bg-gray-700"
+                        className="flex items-center justify-center gap-2 border-gray-600 hover:bg-gray-700 w-full sm:w-auto min-h-[44px] sm:min-h-0"
                       >
-                        <Download className="w-4 h-4" />
-                        Baixar QR Code
+                        <Download className="w-4 h-4 flex-shrink-0" />
+                        <span className="whitespace-nowrap">Baixar QR Code</span>
                       </Button>
                     )}
                   </div>
 
                   {/* Content Section */}
-                  <div className="flex-1 space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          {(link as any).icon && React.createElement((link as any).icon, { className: "w-5 h-5 text-blue-400" })}
-                          <h3 className="font-semibold text-xl text-white">{link.nome}</h3>
+                  <div className="flex-1 space-y-4 min-w-0">
+                    <div className="space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-wrap">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                          {(link as any).icon && React.createElement((link as any).icon, { className: "w-5 h-5 text-blue-400 flex-shrink-0" })}
+                          <h3 className="font-semibold text-lg sm:text-xl text-white break-words">{link.nome}</h3>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
                           {link.id === "default" && (
-                            <Badge variant="default" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                            <Badge variant="default" className="bg-blue-500/20 text-blue-300 border-blue-500/30 whitespace-nowrap">
                               Padrão
                             </Badge>
                           )}
                           {link.id === "afiliado" && (
-                            <Badge variant="default" className="bg-green-500/20 text-green-300 border-green-500/30">
+                            <Badge variant="default" className="bg-green-500/20 text-green-300 border-green-500/30 whitespace-nowrap">
                               Personalizado
                             </Badge>
                           )}
                           {(link as any).badge && (
-                            <Badge variant="default" className={(link as any).badgeColor || "bg-blue-500/20 text-blue-300 border-blue-500/30"}>
+                            <Badge variant="default" className={`${(link as any).badgeColor || "bg-blue-500/20 text-blue-300 border-blue-500/30"} whitespace-nowrap`}>
                               {(link as any).badge}
                             </Badge>
                           )}
                         </div>
-                        <p className="text-gray-400 text-sm">{link.description}</p>
                       </div>
+                      <p className="text-gray-400 text-sm">{link.description}</p>
                     </div>
 
                     {/* URL Display */}
-                    <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
-                      <p className="text-blue-300 font-mono text-sm break-all">
+                    <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-3 sm:p-4 overflow-hidden">
+                      <p className="text-blue-300 font-mono text-xs sm:text-sm break-all word-break break-word">
                         {link.url}
                       </p>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                       <Button
                         onClick={() => copyToClipboard(link.url, link.id)}
                         disabled={copying === link.id}
-                        className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 transition-colors"
+                        className="bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 transition-colors w-full sm:w-auto min-h-[44px] sm:min-h-0"
                         size="sm"
                       >
-                        <Copy className="w-4 h-4" />
-                        {copying === link.id ? "Copiado!" : "Copiar Link"}
+                        <Copy className="w-4 h-4 flex-shrink-0" />
+                        <span className="whitespace-nowrap">{copying === link.id ? "Copiado!" : "Copiar Link"}</span>
                       </Button>
 
                       <a
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex"
+                        className="inline-flex w-full sm:w-auto"
                       >
                         <Button
                           variant="default"
-                          className="border hover:bg-gray-700 text-white flex items-center gap-2"
+                          className="border hover:bg-gray-700 text-white flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px] sm:min-h-0"
                           size="sm"
                         >
-                          <ExternalLink className="w-4 h-4" />
-                          Abrir Link
+                          <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                          <span className="whitespace-nowrap">Abrir Link</span>
                         </Button>
                       </a>
                     </div>

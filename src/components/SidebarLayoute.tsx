@@ -45,12 +45,12 @@ const sidebarLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <>
-      <div className="flex h-screen">
-        <div className="h-screen">
+      <div className="flex min-h-screen">
+        <div className="flex-shrink-0">
           <Sidebar items={menuItems} title="Minha Conta" />
         </div>
 
-        <div className="w-full">{children}</div>
+        <div className="flex-1 w-full overflow-auto">{children}</div>
       </div>
     </>
   );
