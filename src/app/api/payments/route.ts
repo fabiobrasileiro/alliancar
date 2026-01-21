@@ -14,19 +14,51 @@ export async function GET(request: Request) {
 
     // Buscar pagamentos do Asaas
     const baseUrl = process.env.ASAAS_BASE_URL || "https://api.asaas.com/v3";
-    const asaasResponse = await fetch(
-      `${baseUrl}/payments?externalReference=${externalReference}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "access_token": process.env.ASAAS_API_KEY!
-        }
+    const apiKey = process.env.ASAAS_API_KEY;
+
+    // Validação melhorada das variáveis de ambiente
+    if (!apiKey) {
+      console.error("❌ ASAAS_API_KEY não configurada");
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "Configuração de API inválida: ASAAS_API_KEY não encontrada",
+          debug: {
+            hasBaseUrl: !!baseUrl,
+            baseUrl: baseUrl,
+            hasApiKey: false
+          }
+        },
+        { status: 500 }
+      );
+    }
+
+    const url = `${baseUrl}/payments?externalReference=${externalReference}`;
+    console.log(`🔍 Buscando pagamentos: ${url.substring(0, 50)}...`);
+
+    const asaasResponse = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "access_token": apiKey
       }
-    );
+    });
 
     if (!asaasResponse.ok) {
-      throw new Error(`Erro ao buscar pagamentos: ${asaasResponse.status}`);
+      const errorText = await asaasResponse.text();
+      console.error("❌ Erro na API do Asaas:", asaasResponse.status, errorText);
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Erro ao buscar pagamentos: ${asaasResponse.status}`,
+          details: errorText.substring(0, 200),
+          debug: {
+            url: url.substring(0, 100),
+            status: asaasResponse.status
+          }
+        },
+        { status: 500 }
+      );
     }
 
     const asaasData = await asaasResponse.json();
@@ -73,8 +105,8 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message,
-        details: error.response?.data || error
+        error: error.message || "Erro desconhecido",
+        type: error.name || "UnknownError"
       },
       { status: 500 }
     );
