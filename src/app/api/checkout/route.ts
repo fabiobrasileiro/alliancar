@@ -34,6 +34,41 @@ export async function POST(request: Request) {
             hasCreditCard: !!creditCard 
         });
 
+        // ✅ VALIDAÇÃO: Verificar se o valor final é válido (maior que 0)
+        const paymentValue = parseFloat(finalValue);
+        if (!paymentValue || isNaN(paymentValue) || paymentValue <= 0) {
+            console.error("❌ Valor inválido:", { finalValue, paymentValue });
+            return NextResponse.json(
+                { 
+                    success: false, 
+                    error: "O valor do pagamento deve ser maior que R$ 0,00. Por favor, selecione um plano de seguro ou adicione serviços opcionais.",
+                    details: {
+                        receivedValue: finalValue,
+                        parsedValue: paymentValue,
+                        hasPlano: !!plano,
+                        servicesTotal: servicesTotal,
+                        discount: discount
+                    }
+                },
+                { status: 400 }
+            );
+        }
+
+        // ✅ VALIDAÇÃO: Verificar se há um plano ou serviços selecionados
+        if (!plano && (!selectedServices || selectedServices.length === 0)) {
+            return NextResponse.json(
+                { 
+                    success: false, 
+                    error: "É necessário selecionar um plano de seguro antes de finalizar o pagamento.",
+                    details: {
+                        hasPlano: !!plano,
+                        selectedServicesCount: selectedServices?.length || 0
+                    }
+                },
+                { status: 400 }
+            );
+        }
+
         // 1️⃣ Cria o cliente PRIMEIRO
         const customerPayload = {
             name: name,
@@ -142,13 +177,13 @@ export async function POST(request: Request) {
         // 5️⃣ Configurar SPLITS para os afiliados (7,5% para cada)
         const splitAfiliados = [
             {
-                walletId: "44b7be70-b6be-4f34-be9e-b4ad33a10f9d", // Primeiro afiliado
+                walletId: "14146b0b-0dfc-4e44-8d73-1fb091386cb6", // Primeiro afiliado
                 fixedValue: 0,
                 percentualValue: 7.5, // 7,5%
                 totalFixedValue: 0
             },
             {
-                walletId: "a7732382-3e6b-4ac8-b3b4-6c6ff5653fe7", // Segundo afiliado
+                walletId: "14146b0b-0dfc-4e44-8d73-1fb091386cb6", // Segundo afiliado
                 fixedValue: 0,
                 percentualValue: 7.5, // 7,5%
                 totalFixedValue: 0
@@ -166,9 +201,12 @@ export async function POST(request: Request) {
         });
 
         // 6️⃣ Cria o pagamento baseado no método escolhido COM SPLITS
+        // Garantir que o valor está formatado corretamente (2 casas decimais)
+        const formattedValue = paymentValue.toFixed(2);
+        
         let paymentPayload: any = {
             customer: customer.id,
-            value: parseFloat(finalValue).toFixed(2),
+            value: formattedValue,
             dueDate: formattedDueDate,
             description: paymentDescription,
             externalReference: externalReference,
@@ -291,13 +329,13 @@ export async function POST(request: Request) {
             // Configurar splits também para a assinatura
             const subscriptionSplitAfiliados = [
                 {
-                    walletId: "44b7be70-b6be-4f34-be9e-b4ad33a10f9d", // Primeiro afiliado
+                    walletId: "14146b0b-0dfc-4e44-8d73-1fb091386cb6", // Primeiro afiliado
                     fixedValue: 0,
                     percentualValue: 7.5, // 7,5%
                     totalFixedValue: 0
                 },
                 {
-                    walletId: "a7732382-3e6b-4ac8-b3b4-6c6ff5653fe7", // Segundo afiliado
+                    walletId: "14146b0b-0dfc-4e44-8d73-1fb091386cb6", // Segundo afiliado
                     fixedValue: 0,
                     percentualValue: 7.5, // 7,5%
                     totalFixedValue: 0
@@ -379,7 +417,7 @@ export async function POST(request: Request) {
         const vistoriaResponse = await vistoriaService.enviarParaVistoria(vistoriaData);
 
         // 🔟 Calcular valores dos splits para exibir no resumo
-        const paymentValue = parseFloat(finalValue);
+        // paymentValue já foi definido no início da função
         const splitValues = splitAfiliados.map(split => ({
             walletId: split.walletId,
             percentual: split.percentualValue,
