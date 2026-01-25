@@ -88,17 +88,46 @@ export async function POST(request: Request) {
         };
 
         console.log("👤 Criando cliente...");
+        
+        // 🔍 LOG TEMPORÁRIO: Verificar API Key
+        const apiKey = process.env.ASAAS_API_KEY;
+        console.log("🔑 DEBUG API Key:", {
+            exists: !!apiKey,
+            length: apiKey?.length || 0,
+            startsWith: apiKey?.substring(0, 10) || "N/A",
+            endsWith: apiKey?.substring(apiKey?.length - 10) || "N/A",
+            hasDollarSign: apiKey?.startsWith("$") || false,
+            baseUrl: process.env.ASAAS_BASE_URL
+        });
 
         const customerRes = await fetch(`${process.env.ASAAS_BASE_URL}/customers`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "access_token": process.env.ASAAS_API_KEY!
+                "access_token": apiKey!
             },
             body: JSON.stringify(customerPayload),
         });
 
-        const customer = await customerRes.json();
+        // 🔍 LOG TEMPORÁRIO: Verificar resposta antes do parse
+        console.log("📡 DEBUG Resposta do Asaas:", {
+            status: customerRes.status,
+            statusText: customerRes.statusText,
+            ok: customerRes.ok,
+            headers: Object.fromEntries(customerRes.headers.entries())
+        });
+
+        const responseText = await customerRes.text();
+        console.log("📄 DEBUG Body da resposta (primeiros 500 chars):", responseText.substring(0, 500));
+        
+        let customer;
+        try {
+            customer = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error("❌ Erro ao fazer parse do JSON:", parseError);
+            console.error("📄 Body completo:", responseText);
+            throw new Error(`Erro ao fazer parse da resposta do Asaas: ${parseError}`);
+        }
 
         if (!customer.id || customer.errors) {
             console.error("❌ Erro ao criar cliente:", customer);
@@ -177,13 +206,13 @@ export async function POST(request: Request) {
         // 5️⃣ Configurar SPLITS para os afiliados (7,5% para cada)
         const splitAfiliados = [
             {
-                walletId: "14146b0b-0dfc-4e44-8d73-1fb091386cb6", // Primeiro afiliado
+                walletId: "4f2da253-bfc5-47cc-b1ef-29d40b9eb291", // Primeiro afiliado
                 fixedValue: 0,
                 percentualValue: 7.5, // 7,5%
                 totalFixedValue: 0
             },
             {
-                walletId: "14146b0b-0dfc-4e44-8d73-1fb091386cb6", // Segundo afiliado
+                walletId: "4f2da253-bfc5-47cc-b1ef-29d40b9eb291", // Segundo afiliado
                 fixedValue: 0,
                 percentualValue: 7.5, // 7,5%
                 totalFixedValue: 0
@@ -329,13 +358,13 @@ export async function POST(request: Request) {
             // Configurar splits também para a assinatura
             const subscriptionSplitAfiliados = [
                 {
-                    walletId: "14146b0b-0dfc-4e44-8d73-1fb091386cb6", // Primeiro afiliado
+                    walletId: "4f2da253-bfc5-47cc-b1ef-29d40b9eb291", // Primeiro afiliado
                     fixedValue: 0,
                     percentualValue: 7.5, // 7,5%
                     totalFixedValue: 0
                 },
                 {
-                    walletId: "14146b0b-0dfc-4e44-8d73-1fb091386cb6", // Segundo afiliado
+                    walletId: "4f2da253-bfc5-47cc-b1ef-29d40b9eb291", // Segundo afiliado
                     fixedValue: 0,
                     percentualValue: 7.5, // 7,5%
                     totalFixedValue: 0
