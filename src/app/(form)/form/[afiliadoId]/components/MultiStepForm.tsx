@@ -242,14 +242,37 @@ export default function MultiStepForm() {
             }
         }
 
+        // ✅ VALIDAÇÃO: Verificar se há um plano selecionado
+        if (!planoEncontrado && !customMembership) {
+            alert("Por favor, selecione um plano de seguro antes de finalizar o pagamento.");
+            return;
+        }
+
+        // ✅ VALIDAÇÃO: Calcular e validar o valor final
+        const finalValue = orderValues.total - discount;
+        
+        if (finalValue <= 0 || isNaN(finalValue)) {
+            alert("O valor total deve ser maior que R$ 0,00. Por favor, selecione um plano ou adicione serviços opcionais.");
+            console.error("❌ Valor inválido:", {
+                orderValues,
+                discount,
+                finalValue,
+                planoEncontrado: planoEncontrado?.category_name,
+                customMembership,
+                selectedServices
+            });
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const finalValue = orderValues.total - discount;
-
             console.log("🔄 Enviando dados para API...", {
                 paymentMethod: form.paymentMethod,
-                finalValue: finalValue
+                finalValue: finalValue,
+                planoEncontrado: planoEncontrado?.category_name,
+                customMembership: customMembership,
+                orderValues: orderValues
             });
 
             const res = await fetch("/api/checkout", {
