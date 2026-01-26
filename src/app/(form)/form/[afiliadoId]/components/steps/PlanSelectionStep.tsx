@@ -59,16 +59,6 @@ export default function PlanSelectionStep({
     return (
         <div className="space-y-6">
             <div className="bg-gray-800 border border-gray-600 rounded-lg p-6">
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h3 className="font-semibold text-blue-800 mb-2">Veículo Selecionado</h3>
-                    <div className="grid grid-cols-2 gap-2 text-sm text-blue-700">
-                        <div><strong>Tipo:</strong> {vehicleInfo.vehicleType || 'Não informado'}</div>
-                        <div><strong>Marca:</strong> {vehicleInfo.brand || 'Não informada'}</div>
-                        <div><strong>Modelo:</strong> {vehicleInfo.model || 'Não informado'}</div>
-                        <div><strong>Placa:</strong> {vehicleInfo.plate || 'Não informada'}</div>
-                    </div>
-                </div>
-
                 <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-600">
                     <h2 className="text-2xl font-bold text-white">
                         {plano?.category_name || 'PLANO ENCONTRADO'}
