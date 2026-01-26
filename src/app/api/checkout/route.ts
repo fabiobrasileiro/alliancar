@@ -1,5 +1,53 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { vistoriaService } from "@/lib/vistoria-service";
+
+type AfiliadoRow = {
+    id: string;
+    referral_id?: string | null;
+    porcentagem_comissao?: number | null;
+    tipo?: string | null;
+    [key: string]: any;
+};
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+const toPercent = (value?: number | null) => {
+    if (!value || Number.isNaN(value)) return 0;
+    return value * 100;
+};
+
+const getWalletId = (afiliado?: AfiliadoRow | null) => {
+    if (!afiliado) return null;
+    return (
+        afiliado.wallet_id ||
+        afiliado.walletId ||
+        afiliado.asaas_wallet_id ||
+        afiliado.asaasWalletId ||
+        afiliado.carteira_id ||
+        null
+    );
+};
+
+const buildSplit = (walletId: string, percentualValue: number) => ({
+    walletId,
+    fixedValue: 0,
+    percentualValue,
+    totalFixedValue: 0
+});
+
+const addSplit = (
+    splits: Array<ReturnType<typeof buildSplit>>,
+    walletId: string | null,
+    percentualValue: number
+) => {
+    if (!walletId || percentualValue <= 0) return;
+    if (splits.some((split) => split.walletId === walletId)) return;
+    splits.push(buildSplit(walletId, percentualValue));
+};
 
 export async function POST(request: Request) {
     try {
@@ -203,30 +251,64 @@ export async function POST(request: Request) {
             ? `Seguro Auto ${plano.category_name} - ${plano.vehicle_range}${selectedServices.length > 0 ? ` + ${selectedServices.length} serviço(s) opcional(is)` : ''}`
             : `Seguro Auto${selectedServices.length > 0 ? ` + ${selectedServices.length} serviço(s) opcional(is)` : ''}`;
 
-        // 5️⃣ Configurar SPLITS para os afiliados (7,5% para cada)
-        const splitAfiliados = [
-            {
-                walletId: "4f2da253-bfc5-47cc-b1ef-29d40b9eb291", // Primeiro afiliado
-                fixedValue: 0,
-                percentualValue: 7.5, // 7,5%
-                totalFixedValue: 0
-            },
-            {
-                walletId: "4f2da253-bfc5-47cc-b1ef-29d40b9eb291", // Segundo afiliado
-                fixedValue: 0,
-                percentualValue: 7.5, // 7,5%
-                totalFixedValue: 0
+        // 5️⃣ Buscar afiliado e gerente para splits
+        let afiliado: AfiliadoRow | null = null;
+        let gerente: AfiliadoRow | null = null;
+
+        if (externalReference) {
+            const { data: afiliadoData, error: afiliadoError } = await supabase
+                .from("afiliados")
+                .select("*")
+                .eq("id", externalReference)
+                .single();
+
+            if (afiliadoError) {
+                console.warn("⚠️ Não foi possível carregar afiliado:", afiliadoError.message);
+            } else {
+                afiliado = afiliadoData as AfiliadoRow;
             }
-        ];
 
-        // Calcular o valor restante após os splits (85%)
-        const totalPercentualSplits = splitAfiliados.reduce((sum, split) => sum + split.percentualValue, 0);
-        const remainingPercent = 100 - totalPercentualSplits; // 85%
+            if (afiliado?.referral_id) {
+                const { data: gerenteData, error: gerenteError } = await supabase
+                    .from("afiliados")
+                    .select("*")
+                    .eq("id", afiliado.referral_id)
+                    .single();
 
-        console.log("💰 Configurando splits:", {
-            totalPercentualSplits,
-            remainingPercent,
-            splitAfiliados
+                if (gerenteError) {
+                    console.warn("⚠️ Não foi possível carregar gerente:", gerenteError.message);
+                } else {
+                    gerente = gerenteData as AfiliadoRow;
+                }
+            }
+        }
+
+        const gerenteQualifica =
+            !!gerente &&
+            ((gerente.porcentagem_comissao ?? 0) >= 0.09 || gerente.tipo === "gerente");
+
+        const afiliadoWalletId = getWalletId(afiliado);
+        const gerenteWalletId = gerenteQualifica ? getWalletId(gerente) : null;
+        const fernandoWalletId = process.env.ASAAS_WALLET_FERNANDO || null;
+        const marcelWalletId = process.env.ASAAS_WALLET_MARCEL || null;
+        const nivaldoWalletId = process.env.ASAAS_WALLET_NIVALDO || null;
+
+        // 6️⃣ Split do pagamento (adesão): 100% para o afiliado
+        const paymentSplits: Array<ReturnType<typeof buildSplit>> = [];
+        addSplit(paymentSplits, afiliadoWalletId, 100);
+
+        if (paymentSplits.length === 0) {
+            console.warn("⚠️ Nenhum split configurado para adesão (walletId do afiliado ausente).");
+        }
+
+        const paymentSplitPercent = paymentSplits.reduce(
+            (sum, split) => sum + split.percentualValue,
+            0
+        );
+
+        console.log("💰 Configurando splits do pagamento:", {
+            paymentSplitPercent,
+            paymentSplits
         });
 
         // 6️⃣ Cria o pagamento baseado no método escolhido COM SPLITS
@@ -238,9 +320,12 @@ export async function POST(request: Request) {
             value: formattedValue,
             dueDate: formattedDueDate,
             description: paymentDescription,
-            externalReference: externalReference,
-            split: splitAfiliados // Adiciona os splits ao payload
+            externalReference: externalReference
         };
+
+        if (paymentSplits.length > 0) {
+            paymentPayload.split = paymentSplits;
+        }
 
         // Configura o payload baseado no método de pagamento
         switch (paymentMethod) {
@@ -355,21 +440,32 @@ export async function POST(request: Request) {
 
             const subscriptionValue = plano.monthly_payment;
 
-            // Configurar splits também para a assinatura
-            const subscriptionSplitAfiliados = [
-                {
-                    walletId: "4f2da253-bfc5-47cc-b1ef-29d40b9eb291", // Primeiro afiliado
-                    fixedValue: 0,
-                    percentualValue: 7.5, // 7,5%
-                    totalFixedValue: 0
-                },
-                {
-                    walletId: "4f2da253-bfc5-47cc-b1ef-29d40b9eb291", // Segundo afiliado
-                    fixedValue: 0,
-                    percentualValue: 7.5, // 7,5%
-                    totalFixedValue: 0
-                }
-            ];
+            // Configurar splits também para a assinatura (mensalidade)
+            const commissionPoolPercent = 30;
+            const fernandoPercent = 15;
+            const afiliadoPercent = toPercent(afiliado?.porcentagem_comissao);
+            const gerentePercent = gerenteQualifica ? toPercent(gerente?.porcentagem_comissao) : 0;
+
+            const usedPercent = fernandoPercent + afiliadoPercent + gerentePercent;
+            if (usedPercent > commissionPoolPercent) {
+                console.warn("⚠️ Soma de percentuais acima do pool mensal:", {
+                    commissionPoolPercent,
+                    usedPercent,
+                    fernandoPercent,
+                    afiliadoPercent,
+                    gerentePercent
+                });
+            }
+            const remainingPercent = Math.max(0, commissionPoolPercent - usedPercent);
+            const marcelPercent = remainingPercent / 2;
+            const nivaldoPercent = remainingPercent / 2;
+
+            const subscriptionSplits: Array<ReturnType<typeof buildSplit>> = [];
+            addSplit(subscriptionSplits, fernandoWalletId, fernandoPercent);
+            addSplit(subscriptionSplits, afiliadoWalletId, afiliadoPercent);
+            addSplit(subscriptionSplits, gerenteWalletId, gerentePercent);
+            addSplit(subscriptionSplits, marcelWalletId, marcelPercent);
+            addSplit(subscriptionSplits, nivaldoWalletId, nivaldoPercent);
 
             const subscriptionPayload: any = {
                 billingType: 'CREDIT_CARD',
@@ -379,13 +475,18 @@ export async function POST(request: Request) {
                 nextDueDate: formattedNextDueDate,
                 description: `Mensalidade Seguro Auto - ${plano.category_name}`,
                 externalReference: externalReference,
-                creditCardToken: creditCardToken,
-                split: subscriptionSplitAfiliados // Splits para assinatura também
+                creditCardToken: creditCardToken
             };
+
+            if (subscriptionSplits.length > 0) {
+                subscriptionPayload.split = subscriptionSplits;
+            }
 
             console.log("🔄 Criando assinatura com splits:", {
                 value: subscriptionValue,
-                splits: subscriptionSplitAfiliados
+                splits: subscriptionSplits,
+                usedPercent,
+                remainingPercent
             });
 
             const subscriptionRes = await fetch(`${process.env.ASAAS_BASE_URL}/subscriptions`, {
@@ -447,7 +548,7 @@ export async function POST(request: Request) {
 
         // 🔟 Calcular valores dos splits para exibir no resumo
         // paymentValue já foi definido no início da função
-        const splitValues = splitAfiliados.map(split => ({
+        const splitValues = paymentSplits.map(split => ({
             walletId: split.walletId,
             percentual: split.percentualValue,
             valor: (paymentValue * split.percentualValue) / 100
@@ -462,8 +563,8 @@ export async function POST(request: Request) {
             vistoria: vistoriaResponse, // Inclui dados da vistoria na resposta
             splits: {
                 afiliados: splitValues,
-                totalPercentual: totalPercentualSplits,
-                remainingPercentual: remainingPercent,
+                totalPercentual: paymentSplitPercent,
+                remainingPercentual: 100 - paymentSplitPercent,
                 valorTotal: paymentValue
             },
             summary: {
