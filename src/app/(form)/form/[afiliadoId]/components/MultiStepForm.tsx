@@ -36,21 +36,20 @@ export default function MultiStepForm() {
     const [showThankYou, setShowThankYou] = useState(false);
 
 
-    useEffect(() => {
-        // Lê o parâmetro ?adesao= da URL (links personalizados)
-        const adesaoParam = searchParams.get("adesao");
-        if (adesaoParam) {
-            const limpo = adesaoParam.replace(",", ".").replace(/[^\d\.]/g, "");
-            const parsed = parseFloat(limpo);
-            if (Number.isFinite(parsed) && parsed > 0) {
-                setCustomMembership(parsed);
-            }
-        }
-    }, [searchParams]);
+    const adesaoParam = useMemo(() => searchParams.get("adesao") || "", [searchParams]);
 
-    const calculateOrderValues = (): OrderValues => {
+    useEffect(() => {
+        if (!adesaoParam) return;
+        const limpo = adesaoParam.replace(",", ".").replace(/[^\d\.]/g, "");
+        const parsed = parseFloat(limpo);
+        if (Number.isFinite(parsed) && parsed > 0) {
+            setCustomMembership(parsed);
+        }
+    }, [adesaoParam]);
+
+    const orderValues = useMemo<OrderValues>(() => {
         const servicesTotal = optionalServices
-            .filter(service => selectedServices.includes(service.id))
+            .filter((service) => selectedServices.includes(service.id))
             .reduce((total, service) => total + service.price, 0);
 
         const membershipValue = (customMembership ?? planoEncontrado?.adesao) || 0;
@@ -63,13 +62,12 @@ export default function MultiStepForm() {
             subtotal: subtotal,
             total: subtotal
         };
-    };
+    }, [customMembership, planoEncontrado, selectedServices]);
 
-    const [orderValues, setOrderValues] = useState<OrderValues>(calculateOrderValues());
-
-    useEffect(() => {
-        setOrderValues(calculateOrderValues());
-    }, [planoEncontrado, selectedServices, customMembership]);
+    const planDescription = useMemo(
+        () => `Seguro Auto - ${planoEncontrado?.category_name || 'Plano'}`,
+        [planoEncontrado?.category_name]
+    );
 
     const [form, setForm] = useState<FormState>({
         name: "",
@@ -120,12 +118,12 @@ export default function MultiStepForm() {
 
     useEffect(() => {
         const newTotal = orderValues.total - discount;
-        setForm(prev => ({
+        setForm((prev) => ({
             ...prev,
             value: newTotal > 0 ? newTotal.toString() : "0",
-            description: `Seguro Auto - ${planoEncontrado?.category_name || 'Plano'} - ${form.vehicleInfo.model || ''}`
+            description: planDescription
         }));
-    }, [orderValues, discount, planoEncontrado, form.vehicleInfo.model]);
+    }, [orderValues.total, discount, planDescription]);
 
     const handlePlanoEncontrado = (plano: InsurancePlan | null) => {
         setPlanoEncontrado(plano);
@@ -199,11 +197,23 @@ export default function MultiStepForm() {
     };
 
     const nextStep = () => {
-        if (step < 5) setStep(prev => prev + 1);
+        if (step < 5) {
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MultiStepForm.tsx:nextStep',message:'step_change_next',data:{from:step,to:step+1},timestamp:Date.now(),sessionId:'debug-session',runId:'perf1',hypothesisId:'B'})}).catch(()=>{});
+            console.log("[perf][B] step_change_next", { from: step, to: step + 1 });
+            // #endregion
+            setStep(prev => prev + 1);
+        }
     };
 
     const prevStep = () => {
-        if (step > 1) setStep(prev => prev - 1);
+        if (step > 1) {
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MultiStepForm.tsx:prevStep',message:'step_change_prev',data:{from:step,to:step-1},timestamp:Date.now(),sessionId:'debug-session',runId:'perf1',hypothesisId:'B'})}).catch(()=>{});
+            console.log("[perf][B] step_change_prev", { from: step, to: step - 1 });
+            // #endregion
+            setStep(prev => prev - 1);
+        }
     };
 
     const handleBackToPayment = () => {
@@ -414,24 +424,24 @@ export default function MultiStepForm() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
                     <form onSubmit={handleSubmit}>
-                        {step === 1 && (
+                        <div className={step === 1 ? "block" : "hidden"}>
                             <PersonalDataStep
                                 form={form}
                                 onChange={handlePersonalDataChange}
                                 onNext={nextStep}
                             />
-                        )}
+                        </div>
 
-                        {step === 2 && (
+                        <div className={step === 2 ? "block" : "hidden"}>
                             <AddressStep
                                 form={form}
                                 onChange={handleChange}
                                 onBack={prevStep}
                                 onNext={nextStep}
                             />
-                        )}
+                        </div>
 
-                        {step === 3 && (
+                        <div className={step === 3 ? "block" : "hidden"}>
                             <VehicleStep
                                 form={form}
                                 onChange={handleVehicleInfoChange}
@@ -439,9 +449,9 @@ export default function MultiStepForm() {
                                 onNext={nextStep}
                                 onPlanoEncontrado={handlePlanoEncontrado}
                             />
-                        )}
+                        </div>
 
-                        {step === 4 && (
+                        <div className={step === 4 ? "block" : "hidden"}>
                             <PlanSelectionStep
                                 onBack={prevStep}
                                 onNext={nextStep}
@@ -450,9 +460,9 @@ export default function MultiStepForm() {
                                 plano={planoEncontrado}
                                 vehicleInfo={form.vehicleInfo}
                             />
-                        )}
+                        </div>
 
-                        {step === 5 && (
+                        <div className={step === 5 ? "block" : "hidden"}>
                             <PaymentStep
                                 form={form}
                                 onChange={handleCreditCardChange}
@@ -462,7 +472,7 @@ export default function MultiStepForm() {
                                 plano={planoEncontrado}
                                 paymentResult={result} // Passa o resultado para o PaymentStep
                             />
-                        )}
+                        </div>
                     </form>
                 </div>
 

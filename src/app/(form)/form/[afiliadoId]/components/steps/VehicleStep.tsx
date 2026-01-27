@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useEffect, useState } from "react";
+import { useMemo, useCallback, useEffect, useRef, useState } from "react";
 import { FormState, InsurancePlan } from "./types";
 import { createClient } from '@supabase/supabase-js'
 import {
@@ -16,7 +16,74 @@ const supabase = createClient(
 
 const CACHE_KEY = "vehicle_options_cache_v1";
 const CACHE_TTL_MS = 60 * 1000; // 60s
+const FETCH_TIMEOUT_MS = 15 * 1000; // 15s — evita "Carregando..." infinito por rede lenta
 const planCache = new Map<string, InsurancePlan | null>();
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return Promise.race([
+        promise,
+        new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("timeout")), ms)
+        ),
+    ]);
+}
+
+interface VehicleCategory {
+    id: string;
+    name: string;
+    description: string;
+}
+
+type VehicleOptionsCache = {
+    timestamp: number;
+    categories: VehicleCategory[];
+    ranges: string[];
+    inFlight: Promise<{ categories: VehicleCategory[]; ranges: string[] }> | null;
+};
+
+const vehicleOptionsCache: VehicleOptionsCache = {
+    timestamp: 0,
+    categories: [],
+    ranges: [],
+    inFlight: null
+};
+
+const readSessionCache = () => {
+    if (typeof window === "undefined") return null;
+    const cached = sessionStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    try {
+        const parsed = JSON.parse(cached) as {
+            timestamp: number;
+            categories?: VehicleCategory[];
+            ranges?: Array<{ vehicle_range: string }>;
+        };
+        const ranges = [...new Set(
+            (parsed.ranges || [])
+                .map((plan) => plan.vehicle_range)
+                .filter((range): range is string => typeof range === "string")
+        )];
+        return {
+            timestamp: parsed.timestamp,
+            categories: parsed.categories || [],
+            ranges
+        };
+    } catch {
+        return null;
+    }
+};
+
+const writeSessionCache = (categories: VehicleCategory[], ranges: string[]) => {
+    if (typeof window === "undefined") return;
+    sessionStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({
+            timestamp: Date.now(),
+            categories,
+            ranges: ranges.map((range) => ({ vehicle_range: range }))
+        })
+    );
+};
 
 interface VehicleStepProps {
     form: FormState;
@@ -26,88 +93,109 @@ interface VehicleStepProps {
     onPlanoEncontrado: (plano: InsurancePlan | null) => void;
 }
 
-interface VehicleCategory {
-    id: string;
-    name: string;
-    description: string;
-}
-
 export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEncontrado }: VehicleStepProps) {
     const [vehicleCategories, setVehicleCategories] = useState<VehicleCategory[]>([]);
     const [fipeValues, setFipeValues] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
     const [findingPlan, setFindingPlan] = useState(false);
+    const mountedRef = useRef(true);
 
     useEffect(() => {
-        const fetchData = async (isBackground = false) => {
-            try {
-                if (!isBackground) setLoading(true);
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    }, []);
 
+    useEffect(() => {
+        let isActive = true;
+
+        const applyOptions = (categories: VehicleCategory[], ranges: string[]) => {
+            if (!isActive) return;
+            setVehicleCategories(categories);
+            setFipeValues(ranges);
+            setLoadError(null);
+            setLoading(false);
+        };
+
+        const fetchOptions = async () => {
+            if (vehicleOptionsCache.inFlight) return vehicleOptionsCache.inFlight;
+
+            vehicleOptionsCache.inFlight = (async () => {
                 const [categoriesResult, plansResult] = await Promise.all([
-                    supabase.from('vehicle_categories').select('id, name, description').order('name'),
-                    supabase.from('insurance_plans').select('vehicle_range').order('vehicle_range'),
+                    supabase.from("vehicle_categories").select("id, name, description").order("name"),
+                    supabase.from("insurance_plans").select("vehicle_range").order("vehicle_range")
                 ]);
 
                 if (categoriesResult.error) {
-                    console.error('Erro ao buscar categorias:', categoriesResult.error);
-                } else {
-                    setVehicleCategories(categoriesResult.data || []);
+                    console.error("Erro ao buscar categorias:", categoriesResult.error);
                 }
 
                 if (plansResult.error) {
-                    console.error('Erro ao buscar planos:', plansResult.error);
-                } else {
-                    const uniqueRanges = [...new Set((plansResult.data || []).map(plan => plan.vehicle_range))];
-                    setFipeValues(uniqueRanges);
+                    console.error("Erro ao buscar planos:", plansResult.error);
                 }
 
-                if (typeof window !== "undefined") {
-                    sessionStorage.setItem(
-                        CACHE_KEY,
-                        JSON.stringify({
-                            timestamp: Date.now(),
-                            categories: categoriesResult.data || [],
-                            ranges: plansResult.data || [],
-                        })
-                    );
-                }
-            } catch (error) {
-                console.error('Erro ao buscar dados:', error);
+                const categories = categoriesResult.data || [];
+                const ranges = [...new Set((plansResult.data || []).map((plan) => plan.vehicle_range))];
+
+                vehicleOptionsCache.timestamp = Date.now();
+                vehicleOptionsCache.categories = categories;
+                vehicleOptionsCache.ranges = ranges;
+                writeSessionCache(categories, ranges);
+
+                return { categories, ranges };
+            })();
+
+            try {
+                return await vehicleOptionsCache.inFlight;
             } finally {
-                if (!isBackground) setLoading(false);
+                vehicleOptionsCache.inFlight = null;
             }
         };
 
-        if (typeof window !== "undefined") {
-            const cached = sessionStorage.getItem(CACHE_KEY);
-            if (cached) {
-                try {
-                    const parsed = JSON.parse(cached) as {
-                        timestamp: number;
-                        categories?: VehicleCategory[];
-                        ranges?: Array<{ vehicle_range: string }>;
-                    };
-                    if (Date.now() - parsed.timestamp < CACHE_TTL_MS) {
-                        setVehicleCategories(parsed.categories || []);
-                        const uniqueRanges = [...new Set(
-                            (parsed.ranges || [])
-                                .map((plan) => plan.vehicle_range)
-                                .filter((range): range is string => typeof range === 'string')
-                        )];
-                        setFipeValues(uniqueRanges);
-                        setLoading(false);
-                        // revalidate em background
-                        fetchData(true);
-                        return;
-                    }
-                } catch {
-                    // fallback para fetch normal
-                }
+        const loadOptions = async () => {
+            const now = Date.now();
+            // Cache em memória: evita setLoading(true) e selects em "Carregando..." desnecessário
+            if (vehicleOptionsCache.timestamp && now - vehicleOptionsCache.timestamp < CACHE_TTL_MS) {
+                applyOptions(vehicleOptionsCache.categories, vehicleOptionsCache.ranges);
+                return;
             }
-        }
 
-        fetchData();
-    }, []);
+            const sessionCache = readSessionCache();
+            if (sessionCache && now - sessionCache.timestamp < CACHE_TTL_MS) {
+                vehicleOptionsCache.timestamp = sessionCache.timestamp;
+                vehicleOptionsCache.categories = sessionCache.categories;
+                vehicleOptionsCache.ranges = sessionCache.ranges;
+                applyOptions(sessionCache.categories, sessionCache.ranges);
+                return;
+            }
+
+            setLoading(true);
+            setLoadError(null);
+            try {
+                const data = await withTimeout(fetchOptions(), FETCH_TIMEOUT_MS);
+                if (isActive) {
+                    applyOptions(data.categories, data.ranges);
+                }
+            } catch (error) {
+                if (isActive) {
+                    console.error("Erro ao buscar dados:", error);
+                    setLoadError("Não foi possível carregar. Tente novamente.");
+                    vehicleOptionsCache.inFlight = null; // permite nova requisição ao clicar em "Tentar de novo"
+                }
+            } finally {
+                if (isActive) setLoading(false);
+            }
+        };
+
+        loadOptions();
+
+        return () => {
+            isActive = false;
+        };
+    }, [retryCount]);
 
     // Função auxiliar para criar eventos sintéticos para o onChange
     const createChangeEvent = (name: string, value: string | boolean) => {
@@ -154,6 +242,12 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
         if (normalized.includes("ESPECIAL_II")) return "ESPECIAL_II";
         if (normalized.includes("UTILITARIO")) return "UTILITARIO";
         return normalized;
+    }, []);
+
+    const handleRetry = useCallback(() => {
+        setLoadError(null);
+        vehicleOptionsCache.inFlight = null;
+        setRetryCount((c) => c + 1);
     }, []);
 
     const handleNextWithPlan = useCallback(async () => {
@@ -206,7 +300,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
             console.error('Erro ao buscar plano:', error);
             onPlanoEncontrado(null);
         } finally {
-            setFindingPlan(false);
+            if (mountedRef.current) setFindingPlan(false);
         }
     }, [
         form.vehicleInfo.category,
@@ -222,57 +316,74 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
         <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white">Dados do Veículo</h3>
 
-            {/* Categoria do carro */}
-            <div className="space-y-2">
-                <label className="text-sm text-white">Categoria do carro</label>
-                {loading ? (
-                    <div className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded">
-                        Carregando...
+            {/* Categoria do carro e Valor FIPE — erro com retry ou conteúdo normal */}
+            {loadError ? (
+                <div className="space-y-2">
+                    <label className="text-sm text-white">Categoria do carro</label>
+                    <label className="text-sm text-white block mt-1">Valor do carro (FIPE)</label>
+                    <div className="w-full p-3 border border-amber-600/50 bg-amber-900/20 text-amber-200 rounded flex flex-col gap-2">
+                        <span>{loadError}</span>
+                        <button
+                            type="button"
+                            onClick={handleRetry}
+                            className="self-start px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded transition-colors"
+                        >
+                            Tentar de novo
+                        </button>
                     </div>
-                ) : (
-                    <Select
-                        value={form.vehicleInfo.category || ""}
-                        onValueChange={(value) => createChangeEvent('category', value)}
-                    >
-                        <SelectTrigger className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded focus:outline-none focus:border-blue-500">
-                            <SelectValue placeholder="Selecione a categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {vehicleCategories.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
-                                    {category.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                )}
-            </div>
-
-            {/* Valor do carro (FIPE) */}
-            <div className="space-y-2">
-                <label className="text-sm text-white">Valor do carro (FIPE)</label>
-                {loading ? (
-                    <div className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded">
-                        Carregando...
+                </div>
+            ) : (
+                <>
+                    <div className="space-y-2">
+                        <label className="text-sm text-white">Categoria do carro</label>
+                        {loading ? (
+                            <div className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded">
+                                Carregando...
+                            </div>
+                        ) : (
+                            <Select
+                                value={form.vehicleInfo.category || ""}
+                                onValueChange={(value) => createChangeEvent('category', value)}
+                            >
+                                <SelectTrigger className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded focus:outline-none focus:border-blue-500">
+                                    <SelectValue placeholder="Selecione a categoria" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {vehicleCategories.map((category) => (
+                                        <SelectItem key={category.id} value={category.id}>
+                                            {category.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
                     </div>
-                ) : (
-                    <Select
-                        value={form.vehicleInfo.fipeValue || ""}
-                        onValueChange={(value) => createChangeEvent('fipeValue', value)}
-                    >
-                        <SelectTrigger className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded focus:outline-none focus:border-blue-500">
-                            <SelectValue placeholder="Selecione o valor FIPE" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {fipeValues.map((range, index) => (
-                                <SelectItem key={index} value={range}>
-                                    {range}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                )}
-            </div>
+                    <div className="space-y-2">
+                        <label className="text-sm text-white">Valor do carro (FIPE)</label>
+                        {loading ? (
+                            <div className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded">
+                                Carregando...
+                            </div>
+                        ) : (
+                            <Select
+                                value={form.vehicleInfo.fipeValue || ""}
+                                onValueChange={(value) => createChangeEvent('fipeValue', value)}
+                            >
+                                <SelectTrigger className="w-full p-3 border border-gray-600 bg-gray-800 text-white rounded focus:outline-none focus:border-blue-500">
+                                    <SelectValue placeholder="Selecione o valor FIPE" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {fipeValues.map((range, index) => (
+                                        <SelectItem key={index} value={range}>
+                                            {range}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    </div>
+                </>
+            )}
 
             {/* Uso particular */}
             <div className="space-y-2">
