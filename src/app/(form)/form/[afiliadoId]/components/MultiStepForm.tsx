@@ -470,7 +470,9 @@ export default function MultiStepForm() {
                                 onSubmit={handleSubmit}
                                 loading={loading}
                                 plano={planoEncontrado}
-                                paymentResult={result} // Passa o resultado para o PaymentStep
+                                orderValues={orderValues}
+                                totalWithDiscount={totalWithDiscount}
+                                paymentResult={result}
                             />
                         </div>
                     </form>

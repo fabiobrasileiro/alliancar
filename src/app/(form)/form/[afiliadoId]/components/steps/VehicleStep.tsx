@@ -272,17 +272,25 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
 
         setFindingPlan(true);
         try {
-            const { data, error } = await supabase
+            const planPromise = supabase
                 .from('insurance_plans')
                 .select('id, category_name, vehicle_range, adesao, monthly_payment, percentual_7_5, percentual_70, participation_min, vehicles')
                 .eq('category_name', planCategoryName)
                 .eq('vehicle_range', fipeRange)
                 .limit(1);
 
+            // PostgrestFilterBuilder é thenable mas não Promise nativa - precisa cast via unknown
+            const result = await withTimeout(
+                planPromise as unknown as Promise<{ data: InsurancePlan[] | null; error: unknown }>,
+                FETCH_TIMEOUT_MS
+            );
+            const { data, error } = result;
+
             if (error) {
                 console.error('Erro ao buscar plano:', error);
                 planCache.set(cacheKey, null);
                 onPlanoEncontrado(null);
+                if (mountedRef.current) setFindingPlan(false);
                 return;
             }
 
@@ -292,13 +300,21 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
 
             if (!plan) {
                 alert("Plano não encontrado para a categoria e faixa FIPE selecionadas.");
+                if (mountedRef.current) setFindingPlan(false);
                 return;
             }
 
             onNext();
-        } catch (error) {
-            console.error('Erro ao buscar plano:', error);
+        } catch (err) {
+            console.error('Erro ao buscar plano:', err);
             onPlanoEncontrado(null);
+            if (mountedRef.current) {
+                setFindingPlan(false);
+                const isTimeout = err instanceof Error && err.message === "timeout";
+                if (isTimeout) {
+                    alert("A busca do plano demorou muito. Verifique sua conexão e tente novamente.");
+                }
+            }
         } finally {
             if (mountedRef.current) setFindingPlan(false);
         }
