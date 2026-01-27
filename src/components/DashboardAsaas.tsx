@@ -23,9 +23,11 @@ interface DashboardData {
 interface DashboardAsaasProps {
   afiliadoId: string;
   perfilData: any;
+  initialData?: DashboardData | null;
+  initialUpdatedAt?: string | null;
 }
 
-export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaasProps) {
+export default function DashboardAsaas({ afiliadoId, perfilData, initialData, initialUpdatedAt }: DashboardAsaasProps) {
   // Função auxiliar para obter dados do cache
   const getCachedData = (): { data: DashboardData | null; timestamp: number | null } => {
     if (typeof window === 'undefined') return { data: null, timestamp: null };
@@ -51,12 +53,17 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
 
   // Restaura dados do cache no estado inicial usando lazy initialization (padrão React)
   const cached = getCachedData();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(cached.data);
-  const [loading, setLoading] = useState(!cached.data); // Só mostra loading se não tiver cache
+  const initialDashboardData = initialData ?? cached.data;
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(initialDashboardData);
+  const [loading, setLoading] = useState(!initialDashboardData); // Só mostra loading se não tiver cache/initial
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(
-    cached.timestamp ? new Date(cached.timestamp) : null
+    initialUpdatedAt
+      ? new Date(initialUpdatedAt)
+      : cached.timestamp
+        ? new Date(cached.timestamp)
+        : null
   );
   const [hideFinancialValues, setHideFinancialValues] = useState<boolean>(() => {
     // Carrega do localStorage se existir
@@ -69,8 +76,10 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
 
   // Ref para evitar múltiplas chamadas simultâneas
   const fetchingRef = useRef(false);
-  const hasLoadedRef = useRef(!!cached.data); // Já carregou se tem cache
+  const hasLoadedRef = useRef(!!initialDashboardData); // Já carregou se tem cache/initial
   const lastAfiliadoIdRef = useRef<string | null>(null);
+  const effectRunRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Função para verificar se já carregou recentemente (cache de 60 segundos - staleTime)
@@ -91,6 +100,18 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
     }
     lastAfiliadoIdRef.current = afiliadoId;
   }, [afiliadoId]);
+
+  useEffect(() => {
+    if (!initialData || typeof window === 'undefined') return;
+    sessionStorage.setItem(`dashboard_cache_${afiliadoId}`, Date.now().toString());
+    sessionStorage.setItem(`dashboard_data_${afiliadoId}`, JSON.stringify(initialData));
+  }, [afiliadoId, initialData]);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Função para formatar valores monetários - memoizada
   const formatCurrency = useCallback((value: number): string => {
@@ -116,6 +137,10 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
     }
 
     // Evita múltiplas chamadas simultâneas
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardAsaas.tsx:fetchDashboardData:start',message:'dashboard_fetch_start',data:{afiliadoId,isManualRefresh,fetching:fetchingRef.current,hasLoaded:hasLoadedRef.current,hasCache:hasRecentCache()},timestamp:Date.now(),sessionId:'debug-session',runId:'perf3',hypothesisId:'I'})}).catch(()=>{});
+    console.log("[perf][I] dashboard_fetch_start", { afiliadoId, isManualRefresh, fetching: fetchingRef.current, hasLoaded: hasLoadedRef.current, hasCache: hasRecentCache() });
+    // #endregion
     if (fetchingRef.current) {
       return;
     }
@@ -146,6 +171,10 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
       const response = await fetch(`/api/dashboard?afiliadoId=${afiliadoId}`, {
         signal: abortController.signal
       });
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardAsaas.tsx:fetchDashboardData:response',message:'dashboard_fetch_response',data:{status:response.status,elapsedMs:Date.now()-startTime,afiliadoId},timestamp:Date.now(),sessionId:'debug-session',runId:'perf1',hypothesisId:'I'})}).catch(()=>{});
+      console.log("[perf][I] dashboard_fetch_response", { status: response.status, elapsedMs: Date.now() - startTime, afiliadoId });
+      // #endregion
       
       // Verifica se foi cancelado
       if (abortController.signal.aborted) {
@@ -175,20 +204,28 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
           sessionStorage.setItem(`dashboard_data_${afiliadoId}`, JSON.stringify(data.data));
         }
         console.log("✅ Dados do dashboard carregados:", data.data);
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardAsaas.tsx:fetchDashboardData:done',message:'dashboard_fetch_done',data:{durationMs:duration,afiliadoId},timestamp:Date.now(),sessionId:'debug-session',runId:'perf1',hypothesisId:'I'})}).catch(()=>{});
+        console.log("[perf][I] dashboard_fetch_done", { durationMs: duration, afiliadoId });
+        // #endregion
       } else {
         throw new Error(data.error || 'Erro ao carregar dados');
       }
     } catch (err) {
       // Ignora erros de abort
       if (err instanceof Error && err.name === 'AbortError') {
+        if (isMountedRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+          fetchingRef.current = false;
+        }
         return;
       }
       const duration = Date.now() - startTime;
       console.error('❌ Erro ao buscar dados:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
-      // Só reseta se não foi cancelado
-      if (!abortController.signal.aborted) {
+      if (isMountedRef.current) {
         setLoading(false);
         setRefreshing(false);
         fetchingRef.current = false;
@@ -259,9 +296,18 @@ export default function DashboardAsaas({ afiliadoId, perfilData }: DashboardAsaa
   }, [dashboardData, formatCurrency, formatCurrencyWithoutSymbol, hideFinancialValues]);
 
   useEffect(() => {
+    const now = Date.now();
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardAsaas.tsx:useEffect',message:'dashboard_effect_run',data:{hasAfiliadoId:!!afiliadoId,fetching:fetchingRef.current,hasLoaded:hasLoadedRef.current,hasCache:hasRecentCache(),dashboardData:!!dashboardData,now},timestamp:Date.now(),sessionId:'debug-session',runId:'perf2',hypothesisId:'I'})}).catch(()=>{});
+    console.log("[perf][I] dashboard_effect_run", { hasAfiliadoId: !!afiliadoId, fetching: fetchingRef.current, hasLoaded: hasLoadedRef.current, hasCache: hasRecentCache(), dashboardData: !!dashboardData });
+    // #endregion
     if (!afiliadoId || fetchingRef.current) {
       return;
     }
+    if (effectRunRef.current === afiliadoId) {
+      return;
+    }
+    effectRunRef.current = afiliadoId;
 
     // Se já tem dados carregados (do cache ou fetch anterior), não precisa fazer fetch novamente
     if (hasLoadedRef.current && dashboardData) {

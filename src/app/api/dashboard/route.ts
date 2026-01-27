@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 
 interface AsaasCustomer {
@@ -28,6 +29,7 @@ interface Saque {
 
 export async function GET(request: Request) {
   try {
+    const startTime = Date.now();
     const { searchParams } = new URL(request.url);
     const afiliadoId = searchParams.get('afiliadoId');
 
@@ -39,9 +41,14 @@ export async function GET(request: Request) {
     }
 
     console.log("📊 Buscando dados para afiliado:", afiliadoId);
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/dashboard/route.ts:start',message:'api_dashboard_start',data:{afiliadoId},timestamp:Date.now(),sessionId:'debug-session',runId:'perf1',hypothesisId:'H'})}).catch(()=>{});
+    console.log("[perf][H] api_dashboard_start", { afiliadoId });
+    // #endregion
 
     // Inicializar Supabase
-    const supabase = createClient();
+    const cookieStore = cookies();
+    const supabase = createClient(cookieStore);
 
     // 1️⃣ Buscar SAQUES do afiliado (para deduzir do total)
     const saquesPromise = supabase
@@ -49,32 +56,48 @@ export async function GET(request: Request) {
       .select('id, valor, status')
       .eq('afiliado_id', afiliadoId);
 
-    // 2️⃣ Buscar dados do Asaas em paralelo
-    const customersPromise = fetch(
+    // 2️⃣ Buscar dados do Asaas em paralelo (com timeout de 10s)
+    const customersStart = Date.now();
+    const paymentsStart = Date.now();
+    const subscriptionsStart = Date.now();
+    
+    // Helper para criar fetch com timeout
+    const fetchWithTimeout = (url: string, options: RequestInit, timeoutMs = 10000) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      
+      return fetch(url, {
+        ...options,
+        signal: controller.signal
+      })
+        .finally(() => clearTimeout(timeoutId))
+        .catch(err => {
+          if (err.name === 'AbortError') {
+            console.error(`❌ Timeout ao buscar ${url}`);
+          } else {
+            console.error(`❌ Erro ao buscar ${url}:`, err);
+          }
+          return { ok: false, status: 500, json: async () => ({ data: [] }) };
+        });
+    };
+    
+    const fetchHeaders = {
+      "access_token": process.env.ASAAS_API_KEY!
+    };
+    
+    const customersPromise = fetchWithTimeout(
       `${process.env.ASAAS_BASE_URL}/customers?externalReference=${afiliadoId}`,
-      {
-        headers: {
-          "access_token": process.env.ASAAS_API_KEY!
-        }
-      }
+      { headers: fetchHeaders }
     );
 
-    const paymentsPromise = fetch(
+    const paymentsPromise = fetchWithTimeout(
       `${process.env.ASAAS_BASE_URL}/payments?externalReference=${afiliadoId}`,
-      {
-        headers: {
-          "access_token": process.env.ASAAS_API_KEY!
-        }
-      }
+      { headers: fetchHeaders }
     );
 
-    const subscriptionsPromise = fetch(
+    const subscriptionsPromise = fetchWithTimeout(
       `${process.env.ASAAS_BASE_URL}/subscriptions?externalReference=${afiliadoId}`,
-      {
-        headers: {
-          "access_token": process.env.ASAAS_API_KEY!
-        }
-      }
+      { headers: fetchHeaders }
     );
 
     const [
@@ -88,6 +111,10 @@ export async function GET(request: Request) {
       paymentsPromise,
       subscriptionsPromise
     ]);
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'api/dashboard/route.ts:afterPromiseAll',message:'api_dashboard_after_promises',data:{elapsedMs:Date.now()-startTime,customersStatus:customersResponse.status,paymentsStatus:paymentsResponse.status,subscriptionsStatus:subscriptionsResponse.status,customersMs:Date.now()-customersStart,paymentsMs:Date.now()-paymentsStart,subscriptionsMs:Date.now()-subscriptionsStart},timestamp:Date.now(),sessionId:'debug-session',runId:'perf3',hypothesisId:'H'})}).catch(()=>{});
+    console.log("[perf][H] api_dashboard_after_promises", { elapsedMs: Date.now() - startTime, customersStatus: customersResponse.status, paymentsStatus: paymentsResponse.status, subscriptionsStatus: subscriptionsResponse.status, customersMs: Date.now() - customersStart, paymentsMs: Date.now() - paymentsStart, subscriptionsMs: Date.now() - subscriptionsStart });
+    // #endregion
 
     if (saquesError) {
       console.error('❌ Erro ao buscar saques:', saquesError);

@@ -162,11 +162,13 @@ export default function ContatosPage() {
       
       if (abortController.signal.aborted) return;
       
+      const customersData = await customersResponse.json().catch(() => ({}));
+      
       if (!customersResponse.ok) {
-        throw new Error('Erro ao buscar clientes do Asaas');
+        const msg = customersData?.error || 'Erro ao buscar clientes do Asaas';
+        const detail = customersData?.details ? ` — ${customersData.details}` : '';
+        throw new Error(`${msg}${detail}`);
       }
-
-      const customersData = await customersResponse.json();
       
       if (customersData.success) {
         setContatos(customersData.data || []);

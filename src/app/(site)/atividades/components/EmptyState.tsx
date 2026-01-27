@@ -1,8 +1,17 @@
-import React from "react";
+import React, { ReactNode } from "react";
 
-export const EmptyState: React.FC = () => {
+interface EmptyStateProps {
+  children?: ReactNode;
+}
+
+export const EmptyState: React.FC<EmptyStateProps> = ({ children }) => {
   return (
-    <div className="flex flex-col gap-2 items-center my-8 w-full bg-bg text-a1 p-8 rounded-md">
+    <div className="flex flex-col gap-6 items-center my-8 w-full bg-bg text-a1 p-8 rounded-md">
+      {children && (
+        <div className="w-full mb-4">
+          {children}
+        </div>
+      )}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="80"

@@ -1,77 +1,34 @@
-'use client';
-
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { createClient } from '@/utils/supabase/client';
-import { useUser } from '@/context/UserContext';
-import { toast } from 'sonner';
+import { cookies } from 'next/headers';
+import { createClient } from '@/utils/supabase/server';
 import DashboardAsaas from '@/components/DashboardAsaas';
 
-export default function DashboardPage() {
-  const [perfilData, setPerfilData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const { user } = useUser();
-  // Memoizar o cliente supabase para evitar recriações
-  const supabase = useMemo(() => createClient(), []);
-  const fetchingRef = useRef(false);
+export default async function DashboardPage() {
+  const cookieStore = cookies();
+  const supabase = createClient(cookieStore);
 
-  // 🔹 Carrega perfil do afiliado autenticado
-  useEffect(() => {
-    if (!user || fetchingRef.current) return;
+  const {
+    data: { user },
+    error: userError
+  } = await supabase.auth.getUser();
 
-    fetchingRef.current = true;
-    setLoading(true);
-
-    const fetchPerfil = async () => {
-      try {
-        const {
-          data: { user: authUser },
-          error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError || !authUser) {
-          toast.error('Usuário não autenticado');
-          // Não fazer return aqui - deixar o finally executar
-        } else {
-          const { data: perfilResponse, error: perfilError } = await supabase
-            .from('afiliados')
-            .select('*')
-            .eq('auth_id', authUser.id)
-            .single();
-
-          if (perfilError) {
-            console.error('Erro ao buscar perfil:', perfilError);
-            toast.error('Erro ao buscar perfil');
-            // Não fazer return aqui - deixar o finally executar
-          } else if (perfilResponse) {
-            setPerfilData(perfilResponse);
-            console.log("👤 Perfil carregado:", perfilResponse);
-          }
-        }
-      } catch (error) {
-        console.error('Erro:', error);
-        toast.error('Erro ao carregar perfil');
-      } finally {
-        // O finally sempre executa, garantindo que o loading seja resetado
-        setLoading(false);
-        fetchingRef.current = false;
-      }
-    };
-
-    fetchPerfil();
-  }, [user?.id, supabase]);
-
-  if (loading) {
+  if (userError || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="text-white mt-4">Carregando dashboard...</p>
+          <p className="text-white text-lg">Usuário não autenticado</p>
+          <p className="text-gray-400 mt-2">Faça login novamente</p>
         </div>
       </div>
     );
   }
 
-  if (!perfilData) {
+  const { data: perfilData, error: perfilError } = await supabase
+    .from('afiliados')
+    .select('*')
+    .eq('auth_id', user.id)
+    .single();
+
+  if (perfilError || !perfilData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -82,13 +39,29 @@ export default function DashboardPage() {
     );
   }
 
+  let dashboardData = null;
+  let dashboardUpdatedAt: string | null = null;
+  try {
+    const dashboardRes = await fetch(`/api/dashboard?afiliadoId=${perfilData.id}`, {
+      cache: 'no-store'
+    });
+    if (dashboardRes.ok) {
+      const dashboardJson = await dashboardRes.json();
+      if (dashboardJson?.success) {
+        dashboardData = dashboardJson.data ?? null;
+        dashboardUpdatedAt = new Date().toISOString();
+      }
+    }
+  } catch {
+    // mantém dashboardData como null e deixa o client lidar
+  }
+
   return (
-    <>
-      <DashboardAsaas 
-        afiliadoId={perfilData.id} 
-        perfilData={perfilData} 
-      />
-      
-    </>
+    <DashboardAsaas
+      afiliadoId={perfilData.id}
+      perfilData={perfilData}
+      initialData={dashboardData}
+      initialUpdatedAt={dashboardUpdatedAt}
+    />
   );
 }

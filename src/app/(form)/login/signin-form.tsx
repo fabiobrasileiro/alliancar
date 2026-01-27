@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -18,6 +18,7 @@ import { createClient } from "@/utils/supabase/client";
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const supabase = useMemo(() => createClient(), []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -25,12 +26,16 @@ export default function LoginForm() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isResetMode, setIsResetMode] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const redirectTo = useMemo(
+    () => searchParams.get("redirectedFrom") || "/dashboard",
+    [searchParams],
+  );
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage(null);
     setSuccessMessage(null);
-    const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -42,16 +47,14 @@ export default function LoginForm() {
       );
       return;
     }
-    const redirectTo = searchParams.get("redirectedFrom") || "/dashboard";
     router.replace(redirectTo);
-  };
+  }, [email, password, redirectTo, router, supabase]);
 
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+  const handleResetPasswordSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage(null);
     setSuccessMessage(null);
-    const supabase = createClient();
     const redirectTo =
       typeof window !== "undefined"
         ? `${window.location.origin}/login`
@@ -71,7 +74,7 @@ export default function LoginForm() {
     setSuccessMessage(
       "Se o e-mail existir, enviaremos um link para recuperar a senha.",
     );
-  };
+  }, [email, supabase]);
 
   return (
     <div className="flex items-center h-screen justify-center px-4 py-10">
