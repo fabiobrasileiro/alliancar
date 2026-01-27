@@ -16,7 +16,7 @@ const supabase = createClient(
 
 const CACHE_KEY = "vehicle_options_cache_v1";
 const CACHE_TTL_MS = 60 * 1000; // 60s
-const FETCH_TIMEOUT_MS = 15 * 1000; // 15s — evita "Carregando..." infinito por rede lenta
+const FETCH_TIMEOUT_MS = 30 * 1000; // 30s — mais margem em rede lenta / produção (Vercel) // 15s — evita "Carregando..." infinito por rede lenta
 const planCache = new Map<string, InsurancePlan | null>();
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
