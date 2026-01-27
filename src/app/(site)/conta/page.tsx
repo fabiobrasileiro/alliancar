@@ -26,9 +26,8 @@ const mapSubscriptionStatus = (status: string) => {
 
 async function fetchDashboardData(afiliadoId: string): Promise<DashboardData | null> {
   try {
-    // In Server Components, construct absolute URL for internal API routes
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
-      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    // Usa apenas NEXT_PUBLIC_BASE_URL (definir na Vercel = URL do site em produção)
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const response = await fetch(`${baseUrl}/api/dashboard?afiliadoId=${afiliadoId}`, {
       cache: 'no-store',
     });
@@ -53,10 +52,9 @@ async function fetchDashboardData(afiliadoId: string): Promise<DashboardData | n
 
 async function fetchVendas(afiliadoId: string): Promise<Venda[]> {
   try {
-    // In Server Components, construct absolute URL for internal API routes
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
-      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-    
+    // Usa apenas NEXT_PUBLIC_BASE_URL (definir na Vercel = URL do site em produção)
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
     // Buscar pagamentos e assinaturas em paralelo
     const [paymentsResponse, subscriptionsResponse] = await Promise.all([
       fetch(`${baseUrl}/api/asaas-data?afiliadoId=${afiliadoId}&tipo=payments`, {

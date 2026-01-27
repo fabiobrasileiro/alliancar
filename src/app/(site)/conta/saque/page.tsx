@@ -40,9 +40,8 @@ export default async function Saques() {
 
   let dashboardData = null;
   try {
-    // In Server Components, construct absolute URL for internal API routes
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL 
-      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    // Usa apenas NEXT_PUBLIC_BASE_URL (definir na Vercel = URL do site em produção)
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const response = await fetch(`${baseUrl}/api/dashboard?afiliadoId=${afiliado.id}`, { 
       cache: "no-store" 
     });
