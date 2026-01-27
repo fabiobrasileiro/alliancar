@@ -1,5 +1,5 @@
 // steps/PaymentStep.tsx
-import { FormState, InsurancePlan } from "./types";
+import { FormState, InsurancePlan, OrderValues } from "./types";
 import PixPaymentDisplay from "../PixPaymentDisplay";
 
 interface PaymentStepProps {
@@ -9,10 +9,12 @@ interface PaymentStepProps {
     onSubmit: (e: React.FormEvent) => void;
     loading: boolean;
     plano: InsurancePlan | null;
+    orderValues?: OrderValues;
+    totalWithDiscount?: number;
     paymentResult?: any;
 }
 
-export default function PaymentStep({ form, onChange, onBack, onSubmit, loading, plano, paymentResult }: PaymentStepProps) {
+export default function PaymentStep({ form, onChange, onBack, onSubmit, loading, plano, orderValues, totalWithDiscount, paymentResult }: PaymentStepProps) {
     const handlePaymentMethodChange = (method: string) => {
         const event = {
             target: {
@@ -35,20 +37,20 @@ export default function PaymentStep({ form, onChange, onBack, onSubmit, loading,
         <div className="space-y-6">
             <h3 className="text-lg font-semibold text-white">Pagamento</h3>
 
-            {/* Resumo do valor */}
+            {/* Resumo do valor — usa orderValues/totalWithDiscount (inclui link personalizado ?adesao=) para ficar igual ao Resumo do Pedido */}
             <div className="bg-gray-800 border border-gray-600 rounded-lg p-6">
                 <h4 className="font-semibold text-white mb-4">Resumo do Pagamento</h4>
                 
                 <div className="space-y-3">
                     <div className="flex justify-between text-white">
                         <span>Taxa de Ativação:</span>
-                        <span className="font-semibold">R$ {plano?.adesao?.toFixed(2) || '0,00'}</span>
+                        <span className="font-semibold">R$ {(orderValues?.membership ?? plano?.adesao ?? 0).toFixed(2)}</span>
                     </div>
                     
                     <div className="border-t border-gray-600 pt-3">
                         <div className="flex justify-between text-white text-lg font-bold">
                             <span>Total a pagar:</span>
-                            <span>R$ {plano?.adesao?.toFixed(2) || '0,00'}</span>
+                            <span>R$ {(typeof totalWithDiscount === "number" ? totalWithDiscount : (plano?.adesao ?? 0)).toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
