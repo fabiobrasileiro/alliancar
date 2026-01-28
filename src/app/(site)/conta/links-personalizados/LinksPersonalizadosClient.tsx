@@ -21,8 +21,6 @@ interface LinksPersonalizadosClientProps {
 }
 
 export default function LinksPersonalizadosClient({ initialAfiliado }: LinksPersonalizadosClientProps) {
-  const supabase = createClient();
-
   const [afiliado, setAfiliado] = useState<Afiliado | null>(initialAfiliado);
   const [saving, setSaving] = useState(false);
   const [copying, setCopying] = useState(false);
@@ -70,16 +68,76 @@ export default function LinksPersonalizadosClient({ initialAfiliado }: LinksPers
 
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from("afiliados")
-        .update({
+      // Usa REST direto do Supabase (igual aos testes no DevTools) com timeout controlado
+      const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: 'debug-session',
+          runId: 'links-personalizados',
+          hypothesisId: 'H7',
+          location: 'LinksPersonalizadosClient.tsx:handleSalvarValorPadrao:start',
+          message: 'handleSalvarValorPadrao start',
+          data: {
+            afiliadoId: afiliado.id,
+            valorNumerico,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => { });
+      // #endregion
+
+      const startTime = Date.now();
+
+      const url = new URL(`${baseUrl}/rest/v1/afiliados`);
+      url.searchParams.set("id", `eq.${afiliado.id}`);
+
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 15_000); // 15s
+
+      const response = await fetch(url.toString(), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: anonKey || "",
+          Authorization: `Bearer ${anonKey}`,
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({
           valor_adesao: valorNumerico,
           atualizado_em: new Date().toISOString(),
-        })
-        .eq("id", afiliado.id);
+        }),
+        signal: controller.signal,
+      }).finally(() => window.clearTimeout(timeoutId));
 
-      if (error) {
-        console.error("Erro ao salvar valor de adesão:", error);
+      const durationMs = Date.now() - startTime;
+
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: 'debug-session',
+          runId: 'links-personalizados',
+          hypothesisId: 'H7',
+          location: 'LinksPersonalizadosClient.tsx:handleSalvarValorPadrao:result',
+          message: 'handleSalvarValorPadrao result',
+          data: {
+            durationMs,
+            status: response.status,
+            ok: response.ok,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => { });
+      // #endregion
+
+      if (!response.ok) {
+        console.error("Erro HTTP ao salvar valor de adesão:", response.status);
         toast.error("Erro ao salvar valor de adesão.");
         setSaving(false);
         return;
@@ -89,6 +147,26 @@ export default function LinksPersonalizadosClient({ initialAfiliado }: LinksPers
       setAfiliado((prev) => (prev ? { ...prev, valor_adesao: valorNumerico } : prev));
     } catch (err) {
       console.error("Erro ao salvar valor de adesão:", err);
+
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: 'debug-session',
+          runId: 'links-personalizados',
+          hypothesisId: 'H7',
+          location: 'LinksPersonalizadosClient.tsx:handleSalvarValorPadrao:error',
+          message: 'handleSalvarValorPadrao error',
+          data: {
+            errorMessage: err instanceof Error ? err.message : String(err),
+            errorName: err instanceof Error ? err.name : 'unknown',
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => { });
+      // #endregion
+
       toast.error("Erro ao salvar valor de adesão.");
     } finally {
       setSaving(false);
