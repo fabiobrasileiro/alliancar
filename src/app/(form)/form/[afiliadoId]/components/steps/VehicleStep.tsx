@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from "react";
 import { FormState, InsurancePlan } from "./types";
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/utils/supabase/client'
 import {
     Select,
     SelectContent,
@@ -9,10 +9,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Cliente será criado dentro das funções para evitar estado corrompido após inatividade
+// (problema conhecido do Supabase: cliente singleton pode travar após 1-2min de inatividade)
 
 const CACHE_KEY = "vehicle_options_cache_v1";
 const CACHE_TTL_MS = 60 * 1000; // 60s
@@ -141,9 +139,11 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
             if (vehicleOptionsCache.inFlight) return vehicleOptionsCache.inFlight;
 
             vehicleOptionsCache.inFlight = (async () => {
+                // Recria cliente para evitar estado corrompido após inatividade
+                const supabaseClient = createClient();
                 const [categoriesResult, plansResult] = await Promise.all([
-                    supabase.from("vehicle_categories").select("id, name, description").order("name"),
-                    supabase.from("insurance_plans").select("vehicle_range").order("vehicle_range")
+                    supabaseClient.from("vehicle_categories").select("id, name, description").order("name"),
+                    supabaseClient.from("insurance_plans").select("vehicle_range").order("vehicle_range")
                 ]);
 
                 if (categoriesResult.error) {
@@ -292,7 +292,10 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
 
         setFindingPlan(true);
         try {
-            const planPromise = supabase
+            // Recria cliente para evitar estado corrompido após inatividade
+            // (cliente singleton pode travar após 1-2min sem uso)
+            const supabaseClient = createClient();
+            const planPromise = supabaseClient
                 .from('insurance_plans')
                 .select('id, category_name, vehicle_range, adesao, monthly_payment, percentual_7_5, percentual_70, participation_min, vehicles')
                 .eq('category_name', planCategoryName)
@@ -331,8 +334,13 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
             if (mountedRef.current) {
                 setFindingPlan(false);
                 const isTimeout = err instanceof Error && err.message === "timeout";
-                if (isTimeout) {
-                    alert("A busca do plano demorou muito. Verifique sua conexão e tente novamente.");
+                const isAbortError = err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
+                
+                if (isTimeout || isAbortError) {
+                    alert("A busca do plano demorou muito ou foi cancelada. Isso pode acontecer após ficar um tempo na página. Tente novamente.");
+                } else {
+                    console.error('Erro desconhecido ao buscar plano:', err);
+                    alert("Erro ao buscar o plano. Tente recarregar a página ou verifique sua conexão.");
                 }
             }
         } finally {
