@@ -31,6 +31,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.18",
     "express": "^5.1.0",
+    "fetch-retry": "^6.0.0",
     "lucide-react": "^0.541.0",
     "next": "^16.0.10",
     "ngrok": "^5.0.0-beta.2",
