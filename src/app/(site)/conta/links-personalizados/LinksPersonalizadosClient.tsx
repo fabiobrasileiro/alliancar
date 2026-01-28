@@ -81,6 +81,7 @@ export default function LinksPersonalizadosClient({ initialAfiliado }: LinksPers
       if (error) {
         console.error("Erro ao salvar valor de adesão:", error);
         toast.error("Erro ao salvar valor de adesão.");
+        setSaving(false);
         return;
       }
 

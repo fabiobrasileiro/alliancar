@@ -16,7 +16,7 @@ const supabase = createClient(
 
 const CACHE_KEY = "vehicle_options_cache_v1";
 const CACHE_TTL_MS = 60 * 1000; // 60s
-const FETCH_TIMEOUT_MS = 30 * 1000; // 30s — mais margem em rede lenta / produção (Vercel) // 15s — evita "Carregando..." infinito por rede lenta
+const FETCH_TIMEOUT_MS = 45 * 1000; // 45s — mais margem para rede lenta ou reentrada na página
 const planCache = new Map<string, InsurancePlan | null>();
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -47,6 +47,23 @@ const vehicleOptionsCache: VehicleOptionsCache = {
     ranges: [],
     inFlight: null
 };
+
+// Fallback quando Supabase falhar ou estourar timeout — usuário ainda consegue preencher
+const FALLBACK_CATEGORIES: VehicleCategory[] = [
+    { id: "9adf167c-b5e9-42c6-a62a-f2ada911a516", name: "VEICULO DE ENTRADA", description: "" }
+];
+const FALLBACK_RANGES = [
+    "ATÉ R$ 20.000,00",
+    "R$ 20.000,00 - R$ 30.000,00",
+    "R$ 30.000,00 - R$ 40.000,00",
+    "R$ 40.000,00 - R$ 50.000,00",
+    "R$ 50.000,00 - R$ 60.000,00",
+    "R$ 60.000,00 - R$ 70.000,00",
+    "R$ 70.000,00 - R$ 80.000,00",
+    "R$ 80.000,00 - R$ 90.000,00",
+    "R$ 90.000,00 - R$ 100.000,00",
+    "R$ 80.000,00 - R$ 100.000,00"
+];
 
 const readSessionCache = () => {
     if (typeof window === "undefined") return null;
@@ -182,8 +199,10 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
             } catch (error) {
                 if (isActive) {
                     console.error("Erro ao buscar dados:", error);
-                    setLoadError("Não foi possível carregar. Tente novamente.");
-                    vehicleOptionsCache.inFlight = null; // permite nova requisição ao clicar em "Tentar de novo"
+                    vehicleOptionsCache.inFlight = null;
+                    // Usa fallback para o usuário conseguir preencher mesmo com timeout/rede falha
+                    applyOptions(FALLBACK_CATEGORIES, FALLBACK_RANGES);
+                    // Não seta loadError — usuário vê os selects com opções básicas e pode continuar
                 }
             } finally {
                 if (isActive) setLoading(false);
@@ -246,6 +265,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
 
     const handleRetry = useCallback(() => {
         setLoadError(null);
+        setLoading(true); // usuário vê "Carregando..." na hora
         vehicleOptionsCache.inFlight = null;
         setRetryCount((c) => c + 1);
     }, []);
