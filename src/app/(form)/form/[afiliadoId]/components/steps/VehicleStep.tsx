@@ -13,8 +13,8 @@ import {
 // (problema conhecido do Supabase: cliente singleton pode travar após 1-2min de inatividade)
 
 const CACHE_KEY = "vehicle_options_cache_v1";
-const CACHE_TTL_MS = 60 * 1000; // 60s
-const FETCH_TIMEOUT_MS = 45 * 1000; // 45s — mais margem para rede lenta ou reentrada na página
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10min — categorias mudam pouco, reduz chamadas ao Supabase
+const FETCH_TIMEOUT_MS = 15 * 1000; // 15s — reduz espera antes de aplicar fallback
 const planCache = new Map<string, InsurancePlan | null>();
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -46,6 +46,34 @@ const vehicleOptionsCache: VehicleOptionsCache = {
     inFlight: null
 };
 
+// Inicializa cache em memória do localStorage quando o módulo carregar (apenas no browser)
+if (typeof window !== "undefined") {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+        try {
+            const parsed = JSON.parse(cached) as {
+                timestamp: number;
+                categories?: VehicleCategory[];
+                ranges?: Array<{ vehicle_range: string }>;
+            };
+            const now = Date.now();
+            // Só usa se não estiver expirado
+            if (parsed.timestamp && now - parsed.timestamp < CACHE_TTL_MS) {
+                const ranges = [...new Set(
+                    (parsed.ranges || [])
+                        .map((plan) => plan.vehicle_range)
+                        .filter((range): range is string => typeof range === "string")
+                )];
+                vehicleOptionsCache.timestamp = parsed.timestamp;
+                vehicleOptionsCache.categories = parsed.categories || [];
+                vehicleOptionsCache.ranges = ranges;
+            }
+        } catch {
+            // Ignora erros de parse na inicialização
+        }
+    }
+}
+
 // Fallback quando Supabase falhar ou estourar timeout — usuário ainda consegue preencher
 const FALLBACK_CATEGORIES: VehicleCategory[] = [
     { id: "9adf167c-b5e9-42c6-a62a-f2ada911a516", name: "VEICULO DE ENTRADA", description: "" }
@@ -65,7 +93,28 @@ const FALLBACK_RANGES = [
 
 const readSessionCache = () => {
     if (typeof window === "undefined") return null;
-    const cached = sessionStorage.getItem(CACHE_KEY);
+    // Usa localStorage em vez de sessionStorage para persistir entre navegações
+    const cached = localStorage.getItem(CACHE_KEY);
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sessionId: 'debug-session',
+            runId: 'vehicle-step',
+            hypothesisId: 'H2',
+            location: 'VehicleStep.tsx:readSessionCache',
+            message: 'readSessionCache called',
+            data: {
+                hasCached: !!cached,
+                cachedLength: cached?.length || 0,
+            },
+            timestamp: Date.now(),
+        }),
+    }).catch(() => { });
+    // #endregion
+    
     if (!cached) return null;
     try {
         const parsed = JSON.parse(cached) as {
@@ -78,26 +127,87 @@ const readSessionCache = () => {
                 .map((plan) => plan.vehicle_range)
                 .filter((range): range is string => typeof range === "string")
         )];
-        return {
+        const result = {
             timestamp: parsed.timestamp,
             categories: parsed.categories || [],
             ranges
         };
-    } catch {
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: 'debug-session',
+                runId: 'vehicle-step',
+                hypothesisId: 'H2',
+                location: 'VehicleStep.tsx:readSessionCache',
+                message: 'readSessionCache parsed',
+                data: {
+                    timestamp: result.timestamp,
+                    categoriesCount: result.categories.length,
+                    rangesCount: result.ranges.length,
+                    ageMs: Date.now() - result.timestamp,
+                },
+                timestamp: Date.now(),
+            }),
+        }).catch(() => { });
+        // #endregion
+        
+        return result;
+    } catch (err) {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: 'debug-session',
+                runId: 'vehicle-step',
+                hypothesisId: 'H2',
+                location: 'VehicleStep.tsx:readSessionCache',
+                message: 'readSessionCache parse error',
+                data: {
+                    error: err instanceof Error ? err.message : String(err),
+                },
+                timestamp: Date.now(),
+            }),
+        }).catch(() => { });
+        // #endregion
         return null;
     }
 };
 
 const writeSessionCache = (categories: VehicleCategory[], ranges: string[]) => {
     if (typeof window === "undefined") return;
-    sessionStorage.setItem(
-        CACHE_KEY,
-        JSON.stringify({
+    const timestamp = Date.now();
+    const data = {
+        timestamp,
+        categories,
+        ranges: ranges.map((range) => ({ vehicle_range: range }))
+    };
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sessionId: 'debug-session',
+            runId: 'vehicle-step',
+            hypothesisId: 'H2',
+            location: 'VehicleStep.tsx:writeSessionCache',
+            message: 'writeSessionCache called',
+            data: {
+                timestamp,
+                categoriesCount: categories.length,
+                rangesCount: ranges.length,
+            },
             timestamp: Date.now(),
-            categories,
-            ranges: ranges.map((range) => ({ vehicle_range: range }))
-        })
-    );
+        }),
+    }).catch(() => { });
+    // #endregion
+    
+    // Usa localStorage em vez de sessionStorage para persistir entre navegações
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
 };
 
 interface VehicleStepProps {
@@ -133,12 +243,46 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
             setFipeValues(ranges);
             setLoadError(null);
             setLoading(false);
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: 'debug-session',
+                    runId: 'vehicle-step',
+                    hypothesisId: 'H5',
+                    location: 'VehicleStep.tsx:136',
+                    message: 'applyOptions called',
+                    data: {
+                        categoriesCount: categories.length,
+                        rangesCount: ranges.length,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(() => { });
+            // #endregion
         };
 
         const fetchOptions = async () => {
             if (vehicleOptionsCache.inFlight) return vehicleOptionsCache.inFlight;
 
             vehicleOptionsCache.inFlight = (async () => {
+                // #region agent log
+                fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: 'debug-session',
+                        runId: 'vehicle-step',
+                        hypothesisId: 'H3',
+                        location: 'VehicleStep.tsx:143',
+                        message: 'fetchOptions start',
+                        data: { cacheTimestamp: vehicleOptionsCache.timestamp },
+                        timestamp: Date.now(),
+                    }),
+                }).catch(() => { });
+                // #endregion
+
                 // Recria cliente para evitar estado corrompido após inatividade
                 const supabaseClient = createClient();
                 const [categoriesResult, plansResult] = await Promise.all([
@@ -157,6 +301,27 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 const categories = categoriesResult.data || [];
                 const ranges = [...new Set((plansResult.data || []).map((plan) => plan.vehicle_range))];
 
+                // #region agent log
+                fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: 'debug-session',
+                        runId: 'vehicle-step',
+                        hypothesisId: 'H3',
+                        location: 'VehicleStep.tsx:160',
+                        message: 'fetchOptions results',
+                        data: {
+                            categoriesCount: categories.length,
+                            rangesCount: ranges.length,
+                            categoriesError: !!categoriesResult.error,
+                            rangesError: !!plansResult.error,
+                        },
+                        timestamp: Date.now(),
+                    }),
+                }).catch(() => { });
+                // #endregion
+
                 vehicleOptionsCache.timestamp = Date.now();
                 vehicleOptionsCache.categories = categories;
                 vehicleOptionsCache.ranges = ranges;
@@ -174,17 +339,98 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
 
         const loadOptions = async () => {
             const now = Date.now();
+
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: 'debug-session',
+                    runId: 'vehicle-step',
+                    hypothesisId: 'H1',
+                    location: 'VehicleStep.tsx:177',
+                    message: 'loadOptions start',
+                    data: {
+                        retryCount,
+                        cacheTimestamp: vehicleOptionsCache.timestamp,
+                        now,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(() => { });
+            // #endregion
             // Cache em memória: evita setLoading(true) e selects em "Carregando..." desnecessário
             if (vehicleOptionsCache.timestamp && now - vehicleOptionsCache.timestamp < CACHE_TTL_MS) {
+                // #region agent log
+                fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: 'debug-session',
+                        runId: 'vehicle-step',
+                        hypothesisId: 'H1',
+                        location: 'VehicleStep.tsx:184',
+                        message: 'loadOptions using memory cache',
+                        data: {
+                            categoriesCount: vehicleOptionsCache.categories.length,
+                            rangesCount: vehicleOptionsCache.ranges.length,
+                        },
+                        timestamp: Date.now(),
+                    }),
+                }).catch(() => { });
+                // #endregion
                 applyOptions(vehicleOptionsCache.categories, vehicleOptionsCache.ranges);
                 return;
             }
 
             const sessionCache = readSessionCache();
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: 'debug-session',
+                    runId: 'vehicle-step',
+                    hypothesisId: 'H2',
+                    location: 'VehicleStep.tsx:276',
+                    message: 'loadOptions checking sessionCache',
+                    data: {
+                        hasSessionCache: !!sessionCache,
+                        sessionCacheTimestamp: sessionCache?.timestamp || 0,
+                        ageMs: sessionCache ? now - sessionCache.timestamp : 0,
+                        cacheTTL: CACHE_TTL_MS,
+                        isExpired: sessionCache ? (now - sessionCache.timestamp >= CACHE_TTL_MS) : true,
+                        categoriesCount: sessionCache?.categories.length || 0,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(() => { });
+            // #endregion
+            
             if (sessionCache && now - sessionCache.timestamp < CACHE_TTL_MS) {
                 vehicleOptionsCache.timestamp = sessionCache.timestamp;
                 vehicleOptionsCache.categories = sessionCache.categories;
                 vehicleOptionsCache.ranges = sessionCache.ranges;
+
+                // #region agent log
+                fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: 'debug-session',
+                        runId: 'vehicle-step',
+                        hypothesisId: 'H1',
+                        location: 'VehicleStep.tsx:196',
+                        message: 'loadOptions using session cache',
+                        data: {
+                            categoriesCount: sessionCache.categories.length,
+                            rangesCount: sessionCache.ranges.length,
+                        },
+                        timestamp: Date.now(),
+                    }),
+                }).catch(() => { });
+                // #endregion
                 applyOptions(sessionCache.categories, sessionCache.ranges);
                 return;
             }
@@ -192,6 +438,21 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
             setLoading(true);
             setLoadError(null);
             try {
+                // #region agent log
+                fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: 'debug-session',
+                        runId: 'vehicle-step',
+                        hypothesisId: 'H2',
+                        location: 'VehicleStep.tsx:211',
+                        message: 'loadOptions fetching from Supabase',
+                        data: {},
+                        timestamp: Date.now(),
+                    }),
+                }).catch(() => { });
+                // #endregion
                 const data = await withTimeout(fetchOptions(), FETCH_TIMEOUT_MS);
                 if (isActive) {
                     applyOptions(data.categories, data.ranges);
@@ -200,9 +461,52 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                 if (isActive) {
                     console.error("Erro ao buscar dados:", error);
                     vehicleOptionsCache.inFlight = null;
-                    // Usa fallback para o usuário conseguir preencher mesmo com timeout/rede falha
-                    applyOptions(FALLBACK_CATEGORIES, FALLBACK_RANGES);
-                    // Não seta loadError — usuário vê os selects com opções básicas e pode continuar
+                    // #region agent log
+                    fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sessionId: 'debug-session',
+                            runId: 'vehicle-step',
+                            hypothesisId: 'H2',
+                            location: 'VehicleStep.tsx:224',
+                            message: 'loadOptions error',
+                            data: {
+                                errorMessage: error instanceof Error ? error.message : String(error),
+                            },
+                            timestamp: Date.now(),
+                        }),
+                    }).catch(() => { });
+                    // #endregion
+
+                    // Se temos cache antigo (mesmo expirado), é melhor mostrar os dados reais
+                    // do que cair para o fallback mínimo com 1 categoria.
+                    if (sessionCache && sessionCache.categories.length > 0) {
+                        // #region agent log
+                        fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                sessionId: 'debug-session',
+                                runId: 'vehicle-step',
+                                hypothesisId: 'H2',
+                                location: 'VehicleStep.tsx:loadOptions:staleCache',
+                                message: 'loadOptions using stale session cache after error',
+                                data: {
+                                    categoriesCount: sessionCache.categories.length,
+                                    rangesCount: sessionCache.ranges.length,
+                                },
+                                timestamp: Date.now(),
+                            }),
+                        }).catch(() => { });
+                        // #endregion
+
+                        applyOptions(sessionCache.categories, sessionCache.ranges);
+                    } else {
+                        // Usa fallback mínimo apenas se nunca conseguimos carregar dados reais
+                        applyOptions(FALLBACK_CATEGORIES, FALLBACK_RANGES);
+                    }
+                    // Não seta loadError — usuário vê os selects com opções e pode continuar
                 }
             } finally {
                 if (isActive) setLoading(false);
@@ -268,6 +572,21 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
         setLoading(true); // usuário vê "Carregando..." na hora
         vehicleOptionsCache.inFlight = null;
         setRetryCount((c) => c + 1);
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: 'debug-session',
+                runId: 'vehicle-step',
+                hypothesisId: 'H4',
+                location: 'VehicleStep.tsx:274',
+                message: 'handleRetry clicked',
+                data: {},
+                timestamp: Date.now(),
+            }),
+        }).catch(() => { });
+        // #endregion
     }, []);
 
     const handleNextWithPlan = useCallback(async () => {
@@ -292,25 +611,81 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
 
         setFindingPlan(true);
         try {
-            // Recria cliente para evitar estado corrompido após inatividade
-            // (cliente singleton pode travar após 1-2min sem uso)
-            const supabaseClient = createClient();
-            const planPromise = supabaseClient
-                .from('insurance_plans')
-                .select('id, category_name, vehicle_range, adesao, monthly_payment, percentual_7_5, percentual_70, participation_min, vehicles')
-                .eq('category_name', planCategoryName)
-                .eq('vehicle_range', fipeRange)
-                .limit(1);
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: 'debug-session',
+                    runId: 'vehicle-step',
+                    hypothesisId: 'H6',
+                    location: 'VehicleStep.tsx:planSearch:start',
+                    message: 'handleNextWithPlan start',
+                    data: {
+                        planCategoryName,
+                        fipeRange,
+                        cacheKey,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(() => { });
+            // #endregion
 
-            // PostgrestFilterBuilder é thenable mas não Promise nativa - precisa cast via unknown
-            const result = await withTimeout(
-                planPromise as unknown as Promise<{ data: InsurancePlan[] | null; error: unknown }>,
-                FETCH_TIMEOUT_MS
+            const startTime = Date.now();
+
+            // Usa REST API diretamente para evitar qualquer problema de cliente "travado"
+            const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+            const url = new URL(`${baseUrl}/rest/v1/insurance_plans`);
+            url.searchParams.set(
+                "select",
+                "id,category_name,vehicle_range,adesao,monthly_payment,percentual_7_5,percentual_70,participation_min,vehicles"
             );
-            const { data, error } = result;
+            url.searchParams.set("category_name", `eq.${planCategoryName}`);
+            url.searchParams.set("vehicle_range", `eq.${fipeRange}`);
+            url.searchParams.set("limit", "1");
 
-            if (error) {
-                console.error('Erro ao buscar plano:', error);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+            const response = await fetch(url.toString(), {
+                method: "GET",
+                headers: {
+                    apikey: anonKey || "",
+                    Authorization: `Bearer ${anonKey}`,
+                },
+                signal: controller.signal,
+            }).finally(() => clearTimeout(timeoutId));
+
+            const durationMs = Date.now() - startTime;
+            const isOk = response.ok;
+
+            const data = (await response.json()) as InsurancePlan[] | null;
+
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: 'debug-session',
+                    runId: 'vehicle-step',
+                    hypothesisId: 'H6',
+                    location: 'VehicleStep.tsx:planSearch:result',
+                    message: 'handleNextWithPlan result',
+                    data: {
+                        durationMs,
+                        status: response.status,
+                        ok: isOk,
+                        hasData: !!data && data.length > 0,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(() => { });
+            // #endregion
+
+            if (!isOk) {
+                console.error('Erro HTTP ao buscar plano:', response.status, await response.text());
                 planCache.set(cacheKey, null);
                 onPlanoEncontrado(null);
                 if (mountedRef.current) setFindingPlan(false);
@@ -330,13 +705,32 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
             onNext();
         } catch (err) {
             console.error('Erro ao buscar plano:', err);
+
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: 'debug-session',
+                    runId: 'vehicle-step',
+                    hypothesisId: 'H6',
+                    location: 'VehicleStep.tsx:planSearch:error',
+                    message: 'handleNextWithPlan error',
+                    data: {
+                        errorMessage: err instanceof Error ? err.message : String(err),
+                        errorName: err instanceof Error ? err.name : 'unknown',
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(() => { });
+            // #endregion
+
             onPlanoEncontrado(null);
             if (mountedRef.current) {
                 setFindingPlan(false);
-                const isTimeout = err instanceof Error && err.message === "timeout";
-                const isAbortError = err instanceof Error && (err.name === "AbortError" || err.message.includes("aborted"));
+                const isTimeout = err instanceof Error && err.message === "The user aborted a request." || err instanceof Error && err.name === "AbortError";
                 
-                if (isTimeout || isAbortError) {
+                if (isTimeout) {
                     alert("A busca do plano demorou muito ou foi cancelada. Isso pode acontecer após ficar um tempo na página. Tente novamente.");
                 } else {
                     console.error('Erro desconhecido ao buscar plano:', err);
