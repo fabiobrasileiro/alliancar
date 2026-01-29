@@ -10,8 +10,10 @@ export default function PersonalDataStep({ form, onChange, onNext }: PersonalDat
   const validateEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  const validateWhatsApp = (phone: string) =>
-    /^\(\d{2}\)\s?\d{4,5}-\d{4}$/.test(phone);
+  const validateWhatsApp = (phone: string) => {
+    const digits = phone.replace(/\D/g, "");
+    return digits.length === 10 || digits.length === 11;
+  };
 
   const formatWhatsApp = (value: string) => {
     const numbers = value.replace(/\D/g, "");
