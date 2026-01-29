@@ -7,8 +7,24 @@ interface AddressStepProps {
     onNext: () => void;
 }
 
+function formatCEP(value: string): string {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    if (digits.length <= 5) return digits;
+    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
+
 export default function AddressStep({ form, onChange, onBack, onNext }: AddressStepProps) {
-    const isFormValid = form.street && form.addressNumber && form.province && form.postalCode;
+    const postalDigits = form.postalCode.replace(/\D/g, "");
+    const isFormValid =
+        form.street &&
+        form.addressNumber &&
+        form.province &&
+        postalDigits.length === 8;
+
+    const handlePostalCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const formatted = formatCEP(e.target.value);
+        onChange({ ...e, target: { ...e.target, name: e.target.name, value: formatted } });
+    };
 
     const baseInput = "w-full p-3 border border-gray-600 bg-gray-800 text-white rounded focus:outline-none focus:border-blue-500 placeholder-gray-400";
 
@@ -55,10 +71,11 @@ export default function AddressStep({ form, onChange, onBack, onNext }: AddressS
 
             <input
                 name="postalCode"
-                placeholder="CEP"
+                placeholder="CEP (00000-000)"
                 value={form.postalCode}
-                onChange={onChange}
+                onChange={handlePostalCodeChange}
                 className={baseInput}
+                maxLength={9}
                 required
             />
 

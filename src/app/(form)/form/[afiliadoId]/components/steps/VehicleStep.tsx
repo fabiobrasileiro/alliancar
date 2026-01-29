@@ -1,6 +1,5 @@
 import { useMemo, useCallback, useEffect, useRef, useState } from "react";
 import { FormState, InsurancePlan } from "./types";
-import { createClient } from '@/utils/supabase/client'
 import {
     Select,
     SelectContent,
@@ -9,22 +8,12 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-// Cliente será criado dentro das funções para evitar estado corrompido após inatividade
-// (problema conhecido do Supabase: cliente singleton pode travar após 1-2min de inatividade)
+// Categorias/faixas via REST + fetch + AbortController (timeout cancela a requisição de verdade)
 
 const CACHE_KEY = "vehicle_options_cache_v1";
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10min — categorias mudam pouco, reduz chamadas ao Supabase
-const FETCH_TIMEOUT_MS = 15 * 1000; // 15s — reduz espera antes de aplicar fallback
+const FETCH_TIMEOUT_MS = 15 * 1000; // 15s — aborta requisição e usa cache/fallback
 const planCache = new Map<string, InsurancePlan | null>();
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-    return Promise.race([
-        promise,
-        new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("timeout")), ms)
-        ),
-    ]);
-}
 
 interface VehicleCategory {
     id: string;
@@ -263,75 +252,58 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
             // #endregion
         };
 
-        const fetchOptions = async () => {
+        const fetchOptions = async (): Promise<{ categories: VehicleCategory[]; ranges: string[] }> => {
             if (vehicleOptionsCache.inFlight) return vehicleOptionsCache.inFlight;
 
-            vehicleOptionsCache.inFlight = (async () => {
-                // #region agent log
-                fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sessionId: 'debug-session',
-                        runId: 'vehicle-step',
-                        hypothesisId: 'H3',
-                        location: 'VehicleStep.tsx:143',
-                        message: 'fetchOptions start',
-                        data: { cacheTimestamp: vehicleOptionsCache.timestamp },
-                        timestamp: Date.now(),
-                    }),
-                }).catch(() => { });
-                // #endregion
+            const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+            const headers: HeadersInit = {
+                apikey: anonKey ?? "",
+                Authorization: `Bearer ${anonKey}`,
+                Accept: "application/json",
+            };
 
-                // Recria cliente para evitar estado corrompido após inatividade
-                const supabaseClient = createClient();
-                const [categoriesResult, plansResult] = await Promise.all([
-                    supabaseClient.from("vehicle_categories").select("id, name, description").order("name"),
-                    supabaseClient.from("insurance_plans").select("vehicle_range").order("vehicle_range")
-                ]);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-                if (categoriesResult.error) {
-                    console.error("Erro ao buscar categorias:", categoriesResult.error);
+            const doFetch = async () => {
+                const categoriesUrl = new URL(`${baseUrl}/rest/v1/vehicle_categories`);
+                categoriesUrl.searchParams.set("select", "id,name,description");
+                categoriesUrl.searchParams.set("order", "name.asc");
+
+                const plansUrl = new URL(`${baseUrl}/rest/v1/insurance_plans`);
+                plansUrl.searchParams.set("select", "vehicle_range");
+                plansUrl.searchParams.set("order", "vehicle_range.asc");
+
+                const [categoriesRes, plansRes] = await Promise.all([
+                    fetch(categoriesUrl.toString(), { method: "GET", headers, signal: controller.signal }),
+                    fetch(plansUrl.toString(), { method: "GET", headers, signal: controller.signal }),
+                ]).finally(() => clearTimeout(timeoutId));
+
+                if (!categoriesRes.ok) {
+                    console.error("Erro ao buscar categorias:", categoriesRes.status, await categoriesRes.text());
+                }
+                if (!plansRes.ok) {
+                    console.error("Erro ao buscar planos:", plansRes.status, await plansRes.text());
                 }
 
-                if (plansResult.error) {
-                    console.error("Erro ao buscar planos:", plansResult.error);
-                }
-
-                const categories = categoriesResult.data || [];
-                const ranges = [...new Set((plansResult.data || []).map((plan) => plan.vehicle_range))];
-
-                // #region agent log
-                fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sessionId: 'debug-session',
-                        runId: 'vehicle-step',
-                        hypothesisId: 'H3',
-                        location: 'VehicleStep.tsx:160',
-                        message: 'fetchOptions results',
-                        data: {
-                            categoriesCount: categories.length,
-                            rangesCount: ranges.length,
-                            categoriesError: !!categoriesResult.error,
-                            rangesError: !!plansResult.error,
-                        },
-                        timestamp: Date.now(),
-                    }),
-                }).catch(() => { });
-                // #endregion
-
-                vehicleOptionsCache.timestamp = Date.now();
-                vehicleOptionsCache.categories = categories;
-                vehicleOptionsCache.ranges = ranges;
-                writeSessionCache(categories, ranges);
+                const categoriesData = (await categoriesRes.json()) as VehicleCategory[] | null;
+                const plansData = (await plansRes.json()) as { vehicle_range: string }[] | null;
+                const categories = categoriesData ?? [];
+                const ranges = [...new Set((plansData ?? []).map((p) => p.vehicle_range))];
 
                 return { categories, ranges };
-            })();
+            };
+
+            vehicleOptionsCache.inFlight = doFetch();
 
             try {
-                return await vehicleOptionsCache.inFlight;
+                const result = await vehicleOptionsCache.inFlight;
+                vehicleOptionsCache.timestamp = Date.now();
+                vehicleOptionsCache.categories = result.categories;
+                vehicleOptionsCache.ranges = result.ranges;
+                writeSessionCache(result.categories, result.ranges);
+                return result;
             } finally {
                 vehicleOptionsCache.inFlight = null;
             }
@@ -453,7 +425,7 @@ export default function VehicleStep({ form, onChange, onBack, onNext, onPlanoEnc
                     }),
                 }).catch(() => { });
                 // #endregion
-                const data = await withTimeout(fetchOptions(), FETCH_TIMEOUT_MS);
+                const data = await fetchOptions();
                 if (isActive) {
                     applyOptions(data.categories, data.ranges);
                 }

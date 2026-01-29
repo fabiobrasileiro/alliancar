@@ -118,11 +118,25 @@ export async function POST(request: Request) {
         }
 
         // 1️⃣ Cria o cliente PRIMEIRO
+        const normalizedPhone = whatsApp?.replace(/\D/g, "") || "";
+        if (normalizedPhone.length > 0 && ![10, 11].includes(normalizedPhone.length)) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: "Telefone inválido. Informe DDD + número (10 ou 11 dígitos).",
+                    details: {
+                        received: whatsApp,
+                        normalizedLength: normalizedPhone.length,
+                    }
+                },
+                { status: 400 }
+            );
+        }
         const customerPayload = {
             name: name,
             email: email,
-            phone: whatsApp,
-            mobilePhone: whatsApp,
+            phone: normalizedPhone,
+            mobilePhone: normalizedPhone,
             cpfCnpj: cpfCnpj.replace(/\D/g, ''),
             address: street,
             addressNumber: addressNumber,

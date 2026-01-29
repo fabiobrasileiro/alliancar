@@ -198,20 +198,12 @@ export default function MultiStepForm() {
 
     const nextStep = () => {
         if (step < 5) {
-            // #region agent log
-            fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MultiStepForm.tsx:nextStep',message:'step_change_next',data:{from:step,to:step+1},timestamp:Date.now(),sessionId:'debug-session',runId:'perf1',hypothesisId:'B'})}).catch(()=>{});
-            console.log("[perf][B] step_change_next", { from: step, to: step + 1 });
-            // #endregion
             setStep(prev => prev + 1);
         }
     };
 
     const prevStep = () => {
         if (step > 1) {
-            // #region agent log
-            fetch('http://127.0.0.1:7245/ingest/5a97670e-1390-4727-9ee6-9b993445f7dc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MultiStepForm.tsx:prevStep',message:'step_change_prev',data:{from:step,to:step-1},timestamp:Date.now(),sessionId:'debug-session',runId:'perf1',hypothesisId:'B'})}).catch(()=>{});
-            console.log("[perf][B] step_change_prev", { from: step, to: step - 1 });
-            // #endregion
             setStep(prev => prev - 1);
         }
     };
@@ -271,6 +263,12 @@ export default function MultiStepForm() {
                 customMembership,
                 selectedServices
             });
+            return;
+        }
+
+        const phoneDigits = form.whatsApp.replace(/\D/g, "");
+        if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
+            alert("Telefone inválido. Informe DDD + número com 10 ou 11 dígitos (ex.: (11) 99999-9999).");
             return;
         }
 
