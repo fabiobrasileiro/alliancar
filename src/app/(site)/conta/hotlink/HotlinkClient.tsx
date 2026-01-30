@@ -62,15 +62,15 @@ export default function HotlinkClient({ initialAfiliado }: HotlinkClientProps) {
     {
       id: "default",
       nome: "Formulário Landing Page",
-      url: `${baseUrl}/formulario/formulariolp`,
-      qrcode_url: generateQRCode(`${baseUrl}/formulario/formulariolp`),
+      url: `${baseUrl}/form/formulariolp`,
+      qrcode_url: generateQRCode(`${baseUrl}/form/formulariolp`),
       description: "Link otimizado para conversão em landing pages"
     },
     {
       id: "afiliado",
       nome: "Formulário Principal",
-      url: `${baseUrl}/formulario/${afiliado?.id || ''}`,
-      qrcode_url: afiliado?.id ? generateQRCode(`${baseUrl}/formulario/${afiliado.id}`) : undefined,
+      url: `${baseUrl}/form/${afiliado?.id || ''}`,
+      qrcode_url: afiliado?.id ? generateQRCode(`${baseUrl}/form/${afiliado.id}`) : undefined,
       description: "Seu link personalizado com seu ID único"
     },
     {
